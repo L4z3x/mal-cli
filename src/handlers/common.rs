@@ -1,4 +1,4 @@
-use crate::app::{ActiveBlock, App, RouteId};
+use crate::app::{ActiveBlock, App};
 use crate::event::Key;
 
 pub fn down_event(key: Key) -> bool {

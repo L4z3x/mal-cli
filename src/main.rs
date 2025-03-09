@@ -1,11 +1,10 @@
+use color_eyre::Result;
 use crossterm::cursor;
 use crossterm::execute;
 use crossterm::terminal;
 use crossterm::{cursor::MoveTo, ExecutableCommand};
-use eyre::Result;
-
-use tui::backend::CrosstermBackend;
-use tui::Terminal;
+use ratatui::prelude::CrosstermBackend;
+use ratatui::Terminal;
 
 use std::sync::Arc;
 use std::{
@@ -17,7 +16,7 @@ use tokio::sync::Mutex;
 use mal::app::*;
 use mal::auth::OAuth;
 use mal::cli::{Opt, StructOpt};
-use mal::config::{AppConfig, AuthConfig};
+use mal::config::{app_config::AppConfig, oauth_config::AuthConfig};
 use mal::event;
 use mal::event::key::Key;
 use mal::handlers;

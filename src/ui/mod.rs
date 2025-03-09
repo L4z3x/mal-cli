@@ -2,18 +2,17 @@ pub mod help;
 pub mod util;
 use crate::api::model::*;
 use crate::app::*;
-use tui::{
-    backend::Backend,
+// use color_eyre::config::Frame;
+use ratatui::{
+    // buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
-    symbols,
-    text::{Span, Spans},
-    widgets::canvas::{Canvas, Line, Map, MapResolution, Rectangle},
+    prelude::Backend,
+    style::{Color, Modifier, Style, Stylize},
+    text::{Span, Text},
     widgets::{
-        Axis, BarChart, Block, Borders, Chart, Dataset, Gauge, List, ListItem, ListState,
-        Paragraph, Row, Sparkline, Table, Tabs, Wrap,
+        Block, Borders, Cell, List, ListItem, ListState, Paragraph, Row, Table, Widget, Wrap,
     },
-    Frame,
+    Frame, // DefaultTerminal, Frame,
 };
 use util::get_color;
 
@@ -61,26 +60,42 @@ pub struct TableItem {
     format: Vec<String>,
 }
 
-pub fn draw_help_menu<B>(f: &mut Frame<B>, app: &App)
-where
-    B: Backend,
-{
+// from chatgpt
+pub fn draw_help_menu(f: &mut Frame, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(100)].as_ref())
         .margin(2)
-        .split(f.size());
+        .split(f.area()); // ✅ Corrected
 
     let white = Style::default().fg(app.app_config.theme.text);
-    let gray = Style::default().fg(app.app_config.theme.text);
+    let gray = Style::default().fg(Color::Gray); //
+
     let header = ["Description", "Event", "Context"];
-
     let help_docs = help::get_help();
-    let help_docs = &help_docs[app.help_menu_offset as usize..];
+    let help_docs: &[Vec<&str>] = &help_docs[app.help_menu_offset as usize..];
 
-    let rows = help_docs.iter().map(|i| Row::StyledData(i.iter(), gray));
+    let rows: Vec<Row> = help_docs
+        .iter()
+        .map(|i| -> Row {
+            Row::new(
+                i.iter()
+                    .map(|&cell| -> Cell { Cell::from(cell).style(gray) })
+                    .collect::<Vec<Cell>>(),
+            )
+        })
+        .collect::<Vec<Row>>();
 
-    let help_menu = Table::new(header.iter(), rows)
+    let header = Row::new(
+        header
+            .iter()
+            .map(|&header| Cell::from(header).style(white))
+            .collect::<Vec<Cell>>(),
+    );
+
+    let help_menu = Table::default()
+        .rows(rows)
+        .header(header)
         .block(
             Block::default()
                 .borders(Borders::ALL)
@@ -95,39 +110,37 @@ where
             Constraint::Length(20),
         ]);
 
-    f.render_widget(help_menu, chunks[0])
+    f.render_widget(help_menu, chunks[0]);
 }
 
-pub fn draw_error<B>(f: &mut Frame<B>, app: &App)
-where
-    B: Backend,
-{
+pub fn draw_error(f: &mut Frame, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(100)].as_ref())
         .margin(5)
-        .split(f.size());
+        .split(f.area());
 
     let error = vec![
-        Spans::from(Span::from("Api response: ")),
-        Spans::from(Span::styled(
+        Span::from(Span::from("Api response: ")),
+        Span::from(Span::styled(
             &app.api_error,
             Style::default().fg(app.app_config.theme.error_text),
         )),
-        Spans::from(Span::styled(
+        Span::from(Span::styled(
             "Your api thing may be wrong idk man",
             Style::default().fg(app.app_config.theme.text),
         )),
-        Spans::from(Span::styled(
+        Span::from(Span::styled(
             "Hint: Maybe do something again",
             Style::default().fg(app.app_config.theme.hint),
         )),
-        Spans::from(Span::styled(
+        Span::from(Span::styled(
             "\n Press <Esc> to return",
             Style::default().fg(app.app_config.theme.inactive),
         )),
     ];
 
+    let error = Text::from_iter(error);
     let error_paragraph = Paragraph::new(error)
         .style(Style::default().fg(app.app_config.theme.text))
         .block(
@@ -143,16 +156,13 @@ where
     f.render_widget(error_paragraph, chunks[0]);
 }
 
-pub fn draw_main_layout<B>(f: &mut Frame<B>, app: &App)
-where
-    B: Backend,
-{
+pub fn draw_main_layout(f: &mut Frame, app: &App) {
     let margin = util::get_main_layout_margin(app);
     let parent_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(3), Constraint::Min(1)].as_ref())
         .margin(margin)
-        .split(f.size());
+        .split(f.area());
 
     // Search Input and help
     draw_input_and_help_box(f, app, parent_layout[0]);
@@ -161,10 +171,7 @@ where
     draw_routes(f, app, parent_layout[1]);
 }
 
-pub fn draw_input_and_help_box<B>(f: &mut Frame<B>, app: &App, layout_chunk: Rect)
-where
-    B: Backend,
-{
+pub fn draw_input_and_help_box(f: &mut Frame, app: &App, layout_chunk: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(90), Constraint::Percentage(10)].as_ref())
@@ -209,10 +216,7 @@ where
     f.render_widget(help, chunks[1]);
 }
 
-pub fn draw_routes<B>(f: &mut Frame<B>, app: &App, layout_chunk: Rect)
-where
-    B: Backend,
-{
+pub fn draw_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
@@ -220,7 +224,7 @@ where
 
     draw_user_block(f, app, chunks[0]);
 
-    let current_route = app.get_current_route();
+    let current_route: &Route = app.get_current_route();
 
     // match current_route.id {
     //     RouteId::Search => {
@@ -233,10 +237,7 @@ where
     // };
 }
 
-pub fn draw_anime_routes<B>(f: &mut Frame<B>, app: &App, layout_chunk: Rect)
-where
-    B: Backend,
-{
+pub fn draw_anime_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
     let current_route = app.get_current_route();
     let highlight_state = (
         current_route.active_block == ActiveBlock::Anime,
@@ -259,10 +260,7 @@ where
     )
 }
 
-pub fn draw_manga_routes<B>(f: &mut Frame<B>, app: &App, layout_chunk: Rect)
-where
-    B: Backend,
-{
+pub fn draw_manga_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
     let current_route = app.get_current_route();
     let highlight_state = (
         current_route.active_block == ActiveBlock::Manga,
@@ -285,10 +283,7 @@ where
     );
 }
 
-pub fn draw_user_routes<B>(f: &mut Frame<B>, app: &App, layout_chunk: Rect)
-where
-    B: Backend,
-{
+pub fn draw_user_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
     let current_route = app.get_current_route();
     let highlight_state = (
         current_route.active_block == ActiveBlock::User,
@@ -310,10 +305,7 @@ where
         Some(app.library.selected_index),
     );
 }
-pub fn draw_user_block<B>(f: &mut Frame<B>, app: &App, layout_chunk: Rect)
-where
-    B: Backend,
-{
+pub fn draw_user_block(f: &mut Frame, app: &App, layout_chunk: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints(
@@ -331,17 +323,15 @@ where
     draw_user_routes(f, app, chunks[2]);
 }
 
-pub fn draw_selectable_list<B>(
-    f: &mut Frame<B>,
+pub fn draw_selectable_list(
+    f: &mut Frame,
     app: &App,
     layout_chunk: Rect,
     title: &str,
     items: Vec<ListItem>,
     highlight_state: (bool, bool),
     selected_index: Option<usize>,
-) where
-    B: Backend,
-{
+) {
     let mut state = ListState::default();
     state.select(selected_index);
 

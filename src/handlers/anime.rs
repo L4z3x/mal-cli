@@ -1,5 +1,5 @@
 use super::common;
-use crate::app::{ActiveBlock, App, RouteId, ANIME_OPTIONS};
+use crate::app::{App, ANIME_OPTIONS};
 
 use crate::event::Key;
 use crate::network::IoEvent;

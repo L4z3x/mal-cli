@@ -1,10 +1,9 @@
 [package]
-name = "mal-cli" 
+name = "mal-tui"
+authors = ["Anas Saeed <saeedanas396@gmail.com>"] 
 version = "0.1.0"
-authors = ["Anas Saeed <saeedanas396@gmail.com>"]
 description = "Terminal User Interface for myanimelist.net"
-edition = "2018"
-
+edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
 name = "mal"
@@ -15,31 +14,31 @@ name = "mal"
 path = "src/main.rs"
 
 [dependencies]
+anyhow = "1.0.97"
+better-panic = "0.3.0"
+color-eyre = "0.6.3"
+crossterm = "0.28.1"
+dirs = "6.0.0"
+httparse = "1.10.1"
+rand = "0.9.0"
+ratatui = "0.29.0"
+regex = "1.11.1"
+reqwest =  { version = "0.12.12", features = ["json", "rustls-tls","blocking"] }
 rmal = { path = "./rmal", version = "0.1.0" }
-reqwest = { version = "^0.10.6", features = ["blocking"] }
-serde = { version = "^1.0.114", features = ["derive"] }
-serde_urlencoded = "^0.6.1"
-serde_json = "^1.0.56"
-url = "^2.1.1"
-rand = "^0.7.3"
-httparse = "^1.3.4"
-strum = "^0.18.0"
-strum_macros = "^0.18.0"
-time = "^0.2.16"
-regex = "^1.3.9"
-webbrowser = "^0.5.5"
-dirs = "^1.0.5"
-anyhow = "^1.0"
-thiserror = "1.0"
-serde_yaml = "0.8"
-termion = "1.5"
-eyre = "0.6.0"
-crossterm = "0.17.7"
-tui = { version = "0.10", default-features = false, features = ["crossterm"] }
-better-panic = "0.2.0"
-tokio = { version = "0.2", features = ["full"] }
-unicode-width = "0.1.8"
-structopt = "0.3.20"
+serde = { version = "1.0.218" , features = ["derive"] }
+serde_json = "1.0.140"
+serde_urlencoded = "0.7.1"
+serde_yaml = "0.9.34"
+structopt = "0.3.26"
+strum = "0.27.1"
+strum_macros = "0.27.1"
+thiserror = "2.0.12"
+time = { version = "0.3.39" , features = ["parsing" , "formatting"] }
+tokio = {version = "1.44.0",features = ["full"]}
+unicode-width = "0.2.0"
+url = "2.5.4"
+webbrowser = "1.0.3"
+
 
 [workspace]
 members=[

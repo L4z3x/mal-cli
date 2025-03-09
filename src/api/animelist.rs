@@ -102,10 +102,10 @@ mod tests {
     async fn test_update_anime_list() {
         let auth = crate::auth::tests::get_auth();
         let query = UpdateUserAnimeListStatusQuery {
-            status: Some(UserWatchStatus::Watching),
+            status: Some(UserWatchStatus::Completed),
             is_rewatching: None,
             score: Some(8),
-            num_watched_episodes: Some(5),
+            num_watched_episodes: Some(13),
             priority: None,
             num_times_rewatched: None,
             rewatch_value: None,

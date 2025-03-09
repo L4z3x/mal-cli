@@ -1,9 +1,8 @@
 use crate::api::model::*;
-use crate::config::AppConfig;
+use crate::config::app_config::AppConfig;
 use crate::network::IoEvent;
+use ratatui::layout::Rect;
 use std::sync::mpsc::Sender;
-use tui::layout::Rect;
-use tui::widgets::ListItem;
 
 const DEFAULT_ROUTE: Route = Route {
     id: RouteId::Home,
@@ -197,7 +196,7 @@ impl App {
         active_block: Option<ActiveBlock>,
         hovered_block: Option<ActiveBlock>,
     ) {
-        let mut current_route = self.get_current_route_mut();
+        let current_route = self.get_current_route_mut();
         if let Some(active_block) = active_block {
             current_route.active_block = active_block;
         }

@@ -4,16 +4,16 @@ pub mod oauth_config;
 // app config
 pub mod app_config;
 
-pub use app_config::AppConfig;
+// pub use app_config::AppConfig;
 pub use oauth_config::AuthConfig;
 
 use std::path::PathBuf;
 
 const CONFIG_DIR: &str = ".config";
-const APP_CONFIG_DIR: &str = "mal-cli";
+const APP_CONFIG_DIR: &str = "mal-tui";
 
 const DEFAULT_PORT: u16 = 7878;
-const DEFAULT_USER_AGENT: &str = "mal-cli";
+const DEFAULT_USER_AGENT: &str = "mal-tui";
 const OAUTH_FILE: &str = "oauth2.yml";
 const TOKEN_CACHE_FILE: &str = ".mal_token_cache.json";
 

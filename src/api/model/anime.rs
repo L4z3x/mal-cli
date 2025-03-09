@@ -1,7 +1,7 @@
 use super::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use strum_macros::{AsStaticStr, EnumString, IntoStaticStr};
+use strum_macros::{EnumString, IntoStaticStr};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AnimeSeason {
@@ -58,7 +58,7 @@ pub enum AnimeField {
     IsSupporter,
 }
 
-#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr, AsStaticStr)]
+#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
 #[strum(serialize_all = "snake_case")]
 pub enum AnimeMediaType {
     Unknown,

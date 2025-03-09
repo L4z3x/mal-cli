@@ -12,10 +12,23 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::Debug;
 use std::str::FromStr;
 use strum_macros::{EnumString, IntoStaticStr};
-use time::{Date, PrimitiveDateTime, Time};
+use time::{
+    format_description,
+    // format_description::well_known::{iso8601, Iso8601},
+    Date,
+    Month,
+    PrimitiveDateTime,
+    Time,
+};
 
 pub type Page<T> = PageableData<Vec<Node<T>>>;
 pub type Ranking<T> = PageableData<Vec<T>>;
+
+// uniform time format: "2021-08-01T00:00:00.0Z"
+// const CONFIG: iso8601::EncodedConfig = iso8601::Config::DEFAULT
+//     .set_year_is_six_digits(false)
+//     .encode();
+// const FORMAT: Iso8601<CONFIG> = Iso8601::<CONFIG>;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Paging {
@@ -37,7 +50,7 @@ pub struct Node<N: Clone + std::fmt::Debug> {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Picture {
     pub large: Option<String>,
-    pub medium: String,
+    pub medium: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -71,6 +84,7 @@ pub struct TimeWrapper {
 pub struct DateWrapper {
     pub date: Date,
 }
+
 #[derive(Clone, Debug)]
 pub struct DateTimeWrapper {
     pub datetime: PrimitiveDateTime,
@@ -233,7 +247,8 @@ impl Serialize for TimeWrapper {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&self.time.format("%H:%M:%S"))
+        let format = format_description::parse("[hour]:[minute]:[second]").unwrap();
+        serializer.serialize_str(&self.time.format(&format).unwrap())
     }
 }
 
@@ -256,7 +271,7 @@ impl<'de> Deserialize<'de> for TimeWrapper {
                 Ok(minute) => minute,
                 Err(e) => return Err(serde::de::Error::custom(e.to_string())),
             };
-            let time = match Time::try_from_hms(hour, minute, 0) {
+            let time = match Time::from_hms(hour, minute, 0) {
                 Ok(time) => time,
                 Err(e) => return Err(serde::de::Error::custom(e.to_string())),
             };
@@ -275,7 +290,8 @@ impl<'de> Deserialize<'de> for TimeWrapper {
     {
         use serde::de::Error;
         let s = String::deserialize(deserializer)?;
-        match Time::parse(&s, "%H:%M:%S") {
+        let format = format_description::parse("[hour]:[minute]:[second]").unwrap();
+        match Time::parse(&s, &format) {
             Ok(time) => {
                 place.time = time;
                 return Ok(());
@@ -294,7 +310,7 @@ impl<'de> Deserialize<'de> for TimeWrapper {
                 Ok(minute) => minute,
                 Err(e) => return Err(serde::de::Error::custom(e.to_string())),
             };
-            place.time = match Time::try_from_hms(hour, minute, 0) {
+            place.time = match Time::from_hms(hour, minute, 0) {
                 Ok(time) => time,
                 Err(e) => return Err(serde::de::Error::custom(e.to_string())),
             };
@@ -310,7 +326,9 @@ impl Serialize for DateWrapper {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&self.date.format("%Y-%m-%d"))
+        let format = format_description::parse("[year]-[month]-[day]").unwrap();
+        serializer.serialize_str(&self.date.format(&format).unwrap())
+        // serializer.serialize_str(&self.date.format("%Y-%m-%d"))
     }
 }
 
@@ -321,7 +339,8 @@ impl<'de> Deserialize<'de> for DateWrapper {
     {
         use serde::de::Error;
         let s = String::deserialize(deserializer)?;
-        match Date::parse(&s, "%Y-%m-%d") {
+        let format = format_description::parse("[year]-[month]-[day]").unwrap();
+        match Date::parse(&s, &format) {
             Ok(date) => return Ok(DateWrapper { date }),
             Err(_) => (),
         };
@@ -334,13 +353,15 @@ impl<'de> Deserialize<'de> for DateWrapper {
             };
             let month = if let Some(month) = caps.get(2) {
                 match month.as_str().parse::<u8>() {
+                    // convert to Month type
                     Ok(month) => month,
                     Err(e) => return Err(serde::de::Error::custom(e.to_string())),
                 }
             } else {
                 1
             };
-            let date = match Date::try_from_ymd(year, month, 1) {
+            let date = match Date::from_calendar_date(year, Month::try_from(month).unwrap(), 1) {
+                // TODO: double check Month::try_from
                 Ok(date) => date,
                 Err(e) => return Err(serde::de::Error::custom(e.to_string())),
             };
@@ -359,7 +380,8 @@ impl<'de> Deserialize<'de> for DateWrapper {
     {
         use serde::de::Error;
         let s = String::deserialize(deserializer)?;
-        match Date::parse(&s, "%Y-%m-%d") {
+        let format = format_description::parse("[year]-[month]-[day]").unwrap();
+        match Date::parse(&s, &format) {
             Ok(date) => {
                 place.date = date;
                 return Ok(());
@@ -381,7 +403,7 @@ impl<'de> Deserialize<'de> for DateWrapper {
             } else {
                 1
             };
-            place.date = match Date::try_from_ymd(year, month, 1) {
+            place.date = match Date::from_calendar_date(year, Month::try_from(month).unwrap(), 1) {
                 Ok(date) => date,
                 Err(e) => return Err(serde::de::Error::custom(e.to_string())),
             };
@@ -397,7 +419,9 @@ impl Serialize for DateTimeWrapper {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&self.datetime.format("%Y-%m-%dT%H:%M:%S"))
+        let format =
+            format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]").unwrap();
+        serializer.serialize_str(&self.datetime.format(&format).unwrap())
     }
 }
 
@@ -408,7 +432,9 @@ impl<'de> Deserialize<'de> for DateTimeWrapper {
     {
         use serde::de::Error;
         let s = String::deserialize(deserializer)?;
-        match PrimitiveDateTime::parse(&s, "%Y-%m-%dT%H:%M:%S") {
+        let format =
+            format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]").unwrap();
+        match PrimitiveDateTime::parse(&s, &format) {
             Ok(datetime) => Ok(DateTimeWrapper { datetime }),
             Err(e) => Err(D::Error::custom(e.to_string())),
         }
@@ -423,7 +449,9 @@ impl<'de> Deserialize<'de> for DateTimeWrapper {
     {
         use serde::de::Error;
         let s = String::deserialize(deserializer)?;
-        match PrimitiveDateTime::parse(&s, "%Y-%m-%dT%H:%M:%S") {
+        let format =
+            format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]").unwrap();
+        match PrimitiveDateTime::parse(&s, &format) {
             Ok(datetime) => {
                 place.datetime = datetime;
                 Ok(())

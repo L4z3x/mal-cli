@@ -1,6 +1,6 @@
 use super::*;
 use crate::event::key::Key;
-use tui::style::Color;
+use ratatui::style::Color;
 
 #[derive(Clone)]
 pub struct AppConfig {

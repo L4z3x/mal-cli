@@ -1,7 +1,8 @@
-use crate::api::model::*;
-use crate::app::{ActiveBlock, App, SearchResultBlock};
+use ratatui::style::Style;
+
+// use crate::api::model::*;
+use crate::app::App;
 use crate::config::app_config::Theme;
-use tui::style::Style;
 
 pub const SMALL_TERMINAL_HEIGHT: u16 = 45;
 
