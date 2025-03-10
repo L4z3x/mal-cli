@@ -1,5 +1,5 @@
 use super::common;
-use crate::app::{App, ANIME_OPTIONS};
+use crate::app::{App, ANIME_OPTIONS, ANIME_OPTIONS_RANGE};
 
 use crate::event::Key;
 use crate::network::IoEvent;
@@ -8,12 +8,23 @@ pub fn handler(key: Key, app: &mut App) {
     match key {
         k if common::right_event(k) => common::handle_right_event(app),
         k if common::down_event(k) => {
-            let next_index =
-                common::on_down_press(&ANIME_OPTIONS, Some(app.library.selected_index));
+            // calculate the next index in the list
+            let next_index = ANIME_OPTIONS_RANGE.start
+                + common::on_down_press(
+                    &ANIME_OPTIONS,
+                    Some(app.library.selected_index % (ANIME_OPTIONS.len())),
+                );
+            dbg!(next_index);
             app.library.selected_index = next_index;
         }
         k if common::up_event(k) => {
-            let next_index = common::on_up_press(&ANIME_OPTIONS, Some(app.library.selected_index));
+            // calculate the next index in the list
+            let next_index = ANIME_OPTIONS_RANGE.start
+                + common::on_up_press(
+                    &ANIME_OPTIONS,
+                    Some(app.library.selected_index % (ANIME_OPTIONS.len())),
+                );
+            dbg!(next_index);
             app.library.selected_index = next_index;
         }
         k if common::high_event(k) => {

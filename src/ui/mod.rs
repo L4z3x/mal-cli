@@ -249,15 +249,12 @@ pub fn draw_anime_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
         .map(|i| ListItem::new(*i).style(Style::default().fg(app.app_config.theme.text)))
         .collect();
 
-    draw_selectable_list(
-        f,
-        app,
-        layout_chunk,
-        "Anime",
-        items,
-        highlight_state,
-        Some(app.library.selected_index),
-    )
+    let mut index = Some(app.library.selected_index);
+    if !ANIME_OPTIONS_RANGE.contains(&app.library.selected_index) {
+        index = None;
+    }
+
+    draw_selectable_list(f, app, layout_chunk, "Anime", items, highlight_state, index)
 }
 
 pub fn draw_manga_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
@@ -272,15 +269,12 @@ pub fn draw_manga_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
         .map(|i| ListItem::new(*i).style(Style::default().fg(app.app_config.theme.text)))
         .collect();
 
-    draw_selectable_list(
-        f,
-        app,
-        layout_chunk,
-        "Manga",
-        items,
-        highlight_state,
-        Some(app.library.selected_index),
-    );
+    let mut index = Some(app.library.selected_index);
+    if !MANGA_OPTIONS_RANGE.contains(&app.library.selected_index) {
+        index = None;
+    }
+
+    draw_selectable_list(f, app, layout_chunk, "Manga", items, highlight_state, index);
 }
 
 pub fn draw_user_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
@@ -295,16 +289,14 @@ pub fn draw_user_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
         .map(|i| ListItem::new(*i).style(Style::default().fg(app.app_config.theme.text)))
         .collect();
 
-    draw_selectable_list(
-        f,
-        app,
-        layout_chunk,
-        "User",
-        items,
-        highlight_state,
-        Some(app.library.selected_index),
-    );
+    let mut index = Some(app.library.selected_index);
+    if !USER_OPTIONS_RANGE.contains(&app.library.selected_index) {
+        index = None;
+    }
+
+    draw_selectable_list(f, app, layout_chunk, "User", items, highlight_state, index);
 }
+
 pub fn draw_user_block(f: &mut Frame, app: &App, layout_chunk: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -333,11 +325,26 @@ pub fn draw_selectable_list(
     selected_index: Option<usize>,
 ) {
     let mut state = ListState::default();
-    state.select(selected_index);
+    if selected_index.is_some() {
+        dbg!(selected_index.unwrap() % items.len());
+        state.select(Some(selected_index.unwrap() % items.len()));
+    }
+
+    // choose color based on hover state
+    let highlight_color = app.app_config.theme.hovered;
 
     let items = List::new(items)
-        .block(Block::default().borders(Borders::ALL).title(title))
-        .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(Span::styled(title, Style::default().fg(highlight_color)))
+                .border_style(Style::default().fg(highlight_color)),
+        )
+        .highlight_style(
+            Style::default()
+                .fg(highlight_color)
+                .add_modifier(Modifier::BOLD),
+        )
         .highlight_symbol("> ");
 
     f.render_stateful_widget(items, layout_chunk, &mut state);

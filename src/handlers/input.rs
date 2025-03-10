@@ -10,18 +10,21 @@ pub fn handler(key: Key, app: &mut App) {
         Key::Ctrl('k') => {
             app.input.drain(app.input_idx..app.input.len());
         }
+
         // Delete everything before the cursor not including selected character
         Key::Ctrl('u') => {
             app.input.drain(..app.input_idx);
             app.input_idx = 0;
             app.input_cursor_position = 0;
         }
+
         // Deletes everything in input
         Key::Ctrl('l') => {
             app.input = vec![];
             app.input_idx = 0;
             app.input_cursor_position = 0;
         }
+        // Delete word before cursor
         Key::Ctrl('w') => {
             if app.input_cursor_position == 0 {
                 return;
@@ -40,6 +43,8 @@ pub fn handler(key: Key, app: &mut App) {
             app.input_idx = word_start;
             app.input_cursor_position -= deleted_len;
         }
+
+        // Move cursor to the end of the input
         Key::Ctrl('e') => {
             app.input_idx = app.input.len();
             let input_string: String = app.input.iter().collect();
@@ -47,10 +52,14 @@ pub fn handler(key: Key, app: &mut App) {
                 .try_into()
                 .unwrap();
         }
+
+        // Move cursor to the start of the input
         Key::Ctrl('a') => {
             app.input_idx = 0;
             app.input_cursor_position = 0;
         }
+
+        // Move cursor to left
         Key::Left | Key::Ctrl('b') => {
             if !app.input.is_empty() && app.input_idx > 0 {
                 let last_c = app.input[app.input_idx - 1];
@@ -58,6 +67,8 @@ pub fn handler(key: Key, app: &mut App) {
                 app.input_cursor_position -= compute_character_width(last_c);
             }
         }
+
+        // Move cursor to right
         Key::Right | Key::Ctrl('f') => {
             if app.input_idx < app.input.len() {
                 let next_c = app.input[app.input_idx];
@@ -65,9 +76,13 @@ pub fn handler(key: Key, app: &mut App) {
                 app.input_cursor_position += compute_character_width(next_c);
             }
         }
+
+        // end input mode
         Key::Esc => {
             app.set_current_route_state(Some(ActiveBlock::Empty), Some(ActiveBlock::BasicView));
         }
+
+        // Submit search query
         Key::Enter => {
             let input_str: String = app.input.iter().collect();
 
@@ -81,11 +96,15 @@ pub fn handler(key: Key, app: &mut App) {
             // On searching for a track, clear the playlist selection
             app.push_navigation_stack(RouteId::Search, ActiveBlock::SearchResultBlock);
         }
+
+        // add character to input
         Key::Char(c) => {
             app.input.insert(app.input_idx, c);
             app.input_idx += 1;
             app.input_cursor_position += compute_character_width(c);
         }
+
+        // delete character before cursor
         Key::Backspace | Key::Ctrl('h') => {
             if !app.input.is_empty() && app.input_idx > 0 {
                 let last_c = app.input.remove(app.input_idx - 1);
@@ -93,11 +112,14 @@ pub fn handler(key: Key, app: &mut App) {
                 app.input_cursor_position -= compute_character_width(last_c);
             }
         }
+
+        // ! not working ??
         Key::Delete | Key::Ctrl('d') => {
             if !app.input.is_empty() && app.input_idx < app.input.len() {
                 app.input.remove(app.input_idx);
             }
         }
+
         _ => {}
     }
 }

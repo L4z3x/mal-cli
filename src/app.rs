@@ -16,6 +16,12 @@ pub const MANGA_OPTIONS: [&str; 2] = ["Ranking", "Search"];
 
 pub const USER_OPTIONS: [&str; 3] = ["Stats", "AnimeList", "MangaList"];
 
+pub const ANIME_OPTIONS_RANGE: std::ops::Range<usize> = 0..4;
+
+pub const MANGA_OPTIONS_RANGE: std::ops::Range<usize> = 4..6;
+
+pub const USER_OPTIONS_RANGE: std::ops::Range<usize> = 6..9;
+
 #[derive(Clone, PartialEq, Debug)]
 pub enum RouteId {
     Search,

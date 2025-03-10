@@ -8,14 +8,14 @@ use ratatui::Terminal;
 
 use std::sync::Arc;
 use std::{
-    io::{self, Write},
+    io::{self}, //Write
     panic,
 };
 use tokio::sync::Mutex;
 
 use mal::app::*;
 use mal::auth::OAuth;
-use mal::cli::{Opt, StructOpt};
+// use mal::cli::{Opt, StructOpt};
 use mal::config::{app_config::AppConfig, oauth_config::AuthConfig};
 use mal::event;
 use mal::event::key::Key;
@@ -65,7 +65,7 @@ async fn main() -> Result<()> {
     better_panic::install();
     setup_panic_hook();
 
-    let opt: Opt = Opt::from_args();
+    // let opt: Opt = Opt::from_args();
 
     // Get config
     let app_config = AppConfig::load()?;
@@ -105,7 +105,7 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
 
     let events = event::Events::new(app_config.behavior.tick_rate_milliseconds);
 
-    let mut is_first_render = true;
+    // let mut is_first_render = true;
 
     loop {
         let mut app = app.lock().await;
@@ -161,6 +161,8 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
                             break;
                         }
                     }
+                } else if key == Key::Tab {
+                    handlers::handle_tab(&mut app);
                 } else {
                     handlers::handle_app(key, &mut app);
                 }
