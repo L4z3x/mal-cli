@@ -4,23 +4,23 @@ use crate::network::IoEvent;
 use ratatui::layout::Rect;
 use std::sync::mpsc::Sender;
 
-const DEFAULT_ROUTE: Route = Route {
-    id: RouteId::Home,
-    active_block: ActiveBlock::Anime,
-    hovered_block: ActiveBlock::UserStats,
-};
+// const DEFAULT_ROUTE: Route = Route {
+//     id: RouteId::Home,
+//     active_block: ActiveBlock::Anime,
+//     hovered_block: ActiveBlock::UserStats,
+// };
 
-pub const ANIME_OPTIONS: [&str; 4] = ["Seasonal", "Ranking", "Suggested", "Search"];
+pub const ANIME_OPTIONS: [&str; 3] = ["Seasonal", "Ranking", "Suggested"];
 
-pub const MANGA_OPTIONS: [&str; 2] = ["Ranking", "Search"];
+pub const MANGA_OPTIONS: [&str; 1] = ["Ranking"];
 
 pub const USER_OPTIONS: [&str; 3] = ["Stats", "AnimeList", "MangaList"];
 
-pub const ANIME_OPTIONS_RANGE: std::ops::Range<usize> = 0..4;
+pub const ANIME_OPTIONS_RANGE: std::ops::Range<usize> = 0..3;
 
-pub const MANGA_OPTIONS_RANGE: std::ops::Range<usize> = 4..6;
+pub const MANGA_OPTIONS_RANGE: std::ops::Range<usize> = 3..4;
 
-pub const USER_OPTIONS_RANGE: std::ops::Range<usize> = 6..9;
+pub const USER_OPTIONS_RANGE: std::ops::Range<usize> = 4..7;
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum RouteId {
@@ -35,15 +35,35 @@ pub enum RouteId {
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum ActiveBlock {
     Input,
-    SearchResultBlock,
-    Empty,
-    UserStats,
-    Error,
-    Help,
-    BasicView,
+    DisplayBlock,
     Anime,
     Manga,
     User,
+    Error,
+    // SearchResultBlock,
+    // UserStats,
+    // Error,
+    // Help,
+    // BasicView,
+    // Anime,
+    // Manga,
+    // User,
+    // Empty,
+}
+
+pub enum ActiveDisplayBlock {
+    SearchResultBlock,
+    Help,
+    UserInfo,
+    UserAnimeList,
+    UserMangaList,
+    Suggestions,
+    Seasonal,
+    AnimeRanking,
+    MangaRanking,
+    Loading,
+    Error,
+    Empty,
 }
 
 #[derive(Debug)]
@@ -118,7 +138,9 @@ pub struct App {
     pub help_menu_page: u32,
     pub help_menu_max_lines: u32,
     pub help_docs_size: u32,
-    navigation_stack: Vec<Route>,
+    pub active_block: ActiveBlock,
+    pub active_display_block: ActiveDisplayBlock,
+    // navigation_stack: Vec<Route>,
 }
 
 impl App {
@@ -149,7 +171,9 @@ impl App {
             help_menu_page: 0,
             help_menu_max_lines: 0,
             help_docs_size: 0,
-            navigation_stack: vec![DEFAULT_ROUTE],
+            active_block: ActiveBlock::DisplayBlock,
+            active_display_block: ActiveDisplayBlock::Suggestions,
+            // navigation_stack: vec![DEFAULT_ROUTE],
         }
     }
 
@@ -164,52 +188,53 @@ impl App {
         if let Some(io_tx) = &self.io_tx {
             if let Err(e) = io_tx.send(event) {
                 self.is_loading = false;
+                // dbg!(e);
                 println!("Error from dispatch {}", e);
             }
         };
     }
 
-    pub fn push_navigation_stack(
-        &mut self,
-        next_route_id: RouteId,
-        next_active_block: ActiveBlock,
-    ) {
-        self.navigation_stack.push(Route {
-            id: next_route_id,
-            active_block: next_active_block,
-            hovered_block: next_active_block,
-        })
-    }
+    // pub fn push_navigation_stack(
+    //     &mut self,
+    //     next_route_id: RouteId,
+    //     next_active_block: ActiveBlock,
+    // ) {
+    //     self.navigation_stack.push(Route {
+    //         id: next_route_id,
+    //         active_block: next_active_block,
+    //         hovered_block: next_active_block,
+    //     })
+    // }
 
-    pub fn pop_navigation_stack(&mut self) -> Option<Route> {
-        if self.navigation_stack.len() == 1 {
-            None
-        } else {
-            self.navigation_stack.pop()
-        }
-    }
+    // pub fn pop_navigation_stack(&mut self) -> Option<Route> {
+    //     if self.navigation_stack.len() == 1 {
+    //         None
+    //     } else {
+    //         self.navigation_stack.pop()
+    //     }
+    // }
 
-    pub fn get_current_route(&self) -> &Route {
-        self.navigation_stack.last().unwrap_or(&DEFAULT_ROUTE)
-    }
+    // pub fn get_current_route(&self) -> &Route {
+    //     self.navigation_stack.last().unwrap_or(&DEFAULT_ROUTE)
+    // }
 
-    pub fn get_current_route_mut(&mut self) -> &mut Route {
-        self.navigation_stack.last_mut().unwrap()
-    }
+    // pub fn get_current_route_mut(&mut self) -> &mut Route {
+    //     self.navigation_stack.last_mut().unwrap()
+    // }
 
-    pub fn set_current_route_state(
-        &mut self,
-        active_block: Option<ActiveBlock>,
-        hovered_block: Option<ActiveBlock>,
-    ) {
-        let current_route = self.get_current_route_mut();
-        if let Some(active_block) = active_block {
-            current_route.active_block = active_block;
-        }
-        if let Some(hovered_block) = hovered_block {
-            current_route.hovered_block = hovered_block;
-        }
-    }
+    // pub fn set_current_route_state(
+    //     &mut self,
+    //     active_block: Option<ActiveBlock>,
+    //     hovered_block: Option<ActiveBlock>,
+    // ) {
+    //     let current_route = self.get_current_route_mut();
+    //     if let Some(active_block) = active_block {
+    //         current_route.active_block = active_block;
+    //     }
+    //     if let Some(hovered_block) = hovered_block {
+    //         current_route.hovered_block = hovered_block;
+    //     }
+    // }
     pub fn calculate_help_menu_offset(&mut self) {
         let old_offset = self.help_menu_offset;
         if self.help_menu_max_lines < self.help_docs_size {

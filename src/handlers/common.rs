@@ -99,17 +99,18 @@ pub fn on_low_press<T>(selection_data: &[T]) -> usize {
     selection_data.len() - 1
 }
 
-pub fn handle_right_event(app: &App) {
-    match app.get_current_route().hovered_block {
-        ActiveBlock::Anime | ActiveBlock::Manga | ActiveBlock::User => {
-            match app.get_current_route().id {
-                _ => {}
-            }
-        }
-        _ => {}
-    }
-}
+//? NOTE: maybe we could use this on the Display_block navigations
+// pub fn handle_right_event(app: &App) {
+//     match app.get_current_route().hovered_block {
+//         ActiveBlock::Anime | ActiveBlock::Manga | ActiveBlock::User => {
+//             match app.get_current_route().id {
+//                 _ => {}
+//             }
+//         }
+//         _ => {}
+//     }
+// }
 
-pub fn handle_left_event(app: &mut App) {
-    app.set_current_route_state(Some(ActiveBlock::Empty), Some(ActiveBlock::Anime));
-}
+// pub fn handle_left_event(app: &mut App) {
+//     app.set_current_route_state(Some(ActiveBlock::Empty), Some(ActiveBlock::Anime));
+// }

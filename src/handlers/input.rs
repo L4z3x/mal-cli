@@ -1,4 +1,4 @@
-use crate::app::{ActiveBlock, App, RouteId};
+use crate::app::{ActiveBlock, ActiveDisplayBlock, App, RouteId};
 use crate::event::Key;
 use crate::network::IoEvent;
 use std::convert::TryInto;
@@ -79,7 +79,7 @@ pub fn handler(key: Key, app: &mut App) {
 
         // end input mode
         Key::Esc => {
-            app.set_current_route_state(Some(ActiveBlock::Empty), Some(ActiveBlock::BasicView));
+            app.active_block = ActiveBlock::DisplayBlock;
         }
 
         // Submit search query
@@ -94,7 +94,8 @@ pub fn handler(key: Key, app: &mut App) {
             app.dispatch(IoEvent::GetSearchResults(input_str));
 
             // On searching for a track, clear the playlist selection
-            app.push_navigation_stack(RouteId::Search, ActiveBlock::SearchResultBlock);
+            app.active_block = ActiveBlock::DisplayBlock;
+            app.active_display_block = ActiveDisplayBlock::Loading;
         }
 
         // add character to input

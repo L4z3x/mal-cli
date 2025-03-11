@@ -110,20 +110,22 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
     loop {
         let mut app = app.lock().await;
 
-        let current_route = app.get_current_route();
-        terminal.draw(|mut f| match current_route.active_block {
-            ActiveBlock::Help => {
-                ui::draw_help_menu(&mut f, &app);
-            }
-            ActiveBlock::Error => {
-                ui::draw_error(&mut f, &app);
-            }
+        let current_block = app.active_block;
+        terminal.draw(|mut f| match current_block {
+            // todo: handle help inside the main_layout
+            // ActiveBlock::Help => {
+            //     ui::draw_help_menu(&mut f, &app);
+            // }
+            //todo: handle error inside the display block
+            // ActiveBlock::Error => {
+            //     ui::draw_error(&mut f, &app);
+            // }
             _ => {
                 ui::draw_main_layout(&mut f, &app);
             }
         })?;
 
-        if current_route.active_block == ActiveBlock::Input {
+        if current_block == ActiveBlock::Input {
             terminal.show_cursor()?;
         } else {
             terminal.hide_cursor()?;
@@ -141,28 +143,48 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
         ))?;
 
         match events.next()? {
+            /*
+            there are five blocks:
+                1.Input
+                2.AnimeMenu
+                3.MangaMenu
+                4.UserMenu
+                5.DisplayBlock
+            and there are different display blocks :
+                1.SearchResultBlock
+                2.Help
+                3.UserInfo
+                4.UserAnimeList,
+                5.UserMangaList
+                6.Suggestions
+                7.Seasonal
+                8.AnimeRanking
+                9.MangaRanking
+                10.Loading
+                11.Error
+                12.Empty
+
+            we switch between blocks by pressing Tab and between display by input and navigation
+            we will implement a stack for display block to allow going back and forth
+             */
             event::Event::Input(key) => {
                 if key == Key::Ctrl('c') {
+                    //todo: display confirmation to  quit
                     break;
                 }
 
-                let current_active_block = app.get_current_route().active_block;
-
-                if current_active_block == ActiveBlock::Input {
+                let active_block = app.active_block;
+                //# change the default of menu selecting to None when leaving the block
+                if key == Key::Tab {
+                    // handle navigation between block
+                    handlers::handle_tab(&mut app);
+                } else if active_block == ActiveBlock::Input {
                     handlers::input_handler(key, &mut app);
                 } else if key == app.app_config.keys.back {
-                    if app.get_current_route().active_block != ActiveBlock::Input {
-                        let pop_result = match app.pop_navigation_stack() {
-                            Some(ref x) if x.id == RouteId::Search => app.pop_navigation_stack(),
-                            Some(x) => Some(x),
-                            None => None,
-                        };
-                        if pop_result.is_none() {
-                            break;
-                        }
+                    if app.active_block != ActiveBlock::Input {
+                        // todo: display confirmation to  quit
+                        break;
                     }
-                } else if key == Key::Tab {
-                    handlers::handle_tab(&mut app);
                 } else {
                     handlers::handle_app(key, &mut app);
                 }

@@ -15,7 +15,7 @@ use ratatui::{
     Frame, // DefaultTerminal, Frame,
 };
 use util::get_color;
-
+mod display_block;
 pub enum TableId {
     Anime,
     Manga,
@@ -66,7 +66,7 @@ pub fn draw_help_menu(f: &mut Frame, app: &App) {
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(100)].as_ref())
         .margin(2)
-        .split(f.area()); // ✅ Corrected
+        .split(f.area());
 
     let white = Style::default().fg(app.app_config.theme.text);
     let gray = Style::default().fg(Color::Gray); //
@@ -177,11 +177,11 @@ pub fn draw_input_and_help_box(f: &mut Frame, app: &App, layout_chunk: Rect) {
         .constraints([Constraint::Percentage(90), Constraint::Percentage(10)].as_ref())
         .split(layout_chunk);
 
-    let current_route = app.get_current_route();
+    let current_route = app.active_block;
 
     let highlight_state = (
-        current_route.active_block == ActiveBlock::Input,
-        current_route.hovered_block == ActiveBlock::Input,
+        current_route == ActiveBlock::Input,
+        current_route == ActiveBlock::Input,
     );
 
     let input_string: String = app.input.iter().collect();
@@ -224,24 +224,16 @@ pub fn draw_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
 
     draw_user_block(f, app, chunks[0]);
 
-    let current_route: &Route = app.get_current_route();
+    // let current_route = app.active_block;
 
-    // match current_route.id {
-    //     RouteId::Search => {
-    //         draw_search_results(f, app, chunks[1]);
-    //     }
-    //     RouteId::Error => {}
-    //     _ => {
-    //         draw_dashboard(f, app, chunks[1]);
-    //     }
-    // };
+    display_block::draw_display_layout(f, app, chunks[1]);
 }
 
 pub fn draw_anime_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
-    let current_route = app.get_current_route();
+    let current_block = app.active_block;
     let highlight_state = (
-        current_route.active_block == ActiveBlock::Anime,
-        current_route.hovered_block == ActiveBlock::Anime,
+        current_block == ActiveBlock::Anime,
+        current_block == ActiveBlock::Anime,
     );
 
     let items: Vec<ListItem> = ANIME_OPTIONS
@@ -258,10 +250,10 @@ pub fn draw_anime_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
 }
 
 pub fn draw_manga_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
-    let current_route = app.get_current_route();
+    let current_block = app.active_block;
     let highlight_state = (
-        current_route.active_block == ActiveBlock::Manga,
-        current_route.hovered_block == ActiveBlock::Manga,
+        current_block == ActiveBlock::Manga,
+        current_block == ActiveBlock::Manga,
     );
 
     let items: Vec<ListItem> = MANGA_OPTIONS
@@ -278,10 +270,10 @@ pub fn draw_manga_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
 }
 
 pub fn draw_user_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
-    let current_route = app.get_current_route();
+    let current_block = app.active_block;
     let highlight_state = (
-        current_route.active_block == ActiveBlock::User,
-        current_route.hovered_block == ActiveBlock::User,
+        current_block == ActiveBlock::User,
+        current_block == ActiveBlock::User,
     );
 
     let items: Vec<ListItem> = USER_OPTIONS
@@ -326,7 +318,7 @@ pub fn draw_selectable_list(
 ) {
     let mut state = ListState::default();
     if selected_index.is_some() {
-        dbg!(selected_index.unwrap() % items.len());
+        // dbg!(selected_index.unwrap() % items.len());
         state.select(Some(selected_index.unwrap() % items.len()));
     }
 
@@ -349,6 +341,16 @@ pub fn draw_selectable_list(
 
     f.render_stateful_widget(items, layout_chunk, &mut state);
 }
+
+// match current_route.id {
+//     RouteId::Search => {
+//         draw_search_results(f, app, chunks[1]);
+//     }
+//     RouteId::Error => {}
+//     _ => {
+//         draw_dashboard(f, app, chunks[1]);
+//     }
+// };
 
 //
 //             let items: Vec<ListItem> = app
