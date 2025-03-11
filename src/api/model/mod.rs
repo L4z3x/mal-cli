@@ -13,7 +13,10 @@ use std::fmt::Debug;
 use std::str::FromStr;
 use strum_macros::{EnumString, IntoStaticStr};
 use time::{
-    format_description,
+    format_description::{
+        self,
+        well_known::{iso8601, Iso8601},
+    },
     // format_description::well_known::{iso8601, Iso8601},
     Date,
     Month,
@@ -25,10 +28,10 @@ pub type Page<T> = PageableData<Vec<Node<T>>>;
 pub type Ranking<T> = PageableData<Vec<T>>;
 
 // uniform time format: "2021-08-01T00:00:00.0Z"
-// const CONFIG: iso8601::EncodedConfig = iso8601::Config::DEFAULT
-//     .set_year_is_six_digits(false)
-//     .encode();
-// const FORMAT: Iso8601<CONFIG> = Iso8601::<CONFIG>;
+const CONFIG: iso8601::EncodedConfig = iso8601::Config::DEFAULT
+    .set_year_is_six_digits(false)
+    .encode();
+const FORMAT: Iso8601<CONFIG> = Iso8601::<CONFIG>;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Paging {
@@ -419,9 +422,7 @@ impl Serialize for DateTimeWrapper {
     where
         S: Serializer,
     {
-        let format =
-            format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]").unwrap();
-        serializer.serialize_str(&self.datetime.format(&format).unwrap())
+        serializer.serialize_str(&self.datetime.format(&FORMAT).unwrap())
     }
 }
 
@@ -432,9 +433,7 @@ impl<'de> Deserialize<'de> for DateTimeWrapper {
     {
         use serde::de::Error;
         let s = String::deserialize(deserializer)?;
-        let format =
-            format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]").unwrap();
-        match PrimitiveDateTime::parse(&s, &format) {
+        match PrimitiveDateTime::parse(&s, &FORMAT) {
             Ok(datetime) => Ok(DateTimeWrapper { datetime }),
             Err(e) => Err(D::Error::custom(e.to_string())),
         }
@@ -449,9 +448,7 @@ impl<'de> Deserialize<'de> for DateTimeWrapper {
     {
         use serde::de::Error;
         let s = String::deserialize(deserializer)?;
-        let format =
-            format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]").unwrap();
-        match PrimitiveDateTime::parse(&s, &format) {
+        match PrimitiveDateTime::parse(&s, &FORMAT) {
             Ok(datetime) => {
                 place.datetime = datetime;
                 Ok(())
