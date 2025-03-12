@@ -21,6 +21,12 @@ pub struct Theme {
     pub error_border: Color,
     pub error_text: Color,
     pub inactive: Color,
+    pub status_completed: Color,
+    pub status_dropped: Color,
+    pub status_on_hold: Color,
+    pub status_watching: Color,
+    pub status_plan_to_watch: Color,
+    pub status_other: Color,
 }
 
 impl Default for Theme {
@@ -35,6 +41,12 @@ impl Default for Theme {
             error_border: Color::Red,
             error_text: Color::LightRed,
             inactive: Color::Gray,
+            status_completed: Color::Green,
+            status_dropped: Color::Gray,
+            status_on_hold: Color::Yellow,
+            status_watching: Color::Blue,
+            status_plan_to_watch: Color::Cyan,
+            status_other: Color::White,
         }
     }
 }

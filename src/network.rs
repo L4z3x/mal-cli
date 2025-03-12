@@ -1,6 +1,6 @@
 use crate::{
     api::{self, model::*},
-    app::App,
+    app::{ActiveDisplayBlock, App, SelectedSearchTab},
     auth::OAuth,
 };
 use std::sync::Arc;
@@ -79,7 +79,6 @@ impl<'a> Network<'a> {
 
     async fn get_search_results(&mut self, q: String) {
         self.oauth.refresh().unwrap();
-
         let mut app = self.app.lock().await;
 
         let anime_query = api::GetAnimeListQuery {
@@ -117,5 +116,7 @@ impl<'a> Network<'a> {
                 return;
             }
         };
+        app.search_results.selected_tab = SelectedSearchTab::Anime;
+        app.active_display_block = ActiveDisplayBlock::SearchResultBlock;
     }
 }

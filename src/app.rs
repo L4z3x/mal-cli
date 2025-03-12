@@ -40,17 +40,9 @@ pub enum ActiveBlock {
     Manga,
     User,
     Error,
-    // SearchResultBlock,
-    // UserStats,
-    // Error,
-    // Help,
-    // BasicView,
-    // Anime,
-    // Manga,
-    // User,
-    // Empty,
 }
 
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum ActiveDisplayBlock {
     SearchResultBlock,
     Help,
@@ -65,18 +57,18 @@ pub enum ActiveDisplayBlock {
     Error,
     Empty,
 }
-
-#[derive(Debug)]
-pub struct Route {
-    pub id: RouteId,
-    pub active_block: ActiveBlock,
-    pub hovered_block: ActiveBlock,
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum SelectedSearchTab {
+    Anime,
+    Manga,
 }
 
 pub struct SearchResult {
     pub anime: Option<Page<Anime>>,
     pub manga: Option<Page<Manga>>,
+    pub selected_tab: SelectedSearchTab,
     pub selected_anime_index: Option<usize>,
+    pub selected_display_card_index: Option<usize>,
     pub selected_manga_index: Option<usize>,
     pub hovered_block: SearchResultBlock,
     pub selected_block: SearchResultBlock,
@@ -157,6 +149,8 @@ impl App {
                 manga: None,
                 selected_anime_index: None,
                 selected_manga_index: None,
+                selected_display_card_index: Some(0),
+                selected_tab: SelectedSearchTab::Anime,
             },
             size: Rect::default(),
             input: vec![],
@@ -165,14 +159,14 @@ impl App {
             library: Library {
                 saved_anime: ScrollablePages::new(),
                 saved_manga: ScrollablePages::new(),
-                selected_index: 0,
+                selected_index: 9, // out of range
             },
             help_menu_offset: 0,
             help_menu_page: 0,
             help_menu_max_lines: 0,
             help_docs_size: 0,
             active_block: ActiveBlock::DisplayBlock,
-            active_display_block: ActiveDisplayBlock::Suggestions,
+            active_display_block: ActiveDisplayBlock::Empty,
             // navigation_stack: vec![DEFAULT_ROUTE],
         }
     }

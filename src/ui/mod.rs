@@ -1,18 +1,14 @@
 pub mod help;
 pub mod util;
-use crate::api::model::*;
 use crate::app::*;
-// use color_eyre::config::Frame;
 use ratatui::{
-    // buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
-    prelude::Backend,
-    style::{Color, Modifier, Style, Stylize},
+    style::{Color, Modifier, Style},
     text::{Span, Text},
     widgets::{
         Block, Borders, Cell, List, ListItem, ListState, Paragraph, Row, Table, Widget, Wrap,
     },
-    Frame, // DefaultTerminal, Frame,
+    Frame,
 };
 use util::get_color;
 mod display_block;
@@ -177,12 +173,9 @@ pub fn draw_input_and_help_box(f: &mut Frame, app: &App, layout_chunk: Rect) {
         .constraints([Constraint::Percentage(90), Constraint::Percentage(10)].as_ref())
         .split(layout_chunk);
 
-    let current_route = app.active_block;
+    let current_block = app.active_block;
 
-    let highlight_state = (
-        current_route == ActiveBlock::Input,
-        current_route == ActiveBlock::Input,
-    );
+    let highlight_state = current_block == ActiveBlock::Input;
 
     let input_string: String = app.input.iter().collect();
     let lines = Span::from(input_string);
@@ -231,10 +224,7 @@ pub fn draw_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
 
 pub fn draw_anime_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
     let current_block = app.active_block;
-    let highlight_state = (
-        current_block == ActiveBlock::Anime,
-        current_block == ActiveBlock::Anime,
-    );
+    let highlight_state = current_block == ActiveBlock::Anime;
 
     let items: Vec<ListItem> = ANIME_OPTIONS
         .iter()
@@ -251,10 +241,7 @@ pub fn draw_anime_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
 
 pub fn draw_manga_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
     let current_block = app.active_block;
-    let highlight_state = (
-        current_block == ActiveBlock::Manga,
-        current_block == ActiveBlock::Manga,
-    );
+    let highlight_state = current_block == ActiveBlock::Manga;
 
     let items: Vec<ListItem> = MANGA_OPTIONS
         .iter()
@@ -271,10 +258,7 @@ pub fn draw_manga_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
 
 pub fn draw_user_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
     let current_block = app.active_block;
-    let highlight_state = (
-        current_block == ActiveBlock::User,
-        current_block == ActiveBlock::User,
-    );
+    let highlight_state = current_block == ActiveBlock::User;
 
     let items: Vec<ListItem> = USER_OPTIONS
         .iter()
@@ -313,7 +297,7 @@ pub fn draw_selectable_list(
     layout_chunk: Rect,
     title: &str,
     items: Vec<ListItem>,
-    highlight_state: (bool, bool),
+    highlight_state: bool,
     selected_index: Option<usize>,
 ) {
     let mut state = ListState::default();
@@ -323,18 +307,20 @@ pub fn draw_selectable_list(
     }
 
     // choose color based on hover state
-    let highlight_color = app.app_config.theme.hovered;
 
     let items = List::new(items)
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .title(Span::styled(title, Style::default().fg(highlight_color)))
-                .border_style(Style::default().fg(highlight_color)),
+                .title(Span::styled(
+                    title,
+                    get_color(highlight_state, app.app_config.theme),
+                ))
+                .border_style(get_color(highlight_state, app.app_config.theme)),
         )
         .highlight_style(
             Style::default()
-                .fg(highlight_color)
+                .fg(app.app_config.theme.selected)
                 .add_modifier(Modifier::BOLD),
         )
         .highlight_symbol("> ");

@@ -11,6 +11,7 @@ pub enum UserWatchStatus {
     OnHold,
     Dropped,
     PlanToWatch,
+    #[strum(serialize = "add")]
     Other(String),
 }
 

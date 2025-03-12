@@ -69,6 +69,7 @@ pub fn handle_tab(app: &mut App) {
     match app.active_block {
         ActiveBlock::Input => {
             // todo: anything else to handle ? like when exiting the input state.
+            app.library.selected_index = ANIME_OPTIONS_RANGE.start;
             app.active_block = ActiveBlock::Anime;
         }
 
@@ -81,7 +82,7 @@ pub fn handle_tab(app: &mut App) {
             app.active_block = ActiveBlock::User;
         }
         ActiveBlock::User => {
-            app.library.selected_index = ANIME_OPTIONS_RANGE.start;
+            app.library.selected_index = 10; // out of range to not display anything
             app.active_block = ActiveBlock::DisplayBlock;
         }
 

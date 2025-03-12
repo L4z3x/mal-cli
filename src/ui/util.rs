@@ -6,10 +6,9 @@ use crate::config::app_config::Theme;
 
 pub const SMALL_TERMINAL_HEIGHT: u16 = 45;
 
-pub fn get_color((is_active, is_hovered): (bool, bool), theme: Theme) -> Style {
-    match (is_active, is_hovered) {
-        (true, _) => Style::default().fg(theme.selected),
-        (false, true) => Style::default().fg(theme.hovered),
+pub fn get_color(is_active: bool, theme: Theme) -> Style {
+    match is_active {
+        true => Style::default().fg(theme.selected),
         _ => Style::default().fg(theme.inactive),
     }
 }
