@@ -1,0 +1,14 @@
+2. load app config from file
+3. help section
+5. impl stack opertations <==
+6. impl pagination operation 
+7. suggested page
+8. ranking page (anime,manga)
+9. anime details page
+10. manga details page
+11. user profile page
+12. verify error authenticity
+14. add verification when exiting
+17. cache top three result and enable reloading them
+18. add bold to block highightings
+19. cache last seasonal and reload if it's old
