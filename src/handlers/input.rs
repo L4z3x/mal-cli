@@ -1,4 +1,4 @@
-use crate::app::{ActiveBlock, ActiveDisplayBlock, App, RouteId};
+use crate::app::{ActiveBlock, ActiveDisplayBlock, App};
 use crate::event::Key;
 use crate::network::IoEvent;
 use std::convert::TryInto;
@@ -91,11 +91,12 @@ pub fn handler(key: Key, app: &mut App) {
                 return;
             }
 
-            app.dispatch(IoEvent::GetSearchResults(input_str));
+            app.dispatch(IoEvent::GetSearchResults(input_str.clone()));
 
             // On searching for a track, clear the playlist selection
             app.active_block = ActiveBlock::DisplayBlock;
             app.active_display_block = ActiveDisplayBlock::Loading;
+            app.display_block_title = format!("Search Results: {}", input_str).to_string();
         }
 
         // add character to input

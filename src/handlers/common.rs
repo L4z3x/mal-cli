@@ -1,4 +1,4 @@
-use crate::app::{ActiveBlock, App};
+// use crate::app::{ActiveBlock, App};
 use crate::event::Key;
 
 pub fn down_event(key: Key) -> bool {
@@ -29,26 +29,26 @@ pub fn right_event(key: Key) -> bool {
     }
 }
 
-pub fn high_event(key: Key) -> bool {
-    match key {
-        Key::Char('H') => true,
-        _ => false,
-    }
-}
+// pub fn high_event(key: Key) -> bool {
+//     match key {
+//         Key::Char('H') => true,
+//         _ => false,
+//     }
+// }
 
-pub fn middle_event(key: Key) -> bool {
-    match key {
-        Key::Char('M') => true,
-        _ => false,
-    }
-}
+// pub fn middle_event(key: Key) -> bool {
+//     match key {
+//         Key::Char('M') => true,
+//         _ => false,
+//     }
+// }
 
-pub fn low_event(key: Key) -> bool {
-    match key {
-        Key::Char('L') => true,
-        _ => false,
-    }
-}
+// pub fn low_event(key: Key) -> bool {
+//     match key {
+//         Key::Char('L') => true,
+//         _ => false,
+//     }
+// }
 
 pub fn on_down_press<T>(selection_data: &[T], selection_index: Option<usize>) -> usize {
     match selection_index {
@@ -83,34 +83,18 @@ pub fn on_up_press<T>(selection_data: &[T], selection_index: Option<usize>) -> u
     }
 }
 
-pub fn on_high_press() -> usize {
-    0
-}
-
-pub fn on_middle_press<T>(selection_data: &[T]) -> usize {
-    let mut index = selection_data.len() / 2;
-    if selection_data.len() % 2 == 0 {
-        index -= 1
-    }
-    index
-}
-
-pub fn on_low_press<T>(selection_data: &[T]) -> usize {
-    selection_data.len() - 1
-}
-
-//? NOTE: maybe we could use this on the Display_block navigations
-// pub fn handle_right_event(app: &App) {
-//     match app.get_current_route().hovered_block {
-//         ActiveBlock::Anime | ActiveBlock::Manga | ActiveBlock::User => {
-//             match app.get_current_route().id {
-//                 _ => {}
-//             }
-//         }
-//         _ => {}
-//     }
+// pub fn on_high_press() -> usize {
+//     0
 // }
 
-// pub fn handle_left_event(app: &mut App) {
-//     app.set_current_route_state(Some(ActiveBlock::Empty), Some(ActiveBlock::Anime));
+// pub fn on_middle_press<T>(selection_data: &[T]) -> usize {
+//     let mut index = selection_data.len() / 2;
+//     if selection_data.len() % 2 == 0 {
+//         index -= 1
+//     }
+//     index
+// }
+
+// pub fn on_low_press<T>(selection_data: &[T]) -> usize {
+//     selection_data.len() - 1
 // }

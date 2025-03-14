@@ -1,7 +1,9 @@
+use crate::config::app_config::{AppConfig, TitleLanguage};
+
 use super::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use strum_macros::{EnumString, IntoStaticStr};
+use strum_macros::{Display, EnumString, IntoStaticStr};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AnimeSeason {
@@ -138,7 +140,7 @@ pub enum Rating {
 pub struct Anime {
     pub id: u64,
     pub title: String,
-    pub main_picture: Picture,
+    pub main_picture: Option<Picture>,
     pub alternative_titles: Option<AlternativeTitles>,
     pub start_date: Option<DateWrapper>,
     pub end_date: Option<DateWrapper>,
@@ -166,7 +168,7 @@ pub struct Anime {
     pub background: Option<String>,
 }
 
-#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
+#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr, Display)]
 #[strum(serialize_all = "snake_case")]
 pub enum AnimeRankingType {
     All,
@@ -210,4 +212,37 @@ pub enum SortStyle {
     AnimeStartDate,
     AnimeId,
     Other(String),
+}
+
+impl Anime {
+    pub fn get_title(&self, app_config: &AppConfig, both: bool) -> Vec<String> {
+        if both {
+            vec![
+                self.title.clone(),
+                self.alternative_titles
+                    .as_ref()
+                    .and_then(|alternative_titles| alternative_titles.en.clone())
+                    .unwrap_or_else(|| self.title.clone()),
+            ]
+        } else {
+            match app_config.title_language {
+                TitleLanguage::Japanese => vec![self.title.clone()],
+                TitleLanguage::English => {
+                    if let Some(ref alternative_titles) = self.alternative_titles {
+                        if let Some(ref en) = alternative_titles.en {
+                            if !en.is_empty() {
+                                vec![en.clone()]
+                            } else {
+                                vec![self.title.clone()]
+                            }
+                        } else {
+                            vec![self.title.clone()]
+                        }
+                    } else {
+                        vec![self.title.clone()]
+                    }
+                }
+            }
+        }
+    }
 }

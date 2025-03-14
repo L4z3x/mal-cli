@@ -1,3 +1,16 @@
+use std::fmt::Debug;
+
+use crate::api::model::MangaMediaType;
+use crate::api::model::Node;
+use crate::api::model::PageableData;
+use crate::api::model::UserReadStatus;
+use crate::app::DISPLAY_COLUMN_NUMBER;
+use crate::app::DISPLAY_RAWS_NUMBER;
+use crate::{
+    api::model::{AnimeMediaType, UserWatchStatus},
+    app::{ActiveBlock, App, SelectedSearchTab},
+    ui::util::get_color,
+};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -6,23 +19,23 @@ use ratatui::{
     Frame,
 };
 
-use crate::{
-    api::model::{Anime, AnimeMediaType, UserWatchStatus},
-    app::{ActiveBlock, App, SelectedSearchTab},
-    ui::util::get_color,
-};
+use super::get_anime_status_color;
 
 pub fn draw_results(f: &mut Frame, app: &App, chunk: Rect) {
     match app.search_results.selected_tab {
         SelectedSearchTab::Anime => {
-            if let Some(results) = app.search_results.anime.as_ref() {
+            if app.search_results.anime.as_ref().is_some() {
                 draw_anime_search_results(f, app, chunk);
             } else {
                 // draw_no_results(f, app, chunk);
             }
         }
         SelectedSearchTab::Manga => {
-            // draw_manga_search_results(f, app, chunk);
+            if app.search_results.manga.as_ref().is_some() {
+                draw_manga_search_results(f, app, chunk);
+            } else {
+                // draw_no_results(f, app, chunk);
+            }
         }
     }
 }
@@ -33,31 +46,14 @@ pub fn draw_anime_search_results(f: &mut Frame, app: &App, chunk: Rect) {
         // draw_no_results(f, app, chunk);
         return;
     }
+    let cards_results = constract_cards_with_data(chunk, results);
 
-    let current_page = &results.data;
-
-    let raw_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .margin(1)
-        .constraints(vec![Constraint::Percentage(20); 5])
-        .split(chunk);
-
-    let components: Vec<&Anime> = current_page.iter().map(|node| &node.node).collect();
-
-    let cards: Vec<Rect> = raw_layout
-        .iter()
-        .flat_map(|raw| {
-            Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints(vec![Constraint::Ratio(1, 3); 3])
-                .split(*raw)
-                .into_iter()
-                .map(|rect| rect.clone())
-                .collect::<Vec<Rect>>()
-        })
-        .collect();
+    let cards = cards_results.0;
+    let components = cards_results.1;
 
     let selected_card_index = app.search_results.selected_display_card_index.unwrap_or(0);
+
+    //
 
     for (index, component) in components.iter().enumerate() {
         let is_active =
@@ -72,25 +68,23 @@ pub fn draw_anime_search_results(f: &mut Frame, app: &App, chunk: Rect) {
 
         let anime_status_color = get_anime_status_color(&anime_status, app);
 
+        let anime_status: &str = anime_status.into();
+
         let title_style = get_color(is_active, app.app_config.theme);
 
+        let anime_title = &component.get_title(&app.app_config, false)[0];
+
         let title: Line<'_> = Line::from(vec![
-            Span::styled(
-                component.title.clone(),
-                title_style.add_modifier(Modifier::BOLD),
-            ),
+            Span::styled(anime_title, title_style.add_modifier(Modifier::BOLD)),
             Span::raw(" "),
-            Span::styled::<&str, ratatui::prelude::Style>(
-                anime_status.into(),
-                Style::default().fg(anime_status_color),
-            ),
+            Span::styled(anime_status, Style::default().fg(anime_status_color)),
         ]);
 
         let media_type: &str = Into::<&str>::into(
             component
                 .media_type
                 .as_ref()
-                .map_or(AnimeMediaType::Other("None".to_string()), |media_type| {
+                .map_or(AnimeMediaType::Other("Unknown".to_string()), |media_type| {
                     media_type.clone()
                 }),
         );
@@ -105,6 +99,14 @@ pub fn draw_anime_search_results(f: &mut Frame, app: &App, chunk: Rect) {
             .map_or("unknown".to_string(), |date| date.date.year().to_string());
 
         let num_user_list: String = component.num_list_users.unwrap().to_string();
+
+        let score = Line::from(Span::styled(
+            format!(
+                "Scored {}",
+                component.mean.map_or("N/A".to_string(), |m| m.to_string())
+            ),
+            Style::default(), //? we can add a function to get color based on score
+        ));
 
         let num_ep = Line::from(Span::styled(
             format!("{} ({} eps)", media_type, ep_num),
@@ -122,7 +124,7 @@ pub fn draw_anime_search_results(f: &mut Frame, app: &App, chunk: Rect) {
             break;
         }
 
-        let card = Paragraph::new(vec![title, num_ep, start_date, num_user_list])
+        let card = Paragraph::new(vec![title, num_ep, score, start_date, num_user_list])
             .alignment(Alignment::Left)
             .wrap(ratatui::widgets::Wrap { trim: true })
             .block(
@@ -145,13 +147,142 @@ pub fn draw_anime_search_results(f: &mut Frame, app: &App, chunk: Rect) {
     */
 }
 
-pub fn get_anime_status_color(status: &UserWatchStatus, app: &App) -> Color {
+fn draw_manga_search_results(f: &mut Frame, app: &App, chunk: Rect) {
+    let results = app.search_results.manga.as_ref().unwrap();
+    if results.data.is_empty() {
+        // draw_no_results(f, app, chunk);
+        return;
+    }
+    let cards_results = constract_cards_with_data(chunk, results);
+
+    let cards = cards_results.0;
+    let components = cards_results.1;
+
+    let selected_card_index = app.search_results.selected_display_card_index.unwrap_or(0);
+
+    //
+
+    for (index, component) in components.iter().enumerate() {
+        let is_active =
+            index == selected_card_index && app.active_block == ActiveBlock::DisplayBlock;
+
+        let manga_status = component
+            .my_list_status
+            .as_ref()
+            .map_or(UserReadStatus::Other("None".to_string()), |status| {
+                status.status.clone()
+            });
+
+        let manga_status_color = get_manga_status_color(&manga_status, app);
+
+        let title_style = get_color(is_active, app.app_config.theme);
+        let title = &component.get_title(&app.app_config, false)[0];
+        // panic!("title: {:?}", title);
+        let title: Line<'_> = Line::from(vec![
+            Span::styled(title, title_style.add_modifier(Modifier::BOLD)),
+            Span::raw(" "),
+            Span::styled::<&str, ratatui::prelude::Style>(
+                manga_status.into(),
+                Style::default().fg(manga_status_color),
+            ),
+        ]);
+
+        let media_type: &str = Into::<&str>::into(
+            component
+                .media_type
+                .as_ref()
+                .map_or(MangaMediaType::Other("None".to_string()), |media_type| {
+                    media_type.clone()
+                }),
+        );
+
+        let vol_num: String = component.get_num(&app.app_config);
+        let start_date: String = component
+            .start_date
+            .as_ref()
+            .map_or("unknown".to_string(), |date| date.date.year().to_string());
+
+        let score = Line::from(Span::styled(
+            format!(
+                "Scored {}",
+                component.mean.map_or("N/A".to_string(), |m| m.to_string())
+            ),
+            Style::default(), //? we can add a function to get color based on score
+        ));
+
+        let num_user_list: String = component.num_list_users.unwrap().to_string();
+
+        //todo: add vols and ch based on app_config
+        let type_num_vol = Line::from(Span::styled(
+            format!("{} ({})", media_type, vol_num),
+            app.app_config.theme.text,
+        ));
+
+        let start_date = Line::from(Span::styled(start_date, app.app_config.theme.text));
+
+        let num_user_list = Line::from(Span::styled(
+            format!("{} members", num_user_list),
+            app.app_config.theme.text,
+        ));
+
+        if index >= cards.len() {
+            break;
+        }
+
+        let card = Paragraph::new(vec![title, type_num_vol, score, start_date, num_user_list])
+            .alignment(Alignment::Left)
+            .wrap(ratatui::widgets::Wrap { trim: true })
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(get_color(is_active, app.app_config.theme)),
+            );
+
+        f.render_widget(card, cards[index]);
+    }
+}
+
+fn constract_cards_with_data<T: Clone + Debug>(
+    chunk: Rect,
+    results: &PageableData<Vec<Node<T>>>,
+) -> (Vec<Rect>, Vec<&T>) {
+    let current_page = &results.data;
+
+    let raw_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(1)
+        .constraints(vec![Constraint::Percentage(20); DISPLAY_RAWS_NUMBER.into()])
+        .split(chunk);
+
+    let components: Vec<&T> = current_page.iter().map(|node| &node.node).collect();
+
+    (
+        raw_layout
+            .iter()
+            .flat_map(|raw| {
+                Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints(vec![
+                        Constraint::Ratio(1, DISPLAY_COLUMN_NUMBER as u32);
+                        DISPLAY_COLUMN_NUMBER.into()
+                    ])
+                    .split(*raw)
+                    .into_iter()
+                    .map(|rect| rect.clone())
+                    .collect::<Vec<Rect>>()
+            })
+            .collect(),
+        components,
+    )
+}
+
+fn get_manga_status_color(status: &UserReadStatus, app: &App) -> Color {
     match status {
-        UserWatchStatus::Completed => app.app_config.theme.status_completed,
-        UserWatchStatus::Dropped => app.app_config.theme.status_dropped,
-        UserWatchStatus::OnHold => app.app_config.theme.status_on_hold,
-        UserWatchStatus::PlanToWatch => app.app_config.theme.status_plan_to_watch,
-        UserWatchStatus::Watching => app.app_config.theme.status_watching,
-        UserWatchStatus::Other(_) => app.app_config.theme.status_other,
+        UserReadStatus::Completed => app.app_config.theme.status_completed,
+        UserReadStatus::Dropped => app.app_config.theme.status_dropped,
+        UserReadStatus::OnHold => app.app_config.theme.status_on_hold,
+        UserReadStatus::PlanToRead => app.app_config.theme.status_plan_to_watch,
+        UserReadStatus::Reading => app.app_config.theme.status_watching,
+        UserReadStatus::Other(_) => app.app_config.theme.status_other,
     }
 }

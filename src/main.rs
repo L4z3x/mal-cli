@@ -3,6 +3,7 @@ use crossterm::cursor;
 use crossterm::execute;
 use crossterm::terminal;
 use crossterm::{cursor::MoveTo, ExecutableCommand};
+use mal::api::model::RankingType;
 use ratatui::prelude::CrosstermBackend;
 use ratatui::Terminal;
 
@@ -104,7 +105,19 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
     setup_terminal()?;
 
     let events = event::Events::new(app_config.behavior.tick_rate_milliseconds);
+    {
+        let mut app = app.lock().await;
+        app.active_top_three = TopThreeBlock::Loading(RankingType::AnimeRankingType(
+            app_config.top_three_anime_types[0].clone(),
+        ));
+        app.active_top_three_anime = Some(app_config.top_three_anime_types[0].clone());
 
+        app.active_top_three_manga = Some(app_config.top_three_manga_types[0].clone());
+
+        app.dispatch(IoEvent::GetTopThree(TopThreeBlock::Anime(
+            app_config.top_three_anime_types[0].clone(),
+        )));
+    }
     // let mut is_first_render = true;
 
     loop {
@@ -142,31 +155,32 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
             cursor_offset,
         ))?;
 
-        match events.next()? {
-            /*
-            there are five blocks:
-                1.Input
-                2.AnimeMenu
-                3.MangaMenu
-                4.UserMenu
-                5.DisplayBlock
-            and there are different display blocks :
-                1.SearchResultBlock
-                2.Help
-                3.UserInfo
-                4.UserAnimeList,
-                5.UserMangaList
-                6.Suggestions
-                7.Seasonal
-                8.AnimeRanking
-                9.MangaRanking
-                10.Loading
-                11.Error
-                12.Empty
+        /*
+        there are five blocks:
+            1.Input
+            2.AnimeMenu
+            3.MangaMenu
+            4.UserMenu
+            5.DisplayBlock
 
-            we switch between blocks by pressing Tab and between display by input and navigation
-            we will implement a stack for display block to allow going back and forth
-             */
+        and there are different display blocks :
+            1.SearchResultBlock
+            2.Help
+            3.UserInfo
+            4.UserAnimeList,
+            5.UserMangaList
+            6.Suggestions
+            7.Seasonal
+            8.AnimeRanking
+            9.MangaRanking
+            10.Loading
+            11.Error
+            12.Empty
+
+        we switch between blocks by pressing Tab and between display by input and navigation
+        we will implement a stack for display block to allow going back and forth
+                */
+        match events.next()? {
             event::Event::Input(key) => {
                 if key == Key::Ctrl('c') {
                     //todo: display confirmation to  quit

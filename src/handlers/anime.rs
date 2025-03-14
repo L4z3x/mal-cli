@@ -2,7 +2,7 @@ use super::common;
 use crate::app::{App, ANIME_OPTIONS, ANIME_OPTIONS_RANGE};
 
 use crate::event::Key;
-use crate::network::IoEvent;
+// use crate::network::IoEvent;
 
 pub fn handler(key: Key, app: &mut App) {
     match key {
@@ -14,7 +14,6 @@ pub fn handler(key: Key, app: &mut App) {
                     &ANIME_OPTIONS,
                     Some(app.library.selected_index % (ANIME_OPTIONS.len())),
                 );
-            dbg!(next_index);
             app.library.selected_index = next_index;
         }
         k if common::up_event(k) => {
@@ -24,7 +23,6 @@ pub fn handler(key: Key, app: &mut App) {
                     &ANIME_OPTIONS,
                     Some(app.library.selected_index % (ANIME_OPTIONS.len())),
                 );
-            dbg!(next_index);
             app.library.selected_index = next_index;
         }
 

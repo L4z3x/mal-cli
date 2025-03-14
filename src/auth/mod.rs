@@ -411,6 +411,13 @@ pub mod tests {
         let auth = OAuth::get_auth(config).unwrap();
         auth
     }
+
+    #[test]
+    fn test_refresh_token() {
+        let mut auth = get_auth();
+        auth.refresh().unwrap();
+        println!("{}", serde_json::to_string(&auth).unwrap());
+    }
     #[test]
     fn test_get_auth() {
         // Get config from file

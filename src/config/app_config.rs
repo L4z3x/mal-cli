@@ -1,5 +1,8 @@
 use super::*;
-use crate::event::key::Key;
+use crate::{
+    api::model::{AnimeRankingType, MangaRankingType},
+    event::key::Key,
+};
 use ratatui::style::Color;
 
 #[derive(Clone)]
@@ -8,6 +11,19 @@ pub struct AppConfig {
     pub theme: Theme,
     pub behavior: BehaviorConfig,
     pub nsfw: bool,
+    pub title_language: TitleLanguage,
+    pub manga_display_type: MangaDisplayType,
+    // pub first_top_three_block: TopThreeBlock,
+    pub top_three_anime_types: Vec<AnimeRankingType>,
+    pub top_three_manga_types: Vec<MangaRankingType>,
+    pub switch_key: Key,
+    pub navigation_stack_limit: u32,
+}
+
+#[derive(Clone, Debug)]
+pub enum TitleLanguage {
+    Japanese,
+    English,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -65,6 +81,13 @@ pub struct BehaviorConfig {
     pub show_loading_indicator: bool,
 }
 
+#[derive(Clone, Debug)]
+pub enum MangaDisplayType {
+    Vol,
+    Ch,
+    Both,
+}
+
 // TODO: get app config from file
 impl AppConfig {
     pub fn load() -> Result<Self, ConfigError> {
@@ -81,6 +104,18 @@ impl AppConfig {
                 show_loading_indicator: true,
             },
             nsfw: true,
+            title_language: TitleLanguage::English,
+            manga_display_type: MangaDisplayType::Both,
+            // first_top_three_block: TopThreeBlock::Anime(AnimeRankingType::Airing),
+            top_three_anime_types: vec![
+                AnimeRankingType::Airing,
+                AnimeRankingType::All,
+                AnimeRankingType::Upcoming,
+                AnimeRankingType::Movie,
+            ],
+            top_three_manga_types: vec![MangaRankingType::All, MangaRankingType::Manga],
+            switch_key: Key::Char('s'),
+            navigation_stack_limit: 4,
         })
     }
 }

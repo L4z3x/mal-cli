@@ -1,9 +1,11 @@
+use crate::config::app_config::{AppConfig, MangaDisplayType, TitleLanguage};
+
 use super::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use strum_macros::{EnumString, IntoStaticStr};
+use strum_macros::{Display, EnumString, IntoStaticStr};
 
-#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
+#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr, Display)]
 #[strum(serialize_all = "snake_case")]
 pub enum MangaRankingType {
     All,
@@ -57,6 +59,7 @@ pub enum UserReadStatus {
     OnHold,
     Dropped,
     PlanToRead,
+    #[strum(serialize = "add")]
     Other(String),
 }
 
@@ -101,4 +104,55 @@ pub struct Manga {
     pub num_volumes: Option<u64>,
     pub num_chapters: Option<u64>,
     pub authors: Option<Vec<PersonRole>>,
+}
+
+impl Manga {
+    pub fn get_title(&self, app_config: &AppConfig, both: bool) -> Vec<String> {
+        if both {
+            vec![
+                self.title.clone(),
+                self.alternative_titles
+                    .as_ref()
+                    .map_or("None".to_string(), |alt| {
+                        alt.clone().en.map_or("None".to_string(), |e| e)
+                    }),
+            ]
+        } else {
+            match app_config.title_language {
+                TitleLanguage::Japanese => vec![self.title.clone()],
+                TitleLanguage::English => {
+                    if let Some(ref alternative_titles) = self.alternative_titles {
+                        if let Some(en) = &alternative_titles.en {
+                            if !en.is_empty() {
+                                vec![en.clone()]
+                            } else {
+                                vec![self.title.clone()]
+                            }
+                        } else {
+                            vec![self.title.clone()]
+                        }
+                    } else {
+                        vec![self.title.clone()]
+                    }
+                }
+            }
+        }
+    }
+    pub fn get_num(&self, app_config: &AppConfig) -> String {
+        match app_config.manga_display_type {
+            MangaDisplayType::Vol => self
+                .num_volumes
+                .map_or("N/A vol".to_string(), |n| format!("{} vol", n.to_string())),
+            MangaDisplayType::Ch => self
+                .num_chapters
+                .map_or("N/A ch".to_string(), |n| format!("{} ch", n.to_string())),
+            MangaDisplayType::Both => format!(
+                "{}, {}",
+                self.num_volumes
+                    .map_or("N/A vol".to_string(), |n| format!("{} vol", n.to_string())),
+                self.num_chapters
+                    .map_or("N/A ch".to_string(), |n| format!("{} ch", n.to_string()))
+            ),
+        }
+    }
 }

@@ -1,9 +1,10 @@
+use crate::api::model::{UserReadStatus, UserWatchStatus};
 use crate::app::{ActiveBlock, ActiveDisplayBlock, App};
-use crate::ui::{draw_error, draw_help_menu};
 use ratatui::layout::{Alignment, Constraint, Direction, Layout};
-use ratatui::widgets::{Block, Borders, Paragraph};
+use ratatui::style::Color;
+use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
 use ratatui::{layout::Rect, Frame};
-
+mod error;
 use super::util::get_color;
 mod empty;
 mod loading;
@@ -41,7 +42,7 @@ pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
         ActiveDisplayBlock::Seasonal => {}
 
         ActiveDisplayBlock::Error => {
-            // draw_error(f, app);
+            error::draw_error(f, app, chunk);
         }
 
         ActiveDisplayBlock::Loading => {
@@ -59,6 +60,7 @@ pub fn draw_main_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
 
     let block = Block::default()
         .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
         .border_style(get_color(highlight_state, app.app_config.theme));
 
     f.render_widget(block, chunk);
@@ -98,4 +100,26 @@ pub fn draw_keys_bar(f: &mut Frame, app: &App, chunk: Rect) -> Rect {
     //todo: for the keys handle slpitting the bar into equal blocks and filling them with the keys
 
     splitted_layout[0]
+}
+
+pub fn get_anime_status_color(status: &UserWatchStatus, app: &App) -> Color {
+    match status {
+        UserWatchStatus::Completed => app.app_config.theme.status_completed,
+        UserWatchStatus::Dropped => app.app_config.theme.status_dropped,
+        UserWatchStatus::OnHold => app.app_config.theme.status_on_hold,
+        UserWatchStatus::PlanToWatch => app.app_config.theme.status_plan_to_watch,
+        UserWatchStatus::Watching => app.app_config.theme.status_watching,
+        UserWatchStatus::Other(_) => app.app_config.theme.status_other,
+    }
+}
+
+pub fn get_manga_status_color(status: &UserReadStatus, app: &App) -> Color {
+    match status {
+        UserReadStatus::Completed => app.app_config.theme.status_completed,
+        UserReadStatus::Dropped => app.app_config.theme.status_dropped,
+        UserReadStatus::OnHold => app.app_config.theme.status_on_hold,
+        UserReadStatus::PlanToRead => app.app_config.theme.status_plan_to_watch,
+        UserReadStatus::Reading => app.app_config.theme.status_watching,
+        UserReadStatus::Other(_) => app.app_config.theme.status_other,
+    }
 }

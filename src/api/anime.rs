@@ -132,6 +132,7 @@ pub async fn get_suggested_anime(
 
 #[cfg(test)]
 pub mod tests {
+
     use super::*;
 
     pub async fn get_anime<T: ToString>(q: T, auth: &OAuth) -> Result<Anime, Error> {
@@ -149,7 +150,9 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_get_anime_list() {
-        let auth = crate::auth::tests::get_auth();
+        let mut auth = crate::auth::tests::get_auth();
+        auth.refresh().unwrap();
+        // let oauth = crate::auth::OAuth::get_auth(app_config::AppConfig::Load())
         let query = GetAnimeListQuery {
             q: "Code Geass".to_string(),
             limit: 4,

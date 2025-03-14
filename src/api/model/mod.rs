@@ -27,6 +27,12 @@ use time::{
 pub type Page<T> = PageableData<Vec<Node<T>>>;
 pub type Ranking<T> = PageableData<Vec<T>>;
 
+#[derive(Debug, Clone)]
+pub enum RankingType {
+    AnimeRankingType(AnimeRankingType),
+    MangaRankingType(MangaRankingType),
+}
+
 // uniform time format: "2021-08-01T00:00:00.0Z"
 const CONFIG: iso8601::EncodedConfig = iso8601::Config::DEFAULT
     .set_year_is_six_digits(false)
@@ -48,6 +54,11 @@ pub struct PageableData<D: Clone + Debug> {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Node<N: Clone + std::fmt::Debug> {
     pub node: N,
+}
+
+pub enum Media {
+    Anime(Anime),
+    Manga(Manga),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

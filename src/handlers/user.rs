@@ -1,31 +1,26 @@
 use super::common;
-use crate::app::{App, USER_OPTIONS, USER_OPTIONS_RANGE};
-
+use crate::app::{App, GENERAL_OPTIONS, GENERAL_OPTIONS_RANGE};
 use crate::event::Key;
-use crate::network::IoEvent;
 
 pub fn handler(key: Key, app: &mut App) {
     match key {
         k if common::down_event(k) => {
             // calculate the next index in the list
-            let next_index = USER_OPTIONS_RANGE.start
+            let next_index = GENERAL_OPTIONS_RANGE.start
                 + common::on_down_press(
-                    &USER_OPTIONS,
-                    Some(app.library.selected_index % USER_OPTIONS_RANGE.len()),
+                    &GENERAL_OPTIONS,
+                    Some(app.library.selected_index % GENERAL_OPTIONS_RANGE.len()),
                 );
-            dbg!(next_index);
             app.library.selected_index = next_index;
         }
 
         k if common::up_event(k) => {
             // calculate the next index in the list
-            let next_index = USER_OPTIONS_RANGE.start
+            let next_index = GENERAL_OPTIONS_RANGE.start
                 + common::on_up_press(
-                    &USER_OPTIONS,
-                    Some(app.library.selected_index % USER_OPTIONS_RANGE.len()),
+                    &GENERAL_OPTIONS,
+                    Some(app.library.selected_index % GENERAL_OPTIONS_RANGE.len()),
                 );
-
-            dbg!(next_index);
 
             app.library.selected_index = next_index;
         }
@@ -36,11 +31,11 @@ pub fn handler(key: Key, app: &mut App) {
         //     app.library.selected_index = next_index;
         // }
         // k if common::middle_event(k) => {
-        //     let next_index = common::on_middle_press(&USER_OPTIONS);
+        //     let next_index = common::on_middle_press(&GENERAL_OPTIONS);
         //     app.library.selected_index = next_index;
         // }
         // k if common::low_event(k) => {
-        //     let next_index = common::on_low_press(&USER_OPTIONS);
+        //     let next_index = common::on_low_press(&GENERAL_OPTIONS);
         //     app.library.selected_index = next_index
         // }
         // `library` should probably be an array of structs with enums rather than just using indexes
