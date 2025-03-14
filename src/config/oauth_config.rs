@@ -1,14 +1,14 @@
+use super::*;
+use crate::BANNER;
 use serde::{Deserialize, Serialize};
+use serde_yaml;
 use std::{
     fs,
     io::{stdin, Write},
     path::Path,
 };
 
-use super::*;
-use crate::BANNER;
-
-#[derive(Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default, Clone, Debug, PartialEq)]
 pub struct AuthConfig {
     pub client_id: String,
     pub user_agent: Option<String>,

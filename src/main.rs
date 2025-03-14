@@ -1,23 +1,23 @@
+use color_eyre::Result;
 use crossterm::cursor;
 use crossterm::execute;
 use crossterm::terminal;
 use crossterm::{cursor::MoveTo, ExecutableCommand};
-use eyre::Result;
-
-use tui::backend::CrosstermBackend;
-use tui::Terminal;
+use mal::api::model::RankingType;
+use ratatui::prelude::CrosstermBackend;
+use ratatui::Terminal;
 
 use std::sync::Arc;
 use std::{
-    io::{self, Write},
+    io::{self}, //Write
     panic,
 };
 use tokio::sync::Mutex;
 
 use mal::app::*;
 use mal::auth::OAuth;
-use mal::cli::{Opt, StructOpt};
-use mal::config::{AppConfig, AuthConfig};
+// use mal::cli::{Opt, StructOpt};
+use mal::config::{app_config::AppConfig, oauth_config::AuthConfig};
 use mal::event;
 use mal::event::key::Key;
 use mal::handlers;
@@ -66,7 +66,7 @@ async fn main() -> Result<()> {
     better_panic::install();
     setup_panic_hook();
 
-    let opt: Opt = Opt::from_args();
+    // let opt: Opt = Opt::from_args();
 
     // Get config
     let app_config = AppConfig::load()?;
@@ -105,26 +105,40 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
     setup_terminal()?;
 
     let events = event::Events::new(app_config.behavior.tick_rate_milliseconds);
+    {
+        let mut app = app.lock().await;
+        app.active_top_three = TopThreeBlock::Loading(RankingType::AnimeRankingType(
+            app_config.top_three_anime_types[0].clone(),
+        ));
+        app.active_top_three_anime = Some(app_config.top_three_anime_types[0].clone());
 
-    let mut is_first_render = true;
+        app.active_top_three_manga = Some(app_config.top_three_manga_types[0].clone());
+
+        app.dispatch(IoEvent::GetTopThree(TopThreeBlock::Anime(
+            app_config.top_three_anime_types[0].clone(),
+        )));
+    }
+    // let mut is_first_render = true;
 
     loop {
         let mut app = app.lock().await;
 
-        let current_route = app.get_current_route();
-        terminal.draw(|mut f| match current_route.active_block {
-            ActiveBlock::Help => {
-                ui::draw_help_menu(&mut f, &app);
-            }
-            ActiveBlock::Error => {
-                ui::draw_error(&mut f, &app);
-            }
+        let current_block = app.active_block;
+        terminal.draw(|mut f| match current_block {
+            // todo: handle help inside the main_layout
+            // ActiveBlock::Help => {
+            //     ui::draw_help_menu(&mut f, &app);
+            // }
+            //todo: handle error inside the display block
+            // ActiveBlock::Error => {
+            //     ui::draw_error(&mut f, &app);
+            // }
             _ => {
                 ui::draw_main_layout(&mut f, &app);
             }
         })?;
 
-        if current_route.active_block == ActiveBlock::Input {
+        if current_block == ActiveBlock::Input {
             terminal.show_cursor()?;
         } else {
             terminal.hide_cursor()?;
@@ -141,26 +155,49 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
             cursor_offset,
         ))?;
 
+        /*
+        there are five blocks:
+            1.Input
+            2.AnimeMenu
+            3.MangaMenu
+            4.UserMenu
+            5.DisplayBlock
+
+        and there are different display blocks :
+            1.SearchResultBlock
+            2.Help
+            3.UserInfo
+            4.UserAnimeList,
+            5.UserMangaList
+            6.Suggestions
+            7.Seasonal
+            8.AnimeRanking
+            9.MangaRanking
+            10.Loading
+            11.Error
+            12.Empty
+
+        we switch between blocks by pressing Tab and between display by input and navigation
+        we will implement a stack for display block to allow going back and forth
+                */
         match events.next()? {
             event::Event::Input(key) => {
                 if key == Key::Ctrl('c') {
+                    //todo: display confirmation to  quit
                     break;
                 }
 
-                let current_active_block = app.get_current_route().active_block;
-
-                if current_active_block == ActiveBlock::Input {
+                let active_block = app.active_block;
+                //# change the default of menu selecting to None when leaving the block
+                if key == Key::Tab {
+                    // handle navigation between block
+                    handlers::handle_tab(&mut app);
+                } else if active_block == ActiveBlock::Input {
                     handlers::input_handler(key, &mut app);
                 } else if key == app.app_config.keys.back {
-                    if app.get_current_route().active_block != ActiveBlock::Input {
-                        let pop_result = match app.pop_navigation_stack() {
-                            Some(ref x) if x.id == RouteId::Search => app.pop_navigation_stack(),
-                            Some(x) => Some(x),
-                            None => None,
-                        };
-                        if pop_result.is_none() {
-                            break;
-                        }
+                    if app.active_block != ActiveBlock::Input {
+                        // todo: display confirmation to  quit
+                        break;
                     }
                 } else {
                     handlers::handle_app(key, &mut app);

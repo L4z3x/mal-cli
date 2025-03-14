@@ -1,16 +1,29 @@
-use crate::api::model::*;
-use crate::app::{ActiveBlock, App, SearchResultBlock};
+use ratatui::style::Style;
+
+// use crate::api::model::*;
+use crate::app::App;
 use crate::config::app_config::Theme;
-use tui::style::Style;
 
 pub const SMALL_TERMINAL_HEIGHT: u16 = 45;
 
-pub fn get_color((is_active, is_hovered): (bool, bool), theme: Theme) -> Style {
-    match (is_active, is_hovered) {
-        (true, _) => Style::default().fg(theme.selected),
-        (false, true) => Style::default().fg(theme.hovered),
+pub fn get_color(is_active: bool, theme: Theme) -> Style {
+    match is_active {
+        true => Style::default().fg(theme.selected),
         _ => Style::default().fg(theme.inactive),
     }
+}
+
+pub fn capitalize_each_word(text: String) -> String {
+    text.split_whitespace()
+        .map(|word| {
+            let mut c = word.chars();
+            match c.next() {
+                None => String::new(),
+                Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+            }
+        })
+        .collect::<Vec<String>>()
+        .join(" ")
 }
 
 pub fn get_main_layout_margin(app: &App) -> u16 {

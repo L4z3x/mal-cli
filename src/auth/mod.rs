@@ -8,16 +8,16 @@ pub mod token;
 pub mod cache;
 
 use crate::config::oauth_config::AuthConfig;
-use eyre::Result;
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use color_eyre::Result;
+use rand::{distr::Alphanumeric, rng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use serde_urlencoded;
-use std::{io::Error, iter, process::Output, str::FromStr};
+use std::{io::Error, iter, str::FromStr}; // process::Output
 use token::{Token, TokenWrapper};
 use url::Url;
 
-const USER_AGENT: &str = "mal-cli";
+const USER_AGENT: &str = "mal-tui";
 const AUTHORIZE_URL: &str = "https://myanimelist.net/v1/oauth2/authorize";
 const TOKEN_URL: &str = "https://myanimelist.net/v1/oauth2/token";
 
@@ -114,10 +114,10 @@ impl OAuth {
         if len < 48 || len > 128 {
             panic!("len is not in between 48 and 128");
         }
-        let mut rng = thread_rng();
+        let mut rng = rng();
         // needs to be url safe so we use Alphanumeric
         let challenge: String = iter::repeat(())
-            .map(|()| rng.sample(Alphanumeric))
+            .map(|()| rng.sample(Alphanumeric) as char)
             .take(len)
             .collect();
         challenge
@@ -399,7 +399,7 @@ impl OAuth {
 }
 
 /// use webbrowser crate to open url in browser
-pub fn open(url: Url) -> Result<Output, Error> {
+pub fn open(url: Url) -> Result<(), Error> {
     webbrowser::open(&url.to_string())
 }
 
@@ -410,6 +410,13 @@ pub mod tests {
         let config = AuthConfig::load().unwrap();
         let auth = OAuth::get_auth(config).unwrap();
         auth
+    }
+
+    #[test]
+    fn test_refresh_token() {
+        let mut auth = get_auth();
+        auth.refresh().unwrap();
+        println!("{}", serde_json::to_string(&auth).unwrap());
     }
     #[test]
     fn test_get_auth() {

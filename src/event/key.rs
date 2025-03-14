@@ -118,10 +118,12 @@ impl From<KeyEvent> for Key {
             KeyEvent {
                 code: KeyCode::Char(c),
                 modifiers: KeyModifiers::ALT,
+                ..
             } => Key::Alt(c),
             KeyEvent {
                 code: KeyCode::Char(c),
                 modifiers: KeyModifiers::CONTROL,
+                ..
             } => Key::Ctrl(c),
             KeyEvent {
                 code: KeyCode::Char(c),
