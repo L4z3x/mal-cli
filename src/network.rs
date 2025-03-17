@@ -1,6 +1,6 @@
 use crate::{
     api::{self, model::*, GetAnimeRankingQuery, GetMangaRankingQuery, GetSeasonalAnimeQuery},
-    app::{ActiveDisplayBlock, App, Route, SelectedSearchTab, TopThreeBlock},
+    app::{ActiveBlock, ActiveDisplayBlock, App, Route, SelectedSearchTab, TopThreeBlock},
     auth::OAuth,
 };
 use std::sync::Arc;
@@ -13,7 +13,7 @@ pub enum IoEvent {
     GetMangaSearchResults(String),
     GetAnime(String),
     GetAnimeRanking(String),
-    GetSeasonalAnime(String),
+    GetSeasonalAnime,
     GetSuggestedAnime(String),
     UpdateAnimeListStatus(String),
     DeleteAnimeListStatus(String),
@@ -40,7 +40,7 @@ impl<'a> Network<'a> {
         Self {
             oauth,
             large_search_limit: 20,
-            small_search_limit: 4,
+            small_search_limit: 3,
             app,
         }
     }
@@ -49,6 +49,9 @@ impl<'a> Network<'a> {
         match io_event {
             IoEvent::GetSearchResults(q) => {
                 self.get_search_results(q).await;
+            }
+            IoEvent::GetSeasonalAnime => {
+                self.get_seasonal().await;
             }
             // IoEvent::GetAnimeSearchResults(String) => {}
             // IoEvent::GetMangaSearchResults(String) => {}
@@ -251,6 +254,7 @@ impl<'a> Network<'a> {
                     }
                     MangaRankingType::Other(_) => {}
                 }
+
                 app.active_top_three = TopThreeBlock::Manga(
                     app.active_top_three_manga
                         .as_ref()
@@ -272,20 +276,43 @@ impl<'a> Network<'a> {
         }
     }
 
-    async fn get_seasonal(&mut self, season: &AnimeSeason, query: GetSeasonalAnimeQuery) {
+    async fn get_seasonal(&mut self) {
         self.oauth.refresh().unwrap();
         let mut app = self.app.lock().await;
-
-        match api::get_seasonal_anime(season, &query, &self.oauth).await {
-            Ok(result) => {}
-            Err(e) => {}
+        let query = GetSeasonalAnimeQuery {
+            sort: Some(app.anime_season.anime_sort.clone()),
+            offset: 0,
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+            limit: self.large_search_limit,
+            nsfw: app.app_config.nsfw,
+        };
+        match api::get_seasonal_anime(&app.anime_season.anime_season, &query, &self.oauth).await {
+            Ok(result) => app.search_results.anime = Some(result),
+            Err(e) => {
+                app.write_error(e);
+                app.active_display_block = ActiveDisplayBlock::Error;
+                return;
+            }
         }
+        let title = format!(
+            "Seasonal Anime: {} {}",
+            app.anime_season.anime_season.season,
+            app.anime_season.anime_season.year.to_string()
+        );
+        app.navigation_index += 1;
+        let route = Route {
+            anime: None,
+            manga: None,
+            results: Some(app.search_results.clone()),
+            user: None,
+            block: ActiveDisplayBlock::Seasonal,
+            title: title.clone(),
+        };
+        app.push_navigation_stack(route);
+        app.active_block = ActiveBlock::DisplayBlock;
+        app.active_display_block = ActiveDisplayBlock::Seasonal;
+        app.display_block_title = title;
     }
-
-    // TODO: Add actual error handling
-    // async fn handle_error(&mut self, e: api::Error, app: &mut App) {
-    //     app.write_error(e);
-    // }
 
     async fn get_search_results(&mut self, q: String) {
         self.oauth.refresh().unwrap();
@@ -313,6 +340,7 @@ impl<'a> Network<'a> {
             }
             Err(e) => {
                 app.write_error(e);
+                app.active_display_block = ActiveDisplayBlock::Error;
                 return;
             }
         };
@@ -323,6 +351,7 @@ impl<'a> Network<'a> {
             }
             Err(e) => {
                 app.write_error(e);
+                app.active_display_block = ActiveDisplayBlock::Error;
                 return;
             }
         };

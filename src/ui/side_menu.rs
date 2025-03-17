@@ -3,6 +3,7 @@ use crate::app::{
     ActiveBlock, App, ANIME_OPTIONS, ANIME_OPTIONS_RANGE, GENERAL_OPTIONS, GENERAL_OPTIONS_RANGE,
     USER_OPTIONS, USER_OPTIONS_RANGE,
 };
+
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Margin, Rect},
     style::{Modifier, Style},
@@ -14,7 +15,7 @@ use ratatui::{
 pub fn draw_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(18), Constraint::Percentage(82)].as_ref())
+        .constraints([Constraint::Percentage(18), Constraint::Percentage(82)])
         .split(layout_chunk);
 
     draw_user_block(f, app, chunks[0]);
@@ -51,8 +52,11 @@ pub fn draw_anime_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
     if !ANIME_OPTIONS_RANGE.contains(&app.library.selected_index) {
         index = None;
     }
-
-    draw_selectable_list(f, app, layout_chunk, items, index)
+    let list_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
+        .split(layout_chunk)[1];
+    draw_selectable_list(f, app, list_layout, items, index);
 }
 
 pub fn draw_user_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
@@ -82,8 +86,11 @@ pub fn draw_user_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
     if !USER_OPTIONS_RANGE.contains(&app.library.selected_index) {
         index = None;
     }
-
-    draw_selectable_list(f, app, layout_chunk, items, index);
+    let list_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
+        .split(layout_chunk)[1];
+    draw_selectable_list(f, app, list_layout, items, index);
 }
 
 pub fn draw_options_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
@@ -114,8 +121,11 @@ pub fn draw_options_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
     if !GENERAL_OPTIONS_RANGE.contains(&app.library.selected_index) {
         index = None;
     }
-
-    draw_selectable_list(f, app, layout_chunk, items, index);
+    let list_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
+        .split(layout_chunk)[1];
+    draw_selectable_list(f, app, list_layout, items, index);
 }
 
 pub fn draw_user_block(f: &mut Frame, app: &App, layout_chunk: Rect) {
@@ -158,7 +168,8 @@ pub fn draw_selectable_list(
             .add_modifier(Modifier::BOLD),
     );
 
-    let centered_rect = center_rect(layout_chunk, items.len() as u16);
+    let centered_rect = display_block::center_area(layout_chunk, 80, 60);
+
     f.render_stateful_widget(items, centered_rect, &mut state);
 }
 
@@ -178,23 +189,3 @@ pub fn center_rect(area: Rect, line_num: u16) -> Rect {
         ])
         .split(area)[1] // Get the centered text area
 }
-// Layout::default()
-//     .direction(Direction::Vertical)
-//     .constraints([
-//         Constraint::Length(1),
-//         Constraint::Percentage(10),
-//         Constraint::Percentage(80),
-//         Constraint::Percentage(10),
-//         Constraint::Length(1),
-//     ])
-//     .split(area)[2];
-// let block = Block::default().borders(Borders::ALL);
-// // .border_type(BorderType::Rounded)
-// // .style(Style::default().fg(app.app_config.theme.active));
-// // f.render_widget(block.clone(), a[1]);
-// // f.render_widget(block, a[3]);
-
-//     a[2]
-// }
-
-// pub fn draw_top_3

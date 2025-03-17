@@ -5,11 +5,12 @@ mod help;
 mod input;
 mod manga;
 mod result;
+mod seasonal;
 mod top_three;
 mod user;
 use crate::app::{
-    ActiveBlock, ActiveDisplayBlock, App, ANIME_OPTIONS_RANGE, GENERAL_OPTIONS_RANGE,
-    USER_OPTIONS_RANGE,
+    ActiveBlock, ActiveDisplayBlock, App, ANIME_OPTIONS_RANGE, DISPLAY_COLUMN_NUMBER,
+    DISPLAY_RAWS_NUMBER, GENERAL_OPTIONS_RANGE, USER_OPTIONS_RANGE,
 };
 use crate::event::Key;
 
@@ -19,7 +20,7 @@ pub fn handle_app(key: Key, app: &mut App) {
     // First handle any global event and then move to block event
     match key {
         Key::Esc => app.load_previous_state(),
-        Key::Ctrl('p') => app.load_next_state(),
+        _ if key == app.app_config.keys.next_state => app.load_next_state(),
         _ if key == app.app_config.keys.help => {
             app.active_display_block = ActiveDisplayBlock::Help;
         }
@@ -47,9 +48,7 @@ fn handle_block_events(key: Key, app: &mut App) {
 
         ActiveBlock::Error => {}
 
-        ActiveBlock::TopThree => {
-            top_three::handler(key, app);
-        }
+        ActiveBlock::TopThree => top_three::handler(key, app),
 
         ActiveBlock::DisplayBlock => display_block::handle_display_block(key, app),
     }
@@ -83,7 +82,9 @@ pub fn handle_tab(app: &mut App) {
         }
 
         ActiveBlock::DisplayBlock => {
-            app.active_block = ActiveBlock::Input;
+            if !app.popup {
+                app.active_block = ActiveBlock::Input;
+            }
             // todo: handle cases when exiting the Display_block.
 
             // app.search_results.selected_block = match app.search_results.selected_block {
@@ -98,3 +99,51 @@ pub fn handle_tab(app: &mut App) {
         _ => {}
     }
 }
+
+pub fn handle_result_block(key: Key, app: &mut App) {
+    let max = DISPLAY_COLUMN_NUMBER * DISPLAY_RAWS_NUMBER;
+    match key {
+        k if common::left_event(k) => {
+            let mut index = app.search_results.selected_display_card_index.unwrap_or(0);
+            let mut edges = Vec::new();
+            for i in (0..max - 3).step_by(DISPLAY_COLUMN_NUMBER) {
+                edges.push(i);
+            }
+            if !edges.contains(&index) {
+                index = (index - 1) % max;
+            }
+            app.search_results.selected_display_card_index = Some(index);
+        }
+        k if common::right_event(k) => {
+            let mut index = app.search_results.selected_display_card_index.unwrap_or(0);
+            let mut edges = Vec::new();
+            for i in (DISPLAY_COLUMN_NUMBER - 1..max).step_by(DISPLAY_COLUMN_NUMBER) {
+                edges.push(i);
+            }
+            if !edges.contains(&index) {
+                index = (index + 1) % max;
+            }
+
+            app.search_results.selected_display_card_index = Some(index);
+        }
+        k if common::up_event(k) => {
+            let mut index = app.search_results.selected_display_card_index.unwrap_or(0);
+            if !(0..3).contains(&index) {
+                index = index - DISPLAY_COLUMN_NUMBER;
+            }
+            app.search_results.selected_display_card_index = Some(index);
+        }
+        k if common::down_event(k) => {
+            let mut index = app.search_results.selected_display_card_index.unwrap_or(0);
+
+            if !((max - DISPLAY_COLUMN_NUMBER)..(max - 1)).contains(&index) {
+                index = (index + DISPLAY_COLUMN_NUMBER) % max
+            }
+            app.search_results.selected_display_card_index = Some(index);
+        }
+        Key::Enter => get_media_detail_page(app),
+        _ => {}
+    }
+}
+
+pub fn get_media_detail_page(app: &mut App) {}

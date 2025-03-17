@@ -1,8 +1,8 @@
 use super::common;
-use crate::app::{App, ANIME_OPTIONS, ANIME_OPTIONS_RANGE};
+use crate::app::{ActiveBlock, ActiveDisplayBlock, App, ANIME_OPTIONS, ANIME_OPTIONS_RANGE};
 
 use crate::event::Key;
-// use crate::network::IoEvent;
+use crate::network::IoEvent;
 
 pub fn handler(key: Key, app: &mut App) {
     match key {
@@ -43,7 +43,7 @@ pub fn handler(key: Key, app: &mut App) {
         // like this
         Key::Enter => match app.library.selected_index {
             // Seasonal
-            0 => {}
+            0 => get_seasonal(app),
             // Ranking
             1 => {}
             // Suggested
@@ -55,4 +55,41 @@ pub fn handler(key: Key, app: &mut App) {
         },
         _ => (),
     };
+}
+
+fn get_seasonal(app: &mut App) {
+    let data_availabe = is_seasonal_data_available(app);
+    let is_current_route = app
+        .get_current_route()
+        .map_or(false, |r| r.block == ActiveDisplayBlock::Seasonal);
+
+    if is_current_route {
+        return;
+    }
+
+    if data_availabe.0 {
+        app.search_results = app.navigation_stack[data_availabe.1.unwrap()]
+            .results
+            .as_ref()
+            .unwrap()
+            .clone();
+
+        app.active_display_block = ActiveDisplayBlock::Seasonal;
+        app.active_block = ActiveBlock::DisplayBlock;
+    } else {
+        app.active_display_block = ActiveDisplayBlock::Loading;
+
+        app.dispatch(IoEvent::GetSeasonalAnime);
+    }
+}
+
+fn is_seasonal_data_available(app: &mut App) -> (bool, Option<usize>) {
+    for i in 0..(app.navigation_stack.len() - 1) {
+        if app.navigation_stack[i].block == ActiveDisplayBlock::Seasonal
+            && app.navigation_stack[i].results.is_some()
+        {
+            return (true, Some(i));
+        }
+    }
+    return (false, None);
 }

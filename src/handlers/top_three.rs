@@ -24,7 +24,7 @@ pub fn handler(key: Key, app: &mut App) {
             }
         }
 
-        k if k == app.app_config.switch_key => match &app.active_top_three {
+        k if k == app.app_config.keys.toggle => match &app.active_top_three {
             TopThreeBlock::Anime(_) => {
                 let data_available = is_manga_data_available(
                     app,

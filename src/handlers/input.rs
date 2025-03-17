@@ -90,13 +90,13 @@ pub fn handler(key: Key, app: &mut App) {
             if input_str.is_empty() {
                 return;
             }
+            app.active_display_block = ActiveDisplayBlock::Loading;
+            app.active_block = ActiveBlock::DisplayBlock;
+            app.display_block_title = format!("Search Results: {}", input_str).to_string();
 
             app.dispatch(IoEvent::GetSearchResults(input_str.clone()));
 
             // On searching for a track, clear the playlist selection
-            app.active_block = ActiveBlock::DisplayBlock;
-            app.active_display_block = ActiveDisplayBlock::Loading;
-            app.display_block_title = format!("Search Results: {}", input_str).to_string();
         }
 
         // add character to input

@@ -11,7 +11,7 @@ pub use user::*;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::Debug;
 use std::str::FromStr;
-use strum_macros::{EnumString, IntoStaticStr};
+use strum_macros::{Display, EnumString, IntoStaticStr};
 use time::{
     format_description::{
         self,
@@ -80,7 +80,7 @@ pub struct Genre {
     pub name: String,
 }
 
-#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
+#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr, Display)]
 #[strum(serialize_all = "snake_case")]
 pub enum Season {
     Winter,

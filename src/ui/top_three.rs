@@ -2,7 +2,7 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Margin, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, BorderType, Borders, Paragraph},
+    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
     Frame,
 };
 
@@ -300,7 +300,10 @@ fn draw_error_top_three(f: &mut Frame, app: &App, chunk: Rect, block: Block) {
         .split(chunk.inner(Margin::new(0, 1)))[2];
 
     let error = Paragraph::new(
-        Line::from(Span::raw(format!("Error: {}", app.api_error))).alignment(Alignment::Center),
-    );
+        Line::from(Span::raw(format!("Error: {}", app.api_error)))
+            .alignment(Alignment::Center)
+            .centered(),
+    )
+    .wrap(Wrap { trim: true });
     f.render_widget(error, middle_chunk);
 }

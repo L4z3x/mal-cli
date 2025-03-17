@@ -16,7 +16,6 @@ pub struct AppConfig {
     // pub first_top_three_block: TopThreeBlock,
     pub top_three_anime_types: Vec<AnimeRankingType>,
     pub top_three_manga_types: Vec<MangaRankingType>,
-    pub switch_key: Key,
     pub navigation_stack_limit: u32,
 }
 
@@ -72,6 +71,8 @@ pub struct KeyBindings {
     pub help: Key,
     pub back: Key,
     pub search: Key,
+    pub toggle: Key,
+    pub next_state: Key,
 }
 
 #[derive(Clone)]
@@ -97,6 +98,8 @@ impl AppConfig {
                 help: Key::Char('?'),
                 back: Key::Char('q'),
                 search: Key::Char('/'),
+                toggle: Key::Char('s'),
+                next_state: Key::Ctrl('p'),
             },
             behavior: BehaviorConfig {
                 seek_milliseconds: 1000,
@@ -114,8 +117,7 @@ impl AppConfig {
                 AnimeRankingType::Movie,
             ],
             top_three_manga_types: vec![MangaRankingType::All, MangaRankingType::Manga],
-            switch_key: Key::Char('s'),
-            navigation_stack_limit: 4,
+            navigation_stack_limit: 6,
         })
     }
 }

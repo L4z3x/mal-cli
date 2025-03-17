@@ -1,6 +1,7 @@
 use crate::api::{self, model::*};
 use crate::config::app_config::AppConfig;
 use crate::network::IoEvent;
+use chrono::Datelike;
 use ratatui::layout::Rect;
 use std::sync::mpsc::Sender;
 use strum_macros::IntoStaticStr;
@@ -15,6 +16,8 @@ const DEFAULT_ROUTE: Route = Route {
 };
 
 pub const DISPLAY_RAWS_NUMBER: usize = 5;
+
+pub const SEASONS: [&str; 4] = ["Winter", "Spring", "Summer", "Fall"];
 
 pub const DISPLAY_COLUMN_NUMBER: usize = 3;
 
@@ -154,6 +157,18 @@ pub struct App {
     pub anime_detail: Option<Anime>,
     pub manga_detail: Option<Manga>,
     pub user_detail: Option<UserInfo>,
+    // seasonal
+    pub anime_season: Seasonal,
+
+    pub popup: bool,
+}
+
+pub struct Seasonal {
+    pub anime_season: AnimeSeason,
+    pub popup_season_highlight: bool,
+    pub anime_sort: SortStyle,
+    pub selected_season: u8,
+    pub selected_year: u16,
 }
 
 #[derive(Debug, Clone, IntoStaticStr)]
@@ -232,8 +247,22 @@ pub struct Route {
 
 impl App {
     pub fn new(io_tx: Sender<IoEvent>, app_config: AppConfig) -> Self {
+        let year = chrono::Utc::now().year_ce();
+        let season = get_season();
+        let selected_season = get_selected_season(&season);
         Self {
             io_tx: Some(io_tx),
+            anime_season: Seasonal {
+                anime_season: AnimeSeason {
+                    year: year.1 as u64,
+                    season,
+                },
+                anime_sort: SortStyle::ListScore,
+                popup_season_highlight: true,
+                selected_season,
+                selected_year: year.1 as u16,
+            },
+
             anime_ranking_types: app_config.top_three_anime_types.clone(),
             active_top_three: TopThreeBlock::Anime(app_config.top_three_anime_types[0].clone()),
             manga_ranking_types: app_config.top_three_manga_types.clone(),
@@ -276,6 +305,7 @@ impl App {
             manga_detail: None,
             user_detail: None,
             display_block_title: String::new(),
+            popup: false,
         }
     }
 
@@ -310,6 +340,7 @@ impl App {
     }
 
     // Send a network event to the network thread
+
     pub fn dispatch(&mut self, event: IoEvent) {
         self.is_loading = true;
         if let Some(io_tx) = &self.io_tx {
@@ -322,17 +353,29 @@ impl App {
     }
 
     pub fn push_navigation_stack(&mut self, r: Route) {
-        self.navigation_stack.push(r);
-        if self.navigation_stack.len() > self.app_config.navigation_stack_limit as usize {
-            self.navigation_stack.remove(0);
+        let index = self.navigation_index as usize;
+        if index < self.navigation_stack.len() {
+            for _ in index..self.navigation_stack.len() {
+                self.navigation_stack.pop();
+            }
         }
+
+        self.navigation_stack.push(r);
+
+        if self.navigation_stack.len() > self.app_config.navigation_stack_limit as usize {
+            self.navigation_stack.remove(1);
+        }
+        // get current index and remove  [>index ]
     }
+
     pub fn pop_navigation_stack(&mut self) -> Option<Route> {
         self.navigation_stack.pop()
     }
+
     pub fn get_current_route(&self) -> Option<&Route> {
         self.navigation_stack.last()
     }
+
     pub fn calculate_help_menu_offset(&mut self) {
         let old_offset = self.help_menu_offset;
         if self.help_menu_max_lines < self.help_docs_size {
@@ -345,32 +388,43 @@ impl App {
     }
 
     pub fn load_previous_state(&mut self) {
-        if self.navigation_index == 0 {
+        if self.popup {
+            self.popup = false;
+            return;
+        }
+        if self.navigation_index == 1 {
             self.active_display_block = ActiveDisplayBlock::Empty;
             self.display_block_title = "Home".to_string();
+            self.navigation_index = 0;
+            return;
+        }
+        if self.active_display_block == ActiveDisplayBlock::Loading {
             return;
         }
         if self.active_display_block == ActiveDisplayBlock::Error
             || self.active_display_block == ActiveDisplayBlock::Help
-            || self.active_display_block == ActiveDisplayBlock::Loading
         {
             self.active_display_block = self.navigation_stack[self.navigation_index as usize]
                 .block
                 .clone();
             return;
         }
-        let i = self.navigation_index as usize - 1;
+        let i = self.navigation_index.saturating_sub(1) as usize;
         self.load_state_data(i);
     }
 
     pub fn load_next_state(&mut self) {
+        if self.navigation_index > self.navigation_stack.len() as u32 - 1 {
+            self.navigation_index = self.navigation_stack.len() as u32 - 2;
+        }
+
         if self.navigation_index == self.navigation_stack.len() as u32 - 1 {
             return;
         }
 
-        let index = self.navigation_index as usize + 1;
-        self.load_state_data(index);
+        self.load_state_data(self.navigation_index as usize + 1);
     }
+
     fn load_state_data(&mut self, i: usize) {
         self.active_display_block = self.navigation_stack[i].block;
 
@@ -393,5 +447,26 @@ impl App {
         self.display_block_title = self.navigation_stack[i].title.clone();
 
         self.navigation_index = i as u32;
+        // dbg!(self.navigation_index); //TODO: remove
+    }
+}
+
+fn get_season() -> Season {
+    let month = chrono::Utc::now().month();
+    match month {
+        3..=5 => Season::Spring,
+        6..=8 => Season::Summer,
+        9..=11 => Season::Fall,
+        _ => Season::Winter,
+    }
+}
+
+fn get_selected_season(season: &Season) -> u8 {
+    match season {
+        &Season::Winter => 0,
+        &Season::Spring => 1,
+        &Season::Summer => 2,
+        &Season::Fall => 3,
+        &Season::Other(_) => panic!("no season selected"),
     }
 }

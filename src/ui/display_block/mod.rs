@@ -1,10 +1,11 @@
 use crate::api::model::{UserReadStatus, UserWatchStatus};
 use crate::app::{ActiveBlock, ActiveDisplayBlock, App};
-use ratatui::layout::{Alignment, Constraint, Direction, Layout};
+use ratatui::layout::{Alignment, Constraint, Direction, Flex, Layout};
 use ratatui::style::Color;
 use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
 use ratatui::{layout::Rect, Frame};
 mod error;
+mod seasonal;
 use super::util::get_color;
 mod empty;
 mod loading;
@@ -16,14 +17,9 @@ pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
     draw_main_display_layout(f, app, chunk);
 
     match current_display_block {
-        ActiveDisplayBlock::Empty => {
-            // drow mal-cli
-            empty::draw_empty(f, app, chunk);
-        }
+        ActiveDisplayBlock::Empty => empty::draw_empty(f, app, chunk),
 
-        ActiveDisplayBlock::Help => {
-            // draw_help_menu(f, app);
-        }
+        ActiveDisplayBlock::Help => {} // draw_help_menu(f, app);
 
         ActiveDisplayBlock::AnimeRanking => {}
 
@@ -35,11 +31,9 @@ pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
 
         ActiveDisplayBlock::UserInfo => {}
 
-        ActiveDisplayBlock::SearchResultBlock => {
-            search::draw_search_result(f, app, chunk);
-        }
+        ActiveDisplayBlock::SearchResultBlock => search::draw_search_result(f, app, chunk),
 
-        ActiveDisplayBlock::Seasonal => {}
+        ActiveDisplayBlock::Seasonal => seasonal::draw_seasonal_anime(f, app, chunk),
 
         ActiveDisplayBlock::Error => {
             error::draw_error(f, app, chunk);
@@ -122,4 +116,12 @@ pub fn get_manga_status_color(status: &UserReadStatus, app: &App) -> Color {
         UserReadStatus::Reading => app.app_config.theme.status_watching,
         UserReadStatus::Other(_) => app.app_config.theme.status_other,
     }
+}
+
+pub fn center_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
+    let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Center);
+    let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Center);
+    let [area] = vertical.areas(area);
+    let [area] = horizontal.areas(area);
+    area
 }

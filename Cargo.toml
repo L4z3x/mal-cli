@@ -16,6 +16,7 @@ path = "src/main.rs"
 [dependencies]
 anyhow = "1.0.97"
 better-panic = "0.3.0"
+chrono = "0.4.40"
 color-eyre = "0.6.3"
 crossterm = "0.28.1"
 dirs = "6.0.0"
