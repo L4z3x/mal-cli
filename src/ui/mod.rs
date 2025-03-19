@@ -31,11 +31,7 @@ pub fn draw_main_layout(f: &mut Frame, app: &App) {
 pub fn draw_input_and_help_box(f: &mut Frame, app: &App, layout_chunk: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(17),
-            // Constraint::Length(1),
-            Constraint::Percentage(82),
-        ])
+        .constraints([Constraint::Percentage(17), Constraint::Percentage(82)])
         .flex(Flex::SpaceBetween)
         .split(layout_chunk);
 
@@ -62,10 +58,6 @@ pub fn draw_input_and_help_box(f: &mut Frame, app: &App, layout_chunk: Rect) {
         title = "Home".to_string(); // Default title , since i couldn't initialize it in app.rs:15
     }
     let block = Block::default()
-        // .title(Span::styled(
-        //     title,
-        //     Style::default().fg(app.app_config.theme.banner),
-        // ))
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(app.app_config.theme.inactive));
@@ -73,6 +65,7 @@ pub fn draw_input_and_help_box(f: &mut Frame, app: &App, layout_chunk: Rect) {
     let lines = Line::from(Span::from(title))
         .alignment(Alignment::Center)
         .style(Style::default().fg(app.app_config.theme.banner));
+
     let help = Paragraph::new(lines)
         .block(block)
         .alignment(Alignment::Center)

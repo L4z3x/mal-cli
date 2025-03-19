@@ -22,12 +22,11 @@ pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
 
         ActiveDisplayBlock::Help => {} // draw_help_menu(f, app);
 
-        ActiveDisplayBlock::AnimeRanking => {
-            ranking::draw_anime_ranking(f, app, chunk);
-        }
-        ActiveDisplayBlock::MangaRanking => {
-            ranking::draw_manga_ranking(f, app, chunk);
-        }
+        ActiveDisplayBlock::AnimeRanking => ranking::draw_anime_ranking(f, app, chunk),
+
+        ActiveDisplayBlock::MangaRanking => ranking::draw_manga_ranking(f, app, chunk),
+
+        ActiveDisplayBlock::Suggestions => search::draw_search_result(f, app, chunk),
 
         ActiveDisplayBlock::UserAnimeList => {}
 
@@ -35,8 +34,10 @@ pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
 
         ActiveDisplayBlock::UserInfo => {}
 
-        ActiveDisplayBlock::SearchResultBlock => search::draw_search_result(f, app, chunk),
-
+        ActiveDisplayBlock::SearchResultBlock => {
+            let chunk = search::draw_nav_bar(f, app, chunk);
+            search::draw_search_result(f, app, chunk);
+        }
         ActiveDisplayBlock::Seasonal => seasonal::draw_seasonal_anime(f, app, chunk),
 
         ActiveDisplayBlock::Error => {
@@ -48,8 +49,6 @@ pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
                 loading::draw_loading(f, app, chunk);
             }
         }
-
-        _ => {}
     }
 }
 

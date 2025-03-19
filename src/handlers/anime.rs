@@ -47,7 +47,7 @@ pub fn handler(key: Key, app: &mut App) {
             // Ranking
             1 => get_anime_ranking(app),
             // Suggested
-            2 => {}
+            2 => get_suggestion(app),
             // This is required because Rust can't tell if this pattern in exhaustive
             _ => {} //# search is not neaded in the list.
                     // // Search
@@ -188,6 +188,50 @@ fn is_manga_ranking_data_available(app: &mut App) -> (bool, Option<usize>) {
             if let Data::MangaRanking(_) = app.navigation_stack[i].data.as_ref().unwrap() {
                 return (true, Some(i));
             }
+        }
+    }
+    return (false, None);
+}
+
+fn get_suggestion(app: &mut App) {
+    let is_data_available = is_suggestion_data_available(app);
+
+    let is_current_route = app
+        .get_current_route()
+        .map_or(false, |r| r.block == ActiveDisplayBlock::Suggestions);
+
+    if is_current_route {
+        return;
+    }
+
+    if is_data_available.0 {
+        app.search_results = match app.navigation_stack[is_data_available.1.unwrap()]
+            .data
+            .as_ref()
+            .unwrap()
+        {
+            Data::SearchResult(d) => d.clone(),
+            _ => return,
+        };
+        app.display_block_title = app.navigation_stack[is_data_available.1.unwrap()]
+            .title
+            .clone();
+        app.active_display_block = ActiveDisplayBlock::Suggestions;
+        app.active_block = ActiveBlock::DisplayBlock;
+        app.navigation_index = is_data_available.1.unwrap() as u32;
+    } else {
+        app.active_display_block = ActiveDisplayBlock::Loading;
+
+        app.dispatch(IoEvent::GetSuggestedAnime);
+    }
+}
+
+fn is_suggestion_data_available(app: &mut App) -> (bool, Option<usize>) {
+    for i in 0..(app.navigation_stack.len() - 1) {
+        if app.navigation_stack[i].block == ActiveDisplayBlock::Suggestions
+            && app.navigation_stack[i].data.is_some()
+        {
+            return (true, Some(i));
         }
     }
     return (false, None);

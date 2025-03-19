@@ -13,8 +13,6 @@ use crate::{
 use super::results::draw_results;
 
 pub fn draw_search_result(f: &mut Frame, app: &App, chunk: Rect) {
-    let chunk = draw_nav_bar(f, app, chunk);
-
     let chunk = super::draw_keys_bar(f, app, chunk);
 
     draw_results(f, app, chunk);

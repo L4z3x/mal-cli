@@ -1,5 +1,8 @@
 use crate::{
-    api::{self, model::*, GetAnimeRankingQuery, GetMangaRankingQuery, GetSeasonalAnimeQuery},
+    api::{
+        self, model::*, GetAnimeRankingQuery, GetMangaRankingQuery, GetSeasonalAnimeQuery,
+        GetSuggestedAnimeQuery,
+    },
     app::{ActiveBlock, ActiveDisplayBlock, App, Data, Route, SelectedSearchTab, TopThreeBlock},
     auth::OAuth,
 };
@@ -15,7 +18,7 @@ pub enum IoEvent {
     GetAnimeRanking(AnimeRankingType),
     GetMangaRanking(MangaRankingType),
     GetSeasonalAnime,
-    GetSuggestedAnime(String),
+    GetSuggestedAnime,
     UpdateAnimeListStatus(String),
     DeleteAnimeListStatus(String),
     GetAnimeList(String),
@@ -55,10 +58,11 @@ impl<'a> Network<'a> {
 
             IoEvent::GetMangaRanking(r) => self.get_manga_ranking(r).await,
 
+            IoEvent::GetSuggestedAnime => self.get_suggested().await,
+
             // IoEvent::GetAnimeSearchResults(String) => {}
             // IoEvent::GetMangaSearchResults(String) => {}
             // IoEvent::GetAnime(String) => {}
-            // IoEvent::GetSeasonalAnime(String) => {}
             // IoEvent::GetSuggestedAnime(String) => {}
             // IoEvent::UpdateAnimeListStatus(String) => {}
             // IoEvent::DeleteAnimeListStatus(String) => {}
@@ -359,6 +363,37 @@ impl<'a> Network<'a> {
                 return;
             }
         }
+    }
+
+    async fn get_suggested(&mut self) {
+        self.oauth.refresh().unwrap();
+        let mut app = self.app.lock().await;
+        let query = GetSuggestedAnimeQuery {
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+            limit: self.large_search_limit,
+            nsfw: app.app_config.nsfw,
+            offset: 0,
+        };
+        match api::get_suggested_anime(&query, &self.oauth).await {
+            Ok(result) => {
+                app.search_results.anime = Some(result.clone());
+            }
+            Err(e) => {
+                app.write_error(e);
+                app.active_display_block = ActiveDisplayBlock::Error;
+                return;
+            }
+        }
+        app.navigation_index += 1;
+        let route = Route {
+            data: Some(Data::Suggestions(app.search_results.clone())),
+            block: ActiveDisplayBlock::Suggestions,
+            title: "Suggested Anime".to_string(),
+        };
+        app.push_navigation_stack(route);
+        app.active_block = ActiveBlock::DisplayBlock;
+        app.active_display_block = ActiveDisplayBlock::Suggestions;
+        app.display_block_title = "Suggested Anime".to_string();
     }
 
     async fn get_seasonal(&mut self) {
