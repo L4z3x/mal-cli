@@ -24,11 +24,11 @@ pub fn draw_search_result(f: &mut Frame, app: &App, chunk: Rect) {
 }
 
 pub fn draw_nav_bar(f: &mut Frame, app: &App, chunk: Rect) -> Rect {
-    let splitted_layout = Layout::default()
+    let splitted_layout: [Rect; 2] = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(7), Constraint::Percentage(93)])
         .margin(0)
-        .split(chunk);
+        .areas(chunk);
 
     let bar = splitted_layout[0];
 
@@ -36,10 +36,10 @@ pub fn draw_nav_bar(f: &mut Frame, app: &App, chunk: Rect) -> Rect {
 
     f.render_widget(block, bar);
 
-    let tab = Layout::default()
+    let tab: [Rect; 2] = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-        .split(bar);
+        .areas(bar);
 
     let anime_tab = tab[0];
 

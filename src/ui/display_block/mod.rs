@@ -9,6 +9,7 @@ mod seasonal;
 use super::util::get_color;
 mod empty;
 mod loading;
+mod ranking;
 mod results;
 mod search;
 pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
@@ -21,9 +22,12 @@ pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
 
         ActiveDisplayBlock::Help => {} // draw_help_menu(f, app);
 
-        ActiveDisplayBlock::AnimeRanking => {}
-
-        ActiveDisplayBlock::MangaRanking => {}
+        ActiveDisplayBlock::AnimeRanking => {
+            ranking::draw_anime_ranking(f, app, chunk);
+        }
+        ActiveDisplayBlock::MangaRanking => {
+            ranking::draw_manga_ranking(f, app, chunk);
+        }
 
         ActiveDisplayBlock::UserAnimeList => {}
 

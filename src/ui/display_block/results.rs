@@ -147,7 +147,7 @@ pub fn draw_anime_search_results(f: &mut Frame, app: &App, chunk: Rect) {
     */
 }
 
-fn draw_manga_search_results(f: &mut Frame, app: &App, chunk: Rect) {
+pub fn draw_manga_search_results(f: &mut Frame, app: &App, chunk: Rect) {
     let results = app.search_results.manga.as_ref().unwrap();
     if results.data.is_empty() {
         // draw_no_results(f, app, chunk);

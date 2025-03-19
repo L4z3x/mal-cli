@@ -7,10 +7,7 @@ use std::sync::mpsc::Sender;
 use strum_macros::IntoStaticStr;
 
 const DEFAULT_ROUTE: Route = Route {
-    anime: None,
-    manga: None,
-    user: None,
-    results: None,
+    data: None,
     block: ActiveDisplayBlock::Empty,
     title: String::new(),
 };
@@ -32,6 +29,30 @@ pub const ANIME_OPTIONS_RANGE: std::ops::Range<usize> = 0..3;
 pub const USER_OPTIONS_RANGE: std::ops::Range<usize> = 3..6;
 
 pub const GENERAL_OPTIONS_RANGE: std::ops::Range<usize> = 6..9;
+
+pub const ANIME_RANKING_TYPES: [&str; 9] = [
+    "All",
+    "Airing",
+    "Upcoming",
+    "Movie",
+    "Popularity",
+    "Special",
+    "TV",
+    "OVA",
+    "Favorite",
+];
+
+pub const MANGA_RANKING_TYPES: [&str; 9] = [
+    "All",
+    "Manga",
+    "Manhwa",
+    "Popularity",
+    "Novels",
+    "Oneshots",
+    "Doujin",
+    "Manhua",
+    "Favorite",
+];
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum RouteId {
@@ -140,6 +161,7 @@ pub struct App {
     pub navigation_index: u32,
     pub navigation_stack: Vec<Route>,
     pub display_block_title: String,
+    pub popup: bool,
     // top three bar:
     pub top_three_anime: TopThreeAnime,
     pub top_three_manga: TopThreeManga,
@@ -147,8 +169,8 @@ pub struct App {
     pub active_top_three_anime: Option<AnimeRankingType>,
     pub active_top_three_manga: Option<MangaRankingType>,
     pub selected_top_three: u32,
-    pub anime_ranking_types: Vec<AnimeRankingType>,
-    pub manga_ranking_types: Vec<MangaRankingType>,
+    pub available_anime_ranking_types: Vec<AnimeRankingType>,
+    pub available_manga_ranking_types: Vec<MangaRankingType>,
     // pub anime_rank_type_index: u32,
     // pub manga_rank_type_index: u32,
     pub active_anime_rank_index: u32,
@@ -159,8 +181,14 @@ pub struct App {
     pub user_detail: Option<UserInfo>,
     // seasonal
     pub anime_season: Seasonal,
-
-    pub popup: bool,
+    //ranking
+    // pub ranking_selected_tab:
+    pub anime_ranking_data: Option<Ranking<RankingAnimePair>>,
+    pub anime_ranking_type: AnimeRankingType,
+    pub manga_ranking_data: Option<Ranking<RankingMangaPair>>,
+    pub manga_ranking_type: MangaRankingType,
+    pub anime_ranking_index: u8,
+    pub manga_ranking_index: u8,
 }
 
 pub struct Seasonal {
@@ -191,6 +219,7 @@ pub struct TopThreeManga {
     pub popular: Option<[Manga; 3]>,
     pub favourite: Option<[Manga; 3]>,
 }
+
 impl TopThreeManga {
     pub fn default() -> Self {
         Self {
@@ -219,6 +248,7 @@ pub struct TopThreeAnime {
     pub special: Option<[Anime; 3]>,
     pub favourite: Option<[Anime; 3]>,
 }
+
 impl TopThreeAnime {
     pub fn default() -> Self {
         Self {
@@ -235,12 +265,21 @@ impl TopThreeAnime {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum Data {
+    SearchResult(SearchResult),
+    Suggestions(SearchResult),
+    UserInfo(UserInfo),
+    Anime(Anime),
+    Manga(Manga),
+    // UserAnimeList(Page<Anime>),
+    // UserMangaList(Page<Manga>),
+    AnimeRanking(Ranking<RankingAnimePair>),
+    MangaRanking(Ranking<RankingMangaPair>),
+}
 #[derive(Debug)]
 pub struct Route {
-    pub anime: Option<Anime>,
-    pub manga: Option<Manga>,
-    pub user: Option<UserInfo>,
-    pub results: Option<SearchResult>,
+    pub data: Option<Data>,
     pub block: ActiveDisplayBlock,
     pub title: String,
 }
@@ -263,9 +302,9 @@ impl App {
                 selected_year: year.1 as u16,
             },
 
-            anime_ranking_types: app_config.top_three_anime_types.clone(),
+            available_anime_ranking_types: app_config.top_three_anime_types.clone(),
             active_top_three: TopThreeBlock::Anime(app_config.top_three_anime_types[0].clone()),
-            manga_ranking_types: app_config.top_three_manga_types.clone(),
+            available_manga_ranking_types: app_config.top_three_manga_types.clone(),
             app_config,
             is_loading: false,
             api_error: String::new(),
@@ -293,6 +332,7 @@ impl App {
             active_block: ActiveBlock::DisplayBlock,
             active_display_block: ActiveDisplayBlock::Empty,
             navigation_stack: vec![DEFAULT_ROUTE],
+            // top three
             top_three_anime: TopThreeAnime::default(),
             top_three_manga: TopThreeManga::default(),
             selected_top_three: 3, // out of index to select nothing
@@ -300,6 +340,14 @@ impl App {
             active_top_three_manga: None,
             active_anime_rank_index: 0,
             active_manga_rank_index: 0,
+            // ranking page
+            anime_ranking_data: None,
+            anime_ranking_type: AnimeRankingType::All,
+            anime_ranking_index: 0,
+            manga_ranking_data: None,
+            manga_ranking_type: MangaRankingType::All,
+            manga_ranking_index: 0,
+            //
             navigation_index: 0,
             anime_detail: None,
             manga_detail: None,
@@ -339,8 +387,6 @@ impl App {
         let _ = &self.dispatch(IoEvent::GetTopThree(self.active_top_three.clone()));
     }
 
-    // Send a network event to the network thread
-
     pub fn dispatch(&mut self, event: IoEvent) {
         self.is_loading = true;
         if let Some(io_tx) = &self.io_tx {
@@ -354,6 +400,7 @@ impl App {
 
     pub fn push_navigation_stack(&mut self, r: Route) {
         let index = self.navigation_index as usize;
+
         if index < self.navigation_stack.len() {
             for _ in index..self.navigation_stack.len() {
                 self.navigation_stack.pop();
@@ -373,7 +420,7 @@ impl App {
     }
 
     pub fn get_current_route(&self) -> Option<&Route> {
-        self.navigation_stack.last()
+        Some(&self.navigation_stack[self.navigation_index as usize])
     }
 
     pub fn calculate_help_menu_offset(&mut self) {
@@ -426,28 +473,32 @@ impl App {
     }
 
     fn load_state_data(&mut self, i: usize) {
-        self.active_display_block = self.navigation_stack[i].block;
+        match &self.navigation_stack[i].data {
+            Some(data) => {
+                match data {
+                    Data::Anime(d) => {
+                        self.anime_detail = Some(d.clone());
+                    }
+                    Data::Manga(d) => {
+                        self.manga_detail = Some(d.clone());
+                    }
+                    Data::AnimeRanking(d) => {
+                        self.anime_ranking_data = Some(d.clone());
+                    }
+                    Data::MangaRanking(d) => {
+                        self.manga_ranking_data = Some(d.clone());
+                    }
+                    Data::UserInfo(d) => self.user_detail = Some(d.clone()),
+                    _ => {}
+                }
 
-        self.anime_detail = self.navigation_stack[i].anime.clone();
+                self.active_display_block = self.navigation_stack[i].block.clone();
+                self.navigation_index = i as u32;
+                self.display_block_title = self.navigation_stack[i].title.clone();
+            }
 
-        self.manga_detail = self.navigation_stack[i].manga.clone();
-
-        self.search_results.anime = self.navigation_stack[i]
-            .results
-            .as_ref()
-            .and_then(|r| r.anime.clone());
-
-        self.search_results.manga = self.navigation_stack[i]
-            .results
-            .as_ref()
-            .and_then(|r| r.manga.clone());
-
-        self.user_detail = self.navigation_stack[i].user.clone();
-
-        self.display_block_title = self.navigation_stack[i].title.clone();
-
-        self.navigation_index = i as u32;
-        // dbg!(self.navigation_index); //TODO: remove
+            None => {}
+        }
     }
 }
 

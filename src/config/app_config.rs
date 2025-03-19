@@ -73,6 +73,7 @@ pub struct KeyBindings {
     pub search: Key,
     pub toggle: Key,
     pub next_state: Key,
+    pub open_popup: Key,
 }
 
 #[derive(Clone)]
@@ -99,6 +100,7 @@ impl AppConfig {
                 back: Key::Char('q'),
                 search: Key::Char('/'),
                 toggle: Key::Char('s'),
+                open_popup: Key::Char('r'),
                 next_state: Key::Ctrl('p'),
             },
             behavior: BehaviorConfig {

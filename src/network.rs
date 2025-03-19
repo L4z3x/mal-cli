@@ -1,6 +1,6 @@
 use crate::{
     api::{self, model::*, GetAnimeRankingQuery, GetMangaRankingQuery, GetSeasonalAnimeQuery},
-    app::{ActiveBlock, ActiveDisplayBlock, App, Route, SelectedSearchTab, TopThreeBlock},
+    app::{ActiveBlock, ActiveDisplayBlock, App, Data, Route, SelectedSearchTab, TopThreeBlock},
     auth::OAuth,
 };
 use std::sync::Arc;
@@ -12,14 +12,14 @@ pub enum IoEvent {
     GetAnimeSearchResults(String),
     GetMangaSearchResults(String),
     GetAnime(String),
-    GetAnimeRanking(String),
+    GetAnimeRanking(AnimeRankingType),
+    GetMangaRanking(MangaRankingType),
     GetSeasonalAnime,
     GetSuggestedAnime(String),
     UpdateAnimeListStatus(String),
     DeleteAnimeListStatus(String),
     GetAnimeList(String),
     GetManga(String),
-    GetMangaRanking(String),
     UpdateMangaListStatus(String),
     DeleteMangaListStatus(String),
     GetMangaList(String),
@@ -47,16 +47,17 @@ impl<'a> Network<'a> {
 
     pub async fn handle_network_event(&mut self, io_event: IoEvent) {
         match io_event {
-            IoEvent::GetSearchResults(q) => {
-                self.get_search_results(q).await;
-            }
-            IoEvent::GetSeasonalAnime => {
-                self.get_seasonal().await;
-            }
+            IoEvent::GetSearchResults(q) => self.get_search_results(q).await,
+
+            IoEvent::GetSeasonalAnime => self.get_seasonal().await,
+
+            IoEvent::GetAnimeRanking(r) => self.get_anime_ranking(r).await,
+
+            IoEvent::GetMangaRanking(r) => self.get_manga_ranking(r).await,
+
             // IoEvent::GetAnimeSearchResults(String) => {}
             // IoEvent::GetMangaSearchResults(String) => {}
             // IoEvent::GetAnime(String) => {}
-            // IoEvent::GetAnimeRanking(String) => {}
             // IoEvent::GetSeasonalAnime(String) => {}
             // IoEvent::GetSuggestedAnime(String) => {}
             // IoEvent::UpdateAnimeListStatus(String) => {}
@@ -74,6 +75,83 @@ impl<'a> Network<'a> {
 
         let mut app = self.app.lock().await;
         app.is_loading = false
+    }
+
+    async fn get_anime_ranking(&mut self, ranking_type: AnimeRankingType) {
+        self.oauth.refresh().unwrap();
+        let mut app = self.app.lock().await;
+        let query = GetAnimeRankingQuery {
+            ranking_type: ranking_type.clone(),
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+            limit: self.large_search_limit,
+            nsfw: app.app_config.nsfw,
+            offset: 0,
+        };
+        let title = format!("Top Anime by {}", ranking_type.to_string());
+        match api::get_anime_ranking(&query, &self.oauth).await {
+            Ok(result) => {
+                app.anime_ranking_data = Some(result.clone());
+            }
+            Err(e) => {
+                app.write_error(e);
+                app.active_display_block = ActiveDisplayBlock::Error;
+                return;
+            }
+        }
+        app.navigation_index += 1;
+        let route = Route {
+            data: Some(Data::AnimeRanking(
+                app.anime_ranking_data.as_ref().unwrap().clone(),
+            )),
+            block: ActiveDisplayBlock::AnimeRanking,
+            title: title.clone(),
+        };
+        app.push_navigation_stack(route);
+        app.active_block = ActiveBlock::DisplayBlock;
+        app.active_display_block = ActiveDisplayBlock::AnimeRanking;
+        app.display_block_title = title;
+    }
+
+    async fn get_manga_ranking(&mut self, ranking_type: MangaRankingType) {
+        self.oauth.refresh().unwrap();
+        let mut app = self.app.lock().await;
+        let query = GetMangaRankingQuery {
+            ranking_type: ranking_type.clone(),
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+            limit: self.large_search_limit,
+            nsfw: app.app_config.nsfw,
+            offset: 0,
+        };
+        // better title:
+        let mut rank = ranking_type.to_string();
+        if rank == "bypopularity".to_string() {
+            rank = "Popular Manga".to_string();
+        }
+        let title = format!("Top {}", rank);
+        match api::get_manga_ranking(&query, &self.oauth).await {
+            Ok(result) => {
+                app.manga_ranking_data = Some(result.clone());
+            }
+            Err(e) => {
+                app.write_error(e);
+                app.active_display_block = ActiveDisplayBlock::Error;
+                return;
+            }
+        }
+        app.navigation_index += 1;
+
+        let route = Route {
+            data: Some(Data::MangaRanking(
+                app.manga_ranking_data.as_ref().unwrap().clone(),
+            )),
+            block: ActiveDisplayBlock::MangaRanking,
+            title: title.clone(),
+        };
+        app.push_navigation_stack(route);
+
+        app.active_block = ActiveBlock::DisplayBlock;
+        app.active_display_block = ActiveDisplayBlock::MangaRanking;
+        app.display_block_title = title;
     }
 
     async fn get_top_three(&mut self, ranking_type: TopThreeBlock) {
@@ -165,7 +243,7 @@ impl<'a> Network<'a> {
                 app.active_top_three = TopThreeBlock::Anime(
                     app.active_top_three_anime
                         .as_ref()
-                        .unwrap_or(&app.anime_ranking_types[0])
+                        .unwrap_or(&app.available_anime_ranking_types[0])
                         .clone(),
                 );
             }
@@ -174,7 +252,7 @@ impl<'a> Network<'a> {
                 app.active_top_three = TopThreeBlock::Error(RankingType::AnimeRankingType(
                     app.active_top_three_anime
                         .as_ref()
-                        .unwrap_or(&app.anime_ranking_types[0])
+                        .unwrap_or(&app.available_anime_ranking_types[0])
                         .clone(),
                 ));
                 return;
@@ -224,6 +302,13 @@ impl<'a> Network<'a> {
                             results.data[2].node.clone(),
                         ]);
                     }
+                    MangaRankingType::Favorite => {
+                        app.top_three_manga.favourite = Some([
+                            results.data[0].node.clone(),
+                            results.data[1].node.clone(),
+                            results.data[2].node.clone(),
+                        ]);
+                    }
                     MangaRankingType::Doujinshi => {
                         app.top_three_manga.doujin = Some([
                             results.data[0].node.clone(),
@@ -258,7 +343,7 @@ impl<'a> Network<'a> {
                 app.active_top_three = TopThreeBlock::Manga(
                     app.active_top_three_manga
                         .as_ref()
-                        .unwrap_or(&app.manga_ranking_types[0])
+                        .unwrap_or(&app.available_manga_ranking_types[0])
                         .clone(),
                 );
             }
@@ -268,7 +353,7 @@ impl<'a> Network<'a> {
                 app.active_top_three = TopThreeBlock::Error(RankingType::MangaRankingType(
                     app.active_top_three_manga
                         .as_ref()
-                        .unwrap_or(&app.manga_ranking_types[0])
+                        .unwrap_or(&app.available_manga_ranking_types[0])
                         .clone(),
                 ));
                 return;
@@ -301,10 +386,7 @@ impl<'a> Network<'a> {
         );
         app.navigation_index += 1;
         let route = Route {
-            anime: None,
-            manga: None,
-            results: Some(app.search_results.clone()),
-            user: None,
+            data: Some(Data::SearchResult(app.search_results.clone())),
             block: ActiveDisplayBlock::Seasonal,
             title: title.clone(),
         };
@@ -357,10 +439,7 @@ impl<'a> Network<'a> {
         };
         app.navigation_index += 1;
         let route = Route {
-            anime: None,
-            manga: None,
-            results: Some(app.search_results.clone()),
-            user: None,
+            data: Some(Data::SearchResult(app.search_results.clone())),
             block: ActiveDisplayBlock::SearchResultBlock,
             title: format!("Search Results: {}", q.clone()).to_string(),
         };

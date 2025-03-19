@@ -1,6 +1,11 @@
 use chrono::Datelike;
 
-use crate::{api::model::Season, app::App, event::Key, network::IoEvent};
+use crate::{
+    api::model::Season,
+    app::{ActiveDisplayBlock, App},
+    event::Key,
+    network::IoEvent,
+};
 
 use super::common;
 
@@ -19,6 +24,7 @@ pub fn handler(key: Key, app: &mut App) {
 }
 
 fn reload_seasonal(app: &mut App) {
+    app.active_display_block = ActiveDisplayBlock::Loading;
     app.popup = false;
     app.anime_season.anime_season.season = get_season(app);
     app.anime_season.anime_season.year = app.anime_season.selected_year as u64;

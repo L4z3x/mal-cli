@@ -18,6 +18,7 @@ pub enum MangaRankingType {
     Manhua,
     #[strum(serialize = "bypopularity")]
     ByPopularity,
+    Favorite,
     Other(String),
 }
 

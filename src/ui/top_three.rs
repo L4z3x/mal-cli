@@ -195,6 +195,7 @@ fn draw_manga_top_three(
         MangaRankingType::Manhwa => &app.top_three_manga.manhwa,
         MangaRankingType::Manhua => &app.top_three_manga.manhua,
         MangaRankingType::ByPopularity => &app.top_three_manga.popular,
+        MangaRankingType::Favorite => &app.top_three_manga.favourite,
         MangaRankingType::Other(_) => {
             println!("No manga ranking type specified in ui/top_three.rs");
             &app.top_three_manga.manga

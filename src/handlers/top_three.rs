@@ -30,26 +30,26 @@ pub fn handler(key: Key, app: &mut App) {
                     app,
                     &app.active_top_three_manga
                         .as_ref()
-                        .unwrap_or(&app.manga_ranking_types[0]),
+                        .unwrap_or(&app.available_manga_ranking_types[0]),
                 );
 
                 if !data_available {
                     app.active_top_three = TopThreeBlock::Loading(RankingType::MangaRankingType(
                         app.active_top_three_manga
                             .clone()
-                            .unwrap_or(app.manga_ranking_types[0].clone()),
+                            .unwrap_or(app.available_manga_ranking_types[0].clone()),
                     ));
 
                     app.dispatch(IoEvent::GetTopThree(TopThreeBlock::Manga(
                         app.active_top_three_manga
                             .clone()
-                            .unwrap_or(app.manga_ranking_types[0].clone()),
+                            .unwrap_or(app.available_manga_ranking_types[0].clone()),
                     )));
                 } else {
                     app.active_top_three = TopThreeBlock::Manga(
                         app.active_top_three_manga
                             .as_ref()
-                            .unwrap_or(&app.manga_ranking_types[0])
+                            .unwrap_or(&app.available_manga_ranking_types[0])
                             .clone(),
                     )
                 }
@@ -60,14 +60,14 @@ pub fn handler(key: Key, app: &mut App) {
                     app,
                     app.active_top_three_anime
                         .as_ref()
-                        .unwrap_or(&app.anime_ranking_types[0]),
+                        .unwrap_or(&app.available_anime_ranking_types[0]),
                 );
 
                 if !data_available {
                     app.active_top_three = TopThreeBlock::Loading(RankingType::AnimeRankingType(
                         app.active_top_three_anime
                             .clone()
-                            .unwrap_or(app.anime_ranking_types[0].clone()),
+                            .unwrap_or(app.available_anime_ranking_types[0].clone()),
                     ));
 
                     app.dispatch(IoEvent::GetTopThree(TopThreeBlock::Anime(
@@ -79,7 +79,7 @@ pub fn handler(key: Key, app: &mut App) {
                     app.active_top_three = TopThreeBlock::Anime(
                         app.active_top_three_anime
                             .as_ref()
-                            .unwrap_or(&app.anime_ranking_types[0])
+                            .unwrap_or(&app.available_anime_ranking_types[0])
                             .clone(),
                     );
                 }
@@ -91,7 +91,7 @@ pub fn handler(key: Key, app: &mut App) {
                     app.dispatch(IoEvent::GetTopThree(TopThreeBlock::Manga(
                         app.active_top_three_manga
                             .as_ref()
-                            .unwrap_or(&app.manga_ranking_types[0])
+                            .unwrap_or(&app.available_manga_ranking_types[0])
                             .clone(),
                     )))
                 }
@@ -99,7 +99,7 @@ pub fn handler(key: Key, app: &mut App) {
                     app.dispatch(IoEvent::GetTopThree(TopThreeBlock::Anime(
                         app.active_top_three_anime
                             .as_ref()
-                            .unwrap_or(&app.anime_ranking_types[0])
+                            .unwrap_or(&app.available_anime_ranking_types[0])
                             .clone(),
                     )))
                 }
@@ -110,14 +110,14 @@ pub fn handler(key: Key, app: &mut App) {
         k if common::left_event(k) => match &app.active_top_three {
             TopThreeBlock::Anime(_) => {
                 let mut index = app.active_anime_rank_index;
-                let max = app.anime_ranking_types.len() as u32;
+                let max = app.available_anime_ranking_types.len() as u32;
                 decrement_index(&mut index, max);
                 change_anime_top_three_block(app, index);
             }
 
             TopThreeBlock::Manga(_) => {
                 let mut index = app.active_manga_rank_index;
-                let max = app.manga_ranking_types.len() as u32;
+                let max = app.available_manga_ranking_types.len() as u32;
 
                 decrement_index(&mut index, max);
                 change_manga_top_three_block(app, index);
@@ -125,14 +125,14 @@ pub fn handler(key: Key, app: &mut App) {
             TopThreeBlock::Error(previous) => match previous {
                 RankingType::AnimeRankingType(_) => {
                     let mut index = app.active_anime_rank_index;
-                    let max = app.anime_ranking_types.len() as u32;
+                    let max = app.available_anime_ranking_types.len() as u32;
                     decrement_index(&mut index, max);
                     change_anime_top_three_block(app, index)
                 }
 
                 RankingType::MangaRankingType(_) => {
                     let mut index = app.active_manga_rank_index;
-                    let max = app.manga_ranking_types.len() as u32;
+                    let max = app.available_manga_ranking_types.len() as u32;
                     decrement_index(&mut index, max);
                     change_manga_top_three_block(app, index)
                 }
@@ -143,13 +143,13 @@ pub fn handler(key: Key, app: &mut App) {
         k if common::right_event(k) => match &app.active_top_three {
             TopThreeBlock::Anime(_) => {
                 let mut index = app.active_anime_rank_index;
-                let max = app.anime_ranking_types.len() as u32;
+                let max = app.available_anime_ranking_types.len() as u32;
                 increment_index(&mut index, max);
                 change_anime_top_three_block(app, index);
             }
             TopThreeBlock::Manga(_) => {
                 let mut index = app.active_manga_rank_index;
-                let max = app.manga_ranking_types.len() as u32;
+                let max = app.available_manga_ranking_types.len() as u32;
 
                 increment_index(&mut index, max);
                 change_manga_top_three_block(app, index);
@@ -157,14 +157,14 @@ pub fn handler(key: Key, app: &mut App) {
             TopThreeBlock::Error(previous) => match previous {
                 RankingType::AnimeRankingType(_) => {
                     let mut index = app.active_anime_rank_index;
-                    let max = app.anime_ranking_types.len() as u32;
+                    let max = app.available_anime_ranking_types.len() as u32;
                     increment_index(&mut index, max);
                     change_anime_top_three_block(app, index)
                 }
 
                 RankingType::MangaRankingType(_) => {
                     let mut index = app.active_manga_rank_index;
-                    let max = app.manga_ranking_types.len() as u32;
+                    let max = app.available_manga_ranking_types.len() as u32;
                     increment_index(&mut index, max);
                     change_manga_top_three_block(app, index)
                 }
@@ -188,6 +188,7 @@ fn is_manga_data_available(app: &App, manga_type: &MangaRankingType) -> bool {
         MangaRankingType::Manhwa => app.top_three_manga.manhwa.is_some(),
         MangaRankingType::Manhua => app.top_three_manga.manhua.is_some(),
         MangaRankingType::ByPopularity => app.top_three_manga.popular.is_some(),
+        MangaRankingType::Favorite => app.top_three_manga.favourite.is_some(),
         MangaRankingType::Other(_) => false,
     }
 }
@@ -208,47 +209,53 @@ fn is_anime_data_available(app: &App, anime_type: &AnimeRankingType) -> bool {
 }
 
 fn change_anime_top_three_block(app: &mut App, index: u32) {
-    let data_available = is_anime_data_available(app, &app.anime_ranking_types[index as usize]);
+    let data_available =
+        is_anime_data_available(app, &app.available_anime_ranking_types[index as usize]);
 
     if !data_available {
         app.active_top_three = TopThreeBlock::Loading(RankingType::AnimeRankingType(
-            app.anime_ranking_types[index as usize].clone(),
+            app.available_anime_ranking_types[index as usize].clone(),
         ));
 
-        app.active_top_three_anime = Some(app.anime_ranking_types[index as usize].clone());
+        app.active_top_three_anime =
+            Some(app.available_anime_ranking_types[index as usize].clone());
 
         app.dispatch(IoEvent::GetTopThree(TopThreeBlock::Anime(
-            app.anime_ranking_types[index as usize].clone(),
+            app.available_anime_ranking_types[index as usize].clone(),
         )));
         app.active_anime_rank_index = index;
     } else {
-        app.active_top_three_anime = Some(app.anime_ranking_types[index as usize].clone());
+        app.active_top_three_anime =
+            Some(app.available_anime_ranking_types[index as usize].clone());
 
         app.active_top_three =
-            TopThreeBlock::Anime(app.anime_ranking_types[index as usize].clone());
+            TopThreeBlock::Anime(app.available_anime_ranking_types[index as usize].clone());
         app.active_anime_rank_index = index;
     }
 }
 
 fn change_manga_top_three_block(app: &mut App, index: u32) {
-    let data_available = is_manga_data_available(app, &app.manga_ranking_types[index as usize]);
+    let data_available =
+        is_manga_data_available(app, &app.available_manga_ranking_types[index as usize]);
 
     if !data_available {
         app.active_top_three = TopThreeBlock::Loading(RankingType::MangaRankingType(
-            app.manga_ranking_types[index as usize].clone(),
+            app.available_manga_ranking_types[index as usize].clone(),
         ));
 
-        app.active_top_three_manga = Some(app.manga_ranking_types[index as usize].clone());
+        app.active_top_three_manga =
+            Some(app.available_manga_ranking_types[index as usize].clone());
 
         app.dispatch(IoEvent::GetTopThree(TopThreeBlock::Manga(
-            app.manga_ranking_types[index as usize].clone(),
+            app.available_manga_ranking_types[index as usize].clone(),
         )));
         app.active_manga_rank_index = index;
     } else {
-        app.active_top_three_manga = Some(app.manga_ranking_types[index as usize].clone());
+        app.active_top_three_manga =
+            Some(app.available_manga_ranking_types[index as usize].clone());
 
         app.active_top_three =
-            TopThreeBlock::Manga(app.manga_ranking_types[index as usize].clone());
+            TopThreeBlock::Manga(app.available_manga_ranking_types[index as usize].clone());
         app.active_manga_rank_index = index;
     }
 }

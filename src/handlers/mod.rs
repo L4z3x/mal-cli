@@ -4,6 +4,7 @@ mod display_block;
 mod help;
 mod input;
 mod manga;
+mod ranking;
 mod result;
 mod seasonal;
 mod top_three;

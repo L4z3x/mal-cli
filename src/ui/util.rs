@@ -1,4 +1,4 @@
-use ratatui::style::Style;
+use ratatui::style::{Modifier, Style};
 
 // use crate::api::model::*;
 use crate::app::App;
@@ -8,7 +8,9 @@ pub const SMALL_TERMINAL_HEIGHT: u16 = 45;
 
 pub fn get_color(is_active: bool, theme: Theme) -> Style {
     match is_active {
-        true => Style::default().fg(theme.selected),
+        true => Style::default()
+            .fg(theme.selected)
+            .add_modifier(Modifier::BOLD),
         _ => Style::default().fg(theme.inactive),
     }
 }
