@@ -12,6 +12,7 @@ mod loading;
 mod ranking;
 mod results;
 mod search;
+mod user;
 pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
     let current_display_block = &app.active_display_block;
 
@@ -32,7 +33,7 @@ pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
 
         ActiveDisplayBlock::UserMangaList => {}
 
-        ActiveDisplayBlock::UserInfo => {}
+        ActiveDisplayBlock::UserInfo => user::draw_user_info(f, app, chunk),
 
         ActiveDisplayBlock::SearchResultBlock => {
             let chunk = search::draw_nav_bar(f, app, chunk);

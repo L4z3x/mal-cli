@@ -23,12 +23,14 @@ pub struct AnimeStatistics {
     pub num_items_dropped: u64,
     pub num_items_plan_to_watch: u64,
     pub num_items: u64,
+
     pub num_days_watched: f64,
     pub num_days_watching: f64,
     pub num_days_completed: f64,
     pub num_days_on_hold: f64,
     pub num_days_dropped: f64,
     pub num_days: f64,
+
     pub num_episodes: u64,
     pub num_times_rewatched: u64,
     pub mean_score: f64,
@@ -38,7 +40,7 @@ pub struct AnimeStatistics {
 pub struct UserInfo {
     pub id: u64,
     pub name: String,
-    pub picture: String,
+    pub picture: Option<String>,
     pub gender: Option<String>,
     pub birthday: Option<DateWrapper>,
     pub location: Option<String>,

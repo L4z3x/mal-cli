@@ -1,7 +1,7 @@
 use crate::{
     api::{
         self, model::*, GetAnimeRankingQuery, GetMangaRankingQuery, GetSeasonalAnimeQuery,
-        GetSuggestedAnimeQuery,
+        GetSuggestedAnimeQuery, GetUserInformationQuery,
     },
     app::{ActiveBlock, ActiveDisplayBlock, App, Data, Route, SelectedSearchTab, TopThreeBlock},
     auth::OAuth,
@@ -26,7 +26,7 @@ pub enum IoEvent {
     UpdateMangaListStatus(String),
     DeleteMangaListStatus(String),
     GetMangaList(String),
-    GetUserInfo(String),
+    GetUserInfo,
     GetTopThree(TopThreeBlock),
 }
 
@@ -72,7 +72,7 @@ impl<'a> Network<'a> {
             // IoEvent::UpdateMangaListStatus(String) => {}
             // IoEvent::DeleteMangaListStatus(String) => {}
             // IoEvent::GetMangaList(String) => {}
-            // IoEvent::GetUserInfo(String) => {}
+            IoEvent::GetUserInfo => self.get_user_info().await,
             IoEvent::GetTopThree(r) => self.get_top_three(r).await,
             _ => (),
         }
@@ -363,6 +363,35 @@ impl<'a> Network<'a> {
                 return;
             }
         }
+    }
+
+    async fn get_user_info(&mut self) {
+        self.oauth.refresh().unwrap();
+        let mut app = self.app.lock().await;
+        let query = GetUserInformationQuery {
+            fields: Some(ALL_USER_FIELDS.to_string()),
+        };
+        //? we can only use @me for the user in the current api version
+        match api::get_my_user_information("@me".to_string(), &query, &self.oauth).await {
+            Ok(result) => {
+                app.user_profile = Some(result.clone());
+            }
+            Err(e) => {
+                app.write_error(e);
+                app.active_display_block = ActiveDisplayBlock::Error;
+                return;
+            }
+        }
+        app.navigation_index += 1;
+        let route = Route {
+            data: Some(Data::UserInfo(app.user_profile.as_ref().unwrap().clone())),
+            block: ActiveDisplayBlock::UserInfo,
+            title: "Profile".to_string(),
+        };
+        app.push_navigation_stack(route);
+        app.active_block = ActiveBlock::DisplayBlock;
+        app.active_display_block = ActiveDisplayBlock::UserInfo;
+        app.display_block_title = "Profile".to_string();
     }
 
     async fn get_suggested(&mut self) {

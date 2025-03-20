@@ -178,7 +178,6 @@ pub struct App {
     // detail
     pub anime_detail: Option<Anime>,
     pub manga_detail: Option<Manga>,
-    pub user_detail: Option<UserInfo>,
     // seasonal
     pub anime_season: Seasonal,
     //ranking
@@ -189,6 +188,8 @@ pub struct App {
     pub manga_ranking_type: MangaRankingType,
     pub anime_ranking_index: u8,
     pub manga_ranking_index: u8,
+    //profile:
+    pub user_profile: Option<UserInfo>,
 }
 
 pub struct Seasonal {
@@ -351,7 +352,7 @@ impl App {
             navigation_index: 0,
             anime_detail: None,
             manga_detail: None,
-            user_detail: None,
+            user_profile: None,
             display_block_title: String::new(),
             popup: false,
         }
@@ -488,7 +489,7 @@ impl App {
                     Data::MangaRanking(d) => {
                         self.manga_ranking_data = Some(d.clone());
                     }
-                    Data::UserInfo(d) => self.user_detail = Some(d.clone()),
+                    Data::UserInfo(d) => self.user_profile = Some(d.clone()),
                     _ => {}
                 }
 

@@ -3,7 +3,7 @@ mod common;
 mod display_block;
 mod help;
 mod input;
-mod manga;
+mod option;
 mod ranking;
 mod result;
 mod seasonal;
@@ -43,9 +43,9 @@ fn handle_block_events(key: Key, app: &mut App) {
 
         ActiveBlock::Anime => anime::handler(key, app),
 
-        ActiveBlock::User => manga::handler(key, app),
+        ActiveBlock::User => user::handler(key, app),
 
-        ActiveBlock::Option => user::handler(key, app),
+        ActiveBlock::Option => option::handler(key, app),
 
         ActiveBlock::Error => {}
 
