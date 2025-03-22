@@ -7,7 +7,7 @@ use crate::{
     network::IoEvent,
 };
 
-use super::common;
+use crate::handlers::common;
 
 pub fn handler(key: Key, app: &mut App) {
     if app.popup {
@@ -18,7 +18,7 @@ pub fn handler(key: Key, app: &mut App) {
             Key::Char('s') => app.popup = true,
 
             // Key::Char('s') => app.active_display_block = ActiveDisplayBlock::,
-            _ => super::handle_result_block(key, app),
+            _ => crate::handlers::handle_result_block(key, app),
         }
     }
 }

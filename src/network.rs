@@ -3,7 +3,10 @@ use crate::{
         self, model::*, GetAnimeRankingQuery, GetMangaRankingQuery, GetSeasonalAnimeQuery,
         GetSuggestedAnimeQuery, GetUserInformationQuery,
     },
-    app::{ActiveBlock, ActiveDisplayBlock, App, Data, Route, SelectedSearchTab, TopThreeBlock},
+    app::{
+        ActiveBlock, ActiveDisplayBlock, App, Data, Route, SelectedSearchTab, TopThreeBlock,
+        UserAnimeList, UserMangaList,
+    },
     auth::OAuth,
 };
 use std::sync::Arc;
@@ -21,11 +24,11 @@ pub enum IoEvent {
     GetSuggestedAnime,
     UpdateAnimeListStatus(String),
     DeleteAnimeListStatus(String),
-    GetAnimeList(String),
+    GetAnimeList(Option<UserWatchStatus>),
+    GetMangaList(Option<UserReadStatus>),
     GetManga(String),
     UpdateMangaListStatus(String),
     DeleteMangaListStatus(String),
-    GetMangaList(String),
     GetUserInfo,
     GetTopThree(TopThreeBlock),
 }
@@ -60,18 +63,20 @@ impl<'a> Network<'a> {
 
             IoEvent::GetSuggestedAnime => self.get_suggested().await,
 
+            IoEvent::GetAnimeList(s) => self.get_user_anime_list(s).await,
+
+            IoEvent::GetMangaList(s) => self.get_user_manga_list(s).await,
+
             // IoEvent::GetAnimeSearchResults(String) => {}
             // IoEvent::GetMangaSearchResults(String) => {}
             // IoEvent::GetAnime(String) => {}
             // IoEvent::GetSuggestedAnime(String) => {}
             // IoEvent::UpdateAnimeListStatus(String) => {}
             // IoEvent::DeleteAnimeListStatus(String) => {}
-            // IoEvent::GetAnimeList(String) => {}
             // IoEvent::GetManga(String) => {}
             // IoEvent::GetMangaRanking(String) => {}
             // IoEvent::UpdateMangaListStatus(String) => {}
             // IoEvent::DeleteMangaListStatus(String) => {}
-            // IoEvent::GetMangaList(String) => {}
             IoEvent::GetUserInfo => self.get_user_info().await,
             IoEvent::GetTopThree(r) => self.get_top_three(r).await,
             _ => (),
@@ -102,7 +107,7 @@ impl<'a> Network<'a> {
                 return;
             }
         }
-        app.navigation_index += 1;
+
         let route = Route {
             data: Some(Data::AnimeRanking(
                 app.anime_ranking_data.as_ref().unwrap().clone(),
@@ -142,7 +147,6 @@ impl<'a> Network<'a> {
                 return;
             }
         }
-        app.navigation_index += 1;
 
         let route = Route {
             data: Some(Data::MangaRanking(
@@ -177,80 +181,72 @@ impl<'a> Network<'a> {
             offset: 0,
         };
         match api::get_anime_ranking(&query, &self.oauth).await {
-            Ok(result) => {
-                match &rank_type {
-                    AnimeRankingType::Airing => {
-                        app.top_three_anime.airing = Some([
-                            result.data[0].node.clone(),
-                            result.data[1].node.clone(),
-                            result.data[2].node.clone(),
-                        ]);
-                    }
-                    AnimeRankingType::All => {
-                        app.top_three_anime.all = Some([
-                            result.data[0].node.clone(),
-                            result.data[1].node.clone(),
-                            result.data[2].node.clone(),
-                        ])
-                    }
-                    AnimeRankingType::Upcoming => {
-                        app.top_three_anime.upcoming = Some([
-                            result.data[0].node.clone(),
-                            result.data[1].node.clone(),
-                            result.data[2].node.clone(),
-                        ]);
-                    }
-                    AnimeRankingType::ByPopularity => {
-                        app.top_three_anime.popular = Some([
-                            result.data[0].node.clone(),
-                            result.data[1].node.clone(),
-                            result.data[2].node.clone(),
-                        ]);
-                    }
-                    AnimeRankingType::Favorite => {
-                        app.top_three_anime.favourite = Some([
-                            result.data[0].node.clone(),
-                            result.data[1].node.clone(),
-                            result.data[2].node.clone(),
-                        ]);
-                    }
-                    AnimeRankingType::Movie => {
-                        app.top_three_anime.movie = Some([
-                            result.data[0].node.clone(),
-                            result.data[1].node.clone(),
-                            result.data[2].node.clone(),
-                        ]);
-                    }
-                    AnimeRankingType::OVA => {
-                        app.top_three_anime.ova = Some([
-                            result.data[0].node.clone(),
-                            result.data[1].node.clone(),
-                            result.data[2].node.clone(),
-                        ]);
-                    }
-                    AnimeRankingType::TV => {
-                        app.top_three_anime.tv = Some([
-                            result.data[0].node.clone(),
-                            result.data[1].node.clone(),
-                            result.data[2].node.clone(),
-                        ]);
-                    }
-                    AnimeRankingType::Special => {
-                        app.top_three_anime.special = Some([
-                            result.data[0].node.clone(),
-                            result.data[1].node.clone(),
-                            result.data[2].node.clone(),
-                        ]);
-                    }
-                    AnimeRankingType::Other(_s) => {}
+            Ok(result) => match &rank_type {
+                AnimeRankingType::Airing => {
+                    app.top_three_anime.airing = Some([
+                        result.data[0].node.clone(),
+                        result.data[1].node.clone(),
+                        result.data[2].node.clone(),
+                    ]);
                 }
-                app.active_top_three = TopThreeBlock::Anime(
-                    app.active_top_three_anime
-                        .as_ref()
-                        .unwrap_or(&app.available_anime_ranking_types[0])
-                        .clone(),
-                );
-            }
+                AnimeRankingType::All => {
+                    app.top_three_anime.all = Some([
+                        result.data[0].node.clone(),
+                        result.data[1].node.clone(),
+                        result.data[2].node.clone(),
+                    ])
+                }
+                AnimeRankingType::Upcoming => {
+                    app.top_three_anime.upcoming = Some([
+                        result.data[0].node.clone(),
+                        result.data[1].node.clone(),
+                        result.data[2].node.clone(),
+                    ]);
+                }
+                AnimeRankingType::ByPopularity => {
+                    app.top_three_anime.popular = Some([
+                        result.data[0].node.clone(),
+                        result.data[1].node.clone(),
+                        result.data[2].node.clone(),
+                    ]);
+                }
+                AnimeRankingType::Favorite => {
+                    app.top_three_anime.favourite = Some([
+                        result.data[0].node.clone(),
+                        result.data[1].node.clone(),
+                        result.data[2].node.clone(),
+                    ]);
+                }
+                AnimeRankingType::Movie => {
+                    app.top_three_anime.movie = Some([
+                        result.data[0].node.clone(),
+                        result.data[1].node.clone(),
+                        result.data[2].node.clone(),
+                    ]);
+                }
+                AnimeRankingType::OVA => {
+                    app.top_three_anime.ova = Some([
+                        result.data[0].node.clone(),
+                        result.data[1].node.clone(),
+                        result.data[2].node.clone(),
+                    ]);
+                }
+                AnimeRankingType::TV => {
+                    app.top_three_anime.tv = Some([
+                        result.data[0].node.clone(),
+                        result.data[1].node.clone(),
+                        result.data[2].node.clone(),
+                    ]);
+                }
+                AnimeRankingType::Special => {
+                    app.top_three_anime.special = Some([
+                        result.data[0].node.clone(),
+                        result.data[1].node.clone(),
+                        result.data[2].node.clone(),
+                    ]);
+                }
+                AnimeRankingType::Other(_s) => {}
+            },
             Err(e) => {
                 app.write_error(e);
                 app.active_top_three = TopThreeBlock::Error(RankingType::AnimeRankingType(
@@ -262,6 +258,12 @@ impl<'a> Network<'a> {
                 return;
             }
         }
+        app.active_top_three = TopThreeBlock::Anime(
+            app.active_top_three_anime
+                .as_ref()
+                .unwrap_or(&app.available_anime_ranking_types[0])
+                .clone(),
+        );
     }
 
     async fn get_manga_top_three(&mut self, rank_type: MangaRankingType) {
@@ -276,81 +278,72 @@ impl<'a> Network<'a> {
         };
 
         match api::get_manga_ranking(&query, &self.oauth).await {
-            Ok(results) => {
-                match &rank_type {
-                    MangaRankingType::All => {
-                        app.top_three_manga.all = Some([
-                            results.data[0].node.clone(),
-                            results.data[1].node.clone(),
-                            results.data[2].node.clone(),
-                        ]);
-                    }
-                    MangaRankingType::Manga => {
-                        app.top_three_manga.manga = Some([
-                            results.data[0].node.clone(),
-                            results.data[1].node.clone(),
-                            results.data[2].node.clone(),
-                        ]);
-                    }
-                    MangaRankingType::Novels => {
-                        app.top_three_manga.novels = Some([
-                            results.data[0].node.clone(),
-                            results.data[1].node.clone(),
-                            results.data[2].node.clone(),
-                        ]);
-                    }
-                    MangaRankingType::OneShots => {
-                        app.top_three_manga.oneshots = Some([
-                            results.data[0].node.clone(),
-                            results.data[1].node.clone(),
-                            results.data[2].node.clone(),
-                        ]);
-                    }
-                    MangaRankingType::Favorite => {
-                        app.top_three_manga.favourite = Some([
-                            results.data[0].node.clone(),
-                            results.data[1].node.clone(),
-                            results.data[2].node.clone(),
-                        ]);
-                    }
-                    MangaRankingType::Doujinshi => {
-                        app.top_three_manga.doujin = Some([
-                            results.data[0].node.clone(),
-                            results.data[1].node.clone(),
-                            results.data[2].node.clone(),
-                        ]);
-                    }
-                    MangaRankingType::Manhwa => {
-                        app.top_three_manga.manhwa = Some([
-                            results.data[0].node.clone(),
-                            results.data[1].node.clone(),
-                            results.data[2].node.clone(),
-                        ]);
-                    }
-                    MangaRankingType::Manhua => {
-                        app.top_three_manga.manhua = Some([
-                            results.data[0].node.clone(),
-                            results.data[1].node.clone(),
-                            results.data[2].node.clone(),
-                        ]);
-                    }
-                    MangaRankingType::ByPopularity => {
-                        app.top_three_manga.popular = Some([
-                            results.data[0].node.clone(),
-                            results.data[1].node.clone(),
-                            results.data[2].node.clone(),
-                        ]);
-                    }
-                    MangaRankingType::Other(_) => {}
+            Ok(results) => match &rank_type {
+                MangaRankingType::All => {
+                    app.top_three_manga.all = Some([
+                        results.data[0].node.clone(),
+                        results.data[1].node.clone(),
+                        results.data[2].node.clone(),
+                    ]);
                 }
-
-                app.active_top_three = TopThreeBlock::Manga(
-                    app.active_top_three_manga
-                        .as_ref()
-                        .unwrap_or(&app.available_manga_ranking_types[0])
-                        .clone(),
-                );
-            }
+                MangaRankingType::Manga => {
+                    app.top_three_manga.manga = Some([
+                        results.data[0].node.clone(),
+                        results.data[1].node.clone(),
+                        results.data[2].node.clone(),
+                    ]);
+                }
+                MangaRankingType::Novels => {
+                    app.top_three_manga.novels = Some([
+                        results.data[0].node.clone(),
+                        results.data[1].node.clone(),
+                        results.data[2].node.clone(),
+                    ]);
+                }
+                MangaRankingType::OneShots => {
+                    app.top_three_manga.oneshots = Some([
+                        results.data[0].node.clone(),
+                        results.data[1].node.clone(),
+                        results.data[2].node.clone(),
+                    ]);
+                }
+                MangaRankingType::Favorite => {
+                    app.top_three_manga.favourite = Some([
+                        results.data[0].node.clone(),
+                        results.data[1].node.clone(),
+                        results.data[2].node.clone(),
+                    ]);
+                }
+                MangaRankingType::Doujinshi => {
+                    app.top_three_manga.doujin = Some([
+                        results.data[0].node.clone(),
+                        results.data[1].node.clone(),
+                        results.data[2].node.clone(),
+                    ]);
+                }
+                MangaRankingType::Manhwa => {
+                    app.top_three_manga.manhwa = Some([
+                        results.data[0].node.clone(),
+                        results.data[1].node.clone(),
+                        results.data[2].node.clone(),
+                    ]);
+                }
+                MangaRankingType::Manhua => {
+                    app.top_three_manga.manhua = Some([
+                        results.data[0].node.clone(),
+                        results.data[1].node.clone(),
+                        results.data[2].node.clone(),
+                    ]);
+                }
+                MangaRankingType::ByPopularity => {
+                    app.top_three_manga.popular = Some([
+                        results.data[0].node.clone(),
+                        results.data[1].node.clone(),
+                        results.data[2].node.clone(),
+                    ]);
+                }
+                MangaRankingType::Other(_) => {}
+            },
 
             Err(e) => {
                 app.write_error(e);
@@ -363,6 +356,12 @@ impl<'a> Network<'a> {
                 return;
             }
         }
+        app.active_top_three = TopThreeBlock::Manga(
+            app.active_top_three_manga
+                .as_ref()
+                .unwrap_or(&app.available_manga_ranking_types[0])
+                .clone(),
+        );
     }
 
     async fn get_user_info(&mut self) {
@@ -382,7 +381,6 @@ impl<'a> Network<'a> {
                 return;
             }
         }
-        app.navigation_index += 1;
         let route = Route {
             data: Some(Data::UserInfo(app.user_profile.as_ref().unwrap().clone())),
             block: ActiveDisplayBlock::UserInfo,
@@ -413,7 +411,6 @@ impl<'a> Network<'a> {
                 return;
             }
         }
-        app.navigation_index += 1;
         let route = Route {
             data: Some(Data::Suggestions(app.search_results.clone())),
             block: ActiveDisplayBlock::Suggestions,
@@ -448,7 +445,7 @@ impl<'a> Network<'a> {
             app.anime_season.anime_season.season,
             app.anime_season.anime_season.year.to_string()
         );
-        app.navigation_index += 1;
+
         let route = Route {
             data: Some(Data::SearchResult(app.search_results.clone())),
             block: ActiveDisplayBlock::Seasonal,
@@ -458,6 +455,81 @@ impl<'a> Network<'a> {
         app.active_block = ActiveBlock::DisplayBlock;
         app.active_display_block = ActiveDisplayBlock::Seasonal;
         app.display_block_title = title;
+    }
+
+    async fn get_user_anime_list(&mut self, status: Option<UserWatchStatus>) {
+        self.oauth.refresh().unwrap();
+        let mut app = self.app.lock().await;
+        let query = api::GetUserAnimeListQuery {
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+            status: status.clone(),
+            sort: Some(SortStyle::ListScore),
+            limit: self.large_search_limit,
+            offset: 0,
+            nsfw: app.app_config.nsfw,
+        };
+        match api::get_user_anime_list("@me".to_string(), &query, &self.oauth).await {
+            Ok(result) => {
+                app.search_results.anime = Some(result.clone());
+            }
+            Err(e) => {
+                app.write_error(e);
+                app.active_display_block = ActiveDisplayBlock::Error;
+                return;
+            }
+        }
+
+        let data = UserAnimeList {
+            anime_list: app.search_results.anime.as_ref().unwrap().clone(),
+            status: status.clone(),
+        };
+        let route = Route {
+            block: ActiveDisplayBlock::UserAnimeList,
+            data: Some(Data::UserAnimeList(data)),
+            title: format!("My Anime List: {}", get_status_string(status)),
+        };
+        app.active_block = ActiveBlock::DisplayBlock;
+        app.active_display_block = ActiveDisplayBlock::UserAnimeList;
+        app.display_block_title = route.title.clone();
+        app.push_navigation_stack(route);
+    }
+
+    async fn get_user_manga_list(&mut self, status: Option<UserReadStatus>) {
+        self.oauth.refresh().unwrap();
+        let mut app = self.app.lock().await;
+        let query = api::GetUserMangaListQuery {
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+            status: status.clone(),
+            sort: Some(SortStyle::ListScore),
+            limit: self.large_search_limit,
+            offset: 0,
+            nsfw: app.app_config.nsfw,
+        };
+        match api::get_user_manga_list("@me".to_string(), &query, &self.oauth).await {
+            Ok(result) => {
+                app.search_results.manga = Some(result.clone());
+            }
+            Err(e) => {
+                app.write_error(e);
+                app.active_display_block = ActiveDisplayBlock::Error;
+                return;
+            }
+        }
+
+        let data = UserMangaList {
+            manga_list: app.search_results.manga.as_ref().unwrap().clone(),
+            status: status.clone(),
+        };
+        let route = Route {
+            block: ActiveDisplayBlock::UserMangaList,
+            data: Some(Data::UserMangaList(data)),
+            title: format!("My Manga List: {}", get_manga_status_string(status)),
+        };
+
+        app.active_block = ActiveBlock::DisplayBlock;
+        app.active_display_block = ActiveDisplayBlock::UserMangaList;
+        app.display_block_title = route.title.clone();
+        app.push_navigation_stack(route);
     }
 
     async fn get_search_results(&mut self, q: String) {
@@ -501,7 +573,7 @@ impl<'a> Network<'a> {
                 return;
             }
         };
-        app.navigation_index += 1;
+
         let route = Route {
             data: Some(Data::SearchResult(app.search_results.clone())),
             block: ActiveDisplayBlock::SearchResultBlock,
@@ -512,5 +584,33 @@ impl<'a> Network<'a> {
         app.search_results.selected_tab = SelectedSearchTab::Anime;
         app.active_display_block = ActiveDisplayBlock::SearchResultBlock;
         app.display_block_title = format!("Search Results: {}", q).to_string()
+    }
+}
+
+fn get_status_string(status: Option<UserWatchStatus>) -> String {
+    match status {
+        Some(s) => match s {
+            UserWatchStatus::Completed => "completed".to_string(),
+            UserWatchStatus::Watching => "watching".to_string(),
+            UserWatchStatus::OnHold => "on_hold".to_string(),
+            UserWatchStatus::Dropped => "dropped".to_string(),
+            UserWatchStatus::PlanToWatch => "plan_to_watch".to_string(),
+            UserWatchStatus::Other(_) => "All".to_string(),
+        },
+        None => "All".to_string(),
+    }
+}
+
+fn get_manga_status_string(status: Option<UserReadStatus>) -> String {
+    match status {
+        Some(s) => match s {
+            UserReadStatus::Completed => "completed".to_string(),
+            UserReadStatus::Reading => "reading".to_string(),
+            UserReadStatus::OnHold => "on_hold".to_string(),
+            UserReadStatus::Dropped => "dropped".to_string(),
+            UserReadStatus::PlanToRead => "plan_to_read".to_string(),
+            UserReadStatus::Other(_) => "All".to_string(),
+        },
+        None => "All".to_string(),
     }
 }

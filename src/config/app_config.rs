@@ -119,7 +119,7 @@ impl AppConfig {
                 AnimeRankingType::Movie,
             ],
             top_three_manga_types: vec![MangaRankingType::All, MangaRankingType::Manga],
-            navigation_stack_limit: 6,
+            navigation_stack_limit: 15,
         })
     }
 }

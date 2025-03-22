@@ -3,7 +3,7 @@ use crate::config::app_config::{AppConfig, TitleLanguage};
 use super::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use strum_macros::{Display, EnumString, IntoStaticStr};
+use strum_macros::{Display, EnumIter, EnumString, IntoStaticStr};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AnimeSeason {
@@ -192,9 +192,9 @@ pub struct RankingAnimePair {
     pub ranking: RankingInfo,
 }
 
-#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
+#[derive(Clone, Debug, PartialEq, EnumString, EnumIter, IntoStaticStr)]
 #[strum(serialize_all = "snake_case")]
-pub enum UserStatus {
+pub enum UserWatchStatus {
     Watching,
     Completed,
     OnHold,

@@ -13,6 +13,7 @@ use crate::{
 use super::results::draw_results;
 
 pub fn draw_search_result(f: &mut Frame, app: &App, chunk: Rect) {
+    let chunk = draw_nav_bar(f, app, chunk);
     let chunk = super::draw_keys_bar(f, app, chunk);
 
     draw_results(f, app, chunk);
@@ -29,10 +30,6 @@ pub fn draw_nav_bar(f: &mut Frame, app: &App, chunk: Rect) -> Rect {
         .areas(chunk);
 
     let bar = splitted_layout[0];
-
-    let block = Block::default().border_style(app.app_config.theme.active);
-
-    f.render_widget(block, bar);
 
     let tab: [Rect; 2] = Layout::default()
         .direction(Direction::Horizontal)

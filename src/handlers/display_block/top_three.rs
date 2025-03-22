@@ -1,4 +1,4 @@
-use super::common;
+use crate::handlers::common;
 use crate::{
     api::model::{AnimeRankingType, MangaRankingType, RankingType},
     app::{App, TopThreeBlock},

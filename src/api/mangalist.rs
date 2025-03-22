@@ -60,7 +60,7 @@ pub struct GetUserMangaListQuery {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fields: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<UserStatus>,
+    pub status: Option<UserReadStatus>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sort: Option<SortStyle>,
     pub limit: u64,

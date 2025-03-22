@@ -3,6 +3,7 @@ use crate::config::app_config::AppConfig;
 use crate::network::IoEvent;
 use chrono::Datelike;
 use ratatui::layout::Rect;
+use std::collections::{HashMap, HashSet};
 use std::sync::mpsc::Sender;
 use strum_macros::IntoStaticStr;
 
@@ -140,6 +141,58 @@ pub struct Library {
     pub saved_manga: ScrollablePages<Page<Manga>>,
 }
 
+#[derive(Debug)]
+pub struct Navigator {
+    pub history: Vec<u16>,
+    pub index: u16,
+    pub data: HashMap<u16, Route>,
+    pub last_id: u16,
+}
+
+impl Navigator {
+    pub fn new() -> Self {
+        let mut data = HashMap::new();
+        data.insert(0, DEFAULT_ROUTE);
+        Self {
+            history: vec![0],
+            index: 0,
+            data,
+            last_id: 0,
+        }
+    }
+
+    pub fn add_existing_route(&mut self, id: u16) {
+        self.history.push(id);
+        self.index = self.history.len() as u16 - 1;
+    }
+
+    pub fn add_route(&mut self, r: Route) {
+        self.last_id += 1;
+        self.data.insert(self.last_id, r);
+        self.history.push(self.last_id);
+        self.index = self.history.len() as u16 - 1;
+    }
+
+    pub fn remove_old_history(&mut self) {
+        self.history.remove(1);
+        self.clear_unused_data();
+    }
+
+    pub fn clear_unused_data(&mut self) {
+        let active_routes: HashSet<u16> = self.history.iter().copied().collect();
+        self.data.retain(|k, _| active_routes.contains(k));
+    }
+
+    pub fn get_current_title(&self) -> &String {
+        let id = self.history[self.index as usize];
+        &self.data[&id].title
+    }
+
+    pub fn get_current_block(&self) -> &ActiveDisplayBlock {
+        let id = self.history[self.index as usize];
+        &self.data[&id].block
+    }
+}
 pub struct App {
     pub io_tx: Option<Sender<IoEvent>>,
     pub app_config: AppConfig,
@@ -155,11 +208,10 @@ pub struct App {
     pub help_menu_page: u32,
     pub help_menu_max_lines: u32,
     pub help_docs_size: u32,
+
     pub active_block: ActiveBlock,
     pub active_display_block: ActiveDisplayBlock,
-
-    pub navigation_index: u32,
-    pub navigation_stack: Vec<Route>,
+    pub navigator: Navigator,
     pub display_block_title: String,
     pub popup: bool,
     // top three bar:
@@ -171,8 +223,6 @@ pub struct App {
     pub selected_top_three: u32,
     pub available_anime_ranking_types: Vec<AnimeRankingType>,
     pub available_manga_ranking_types: Vec<MangaRankingType>,
-    // pub anime_rank_type_index: u32,
-    // pub manga_rank_type_index: u32,
     pub active_anime_rank_index: u32,
     pub active_manga_rank_index: u32,
     // detail
@@ -181,7 +231,6 @@ pub struct App {
     // seasonal
     pub anime_season: Seasonal,
     //ranking
-    // pub ranking_selected_tab:
     pub anime_ranking_data: Option<Ranking<RankingAnimePair>>,
     pub anime_ranking_type: AnimeRankingType,
     pub manga_ranking_data: Option<Ranking<RankingMangaPair>>,
@@ -190,6 +239,10 @@ pub struct App {
     pub manga_ranking_index: u8,
     //profile:
     pub user_profile: Option<UserInfo>,
+    // use UserWatchStatus to determine the current tab
+    pub anime_list_status: Option<UserWatchStatus>,
+    // use UserReadStatus to determine the current tab
+    pub manga_list_status: Option<UserReadStatus>,
 }
 
 pub struct Seasonal {
@@ -273,12 +326,24 @@ pub enum Data {
     UserInfo(UserInfo),
     Anime(Anime),
     Manga(Manga),
-    // UserAnimeList(Page<Anime>),
-    // UserMangaList(Page<Manga>),
+    UserAnimeList(UserAnimeList),
+    UserMangaList(UserMangaList),
     AnimeRanking(Ranking<RankingAnimePair>),
     MangaRanking(Ranking<RankingMangaPair>),
 }
-#[derive(Debug)]
+
+#[derive(Debug, Clone)]
+pub struct UserAnimeList {
+    pub anime_list: Page<Anime>,
+    pub status: Option<UserWatchStatus>,
+}
+#[derive(Debug, Clone)]
+pub struct UserMangaList {
+    pub manga_list: Page<Manga>,
+    pub status: Option<UserReadStatus>,
+}
+
+#[derive(Debug, Clone)]
 pub struct Route {
     pub data: Option<Data>,
     pub block: ActiveDisplayBlock,
@@ -332,7 +397,7 @@ impl App {
             help_docs_size: 0,
             active_block: ActiveBlock::DisplayBlock,
             active_display_block: ActiveDisplayBlock::Empty,
-            navigation_stack: vec![DEFAULT_ROUTE],
+            navigator: Navigator::new(),
             // top three
             top_three_anime: TopThreeAnime::default(),
             top_three_manga: TopThreeManga::default(),
@@ -348,8 +413,11 @@ impl App {
             manga_ranking_data: None,
             manga_ranking_type: MangaRankingType::All,
             manga_ranking_index: 0,
+            // anime list
+            anime_list_status: None,
+            // manga list
+            manga_list_status: None,
             //
-            navigation_index: 0,
             anime_detail: None,
             manga_detail: None,
             user_profile: None,
@@ -399,29 +467,54 @@ impl App {
         };
     }
 
-    pub fn push_navigation_stack(&mut self, r: Route) {
-        let index = self.navigation_index as usize;
+    pub fn clear_route_before_push(&mut self) {
+        let index = self.navigator.index as usize;
 
-        if index < self.navigation_stack.len() {
-            for _ in index..self.navigation_stack.len() {
-                self.navigation_stack.pop();
+        if index < self.navigator.history.len() - 1 {
+            for _ in index + 1..self.navigator.history.len() {
+                self.navigator.history.pop();
+                self.navigator.clear_unused_data();
             }
         }
-
-        self.navigation_stack.push(r);
-
-        if self.navigation_stack.len() > self.app_config.navigation_stack_limit as usize {
-            self.navigation_stack.remove(1);
-        }
-        // get current index and remove  [>index ]
+        self.remove_old_history();
     }
 
-    pub fn pop_navigation_stack(&mut self) -> Option<Route> {
-        self.navigation_stack.pop()
+    fn push_existing_route(&mut self, id: u16) {
+        self.clear_route_before_push();
+        self.navigator.add_existing_route(id);
+    }
+
+    pub fn push_navigation_stack(&mut self, r: Route) {
+        self.clear_route_before_push();
+        self.navigator.add_route(r);
+        self.remove_old_history();
+    }
+
+    fn remove_old_history(&mut self) {
+        if self.navigator.history.len() - 1 > self.app_config.navigation_stack_limit as usize {
+            self.navigator.remove_old_history();
+        }
     }
 
     pub fn get_current_route(&self) -> Option<&Route> {
-        Some(&self.navigation_stack[self.navigation_index as usize])
+        let index = self.navigator.index as usize;
+
+        // Ensure the index is within bounds
+        if index >= self.navigator.history.len() {
+            eprintln!("Error: Navigation index {} is out of bounds", index);
+            return None;
+        }
+
+        let id = self.navigator.history[index];
+
+        // Ensure the route ID exists in the data map
+        match self.navigator.data.get(&id) {
+            Some(route) => Some(route),
+            None => {
+                eprintln!("Error: Route ID {} not found in data map", id);
+                None
+            }
+        }
     }
 
     pub fn calculate_help_menu_offset(&mut self) {
@@ -435,70 +528,141 @@ impl App {
         }
     }
 
-    pub fn load_previous_state(&mut self) {
+    pub fn load_previous_route(&mut self) {
         if self.popup {
             self.popup = false;
             return;
         }
-        if self.navigation_index == 1 {
+
+        if self.navigator.index == 1 {
             self.active_display_block = ActiveDisplayBlock::Empty;
             self.display_block_title = "Home".to_string();
-            self.navigation_index = 0;
+            self.navigator.index = 0;
             return;
         }
+
         if self.active_display_block == ActiveDisplayBlock::Loading {
             return;
         }
+
         if self.active_display_block == ActiveDisplayBlock::Error
             || self.active_display_block == ActiveDisplayBlock::Help
         {
-            self.active_display_block = self.navigation_stack[self.navigation_index as usize]
-                .block
-                .clone();
+            self.active_display_block = self.navigator.get_current_block().clone();
             return;
         }
-        let i = self.navigation_index.saturating_sub(1) as usize;
+        if self.navigator.index == 0 {
+            return;
+        }
+        let i = self.navigator.index.saturating_sub(1);
         self.load_state_data(i);
     }
 
-    pub fn load_next_state(&mut self) {
-        if self.navigation_index > self.navigation_stack.len() as u32 - 1 {
-            self.navigation_index = self.navigation_stack.len() as u32 - 2;
+    pub fn load_next_route(&mut self) {
+        if self.navigator.index >= self.navigator.history.len() as u16 {
+            self.navigator.index = self.navigator.history.len().saturating_sub(2) as u16;
         }
 
-        if self.navigation_index == self.navigation_stack.len() as u32 - 1 {
+        if self.navigator.index == self.navigator.history.len() as u16 - 1 {
             return;
         }
 
-        self.load_state_data(self.navigation_index as usize + 1);
+        self.load_state_data(self.navigator.index + 1);
     }
 
-    fn load_state_data(&mut self, i: usize) {
-        match &self.navigation_stack[i].data {
+    pub fn load_route(&mut self, id: usize) {
+        // todo: change to u16
+        self.push_existing_route(id as u16);
+        self.load_state_data(self.navigator.history.len() as u16 - 1);
+    }
+
+    fn load_state_data(&mut self, i: u16) {
+        if i as usize >= self.navigator.history.len() {
+            return;
+        }
+        self.navigator.index = i;
+        let route = self.get_current_route();
+        if route.is_none() {
+            return;
+        }
+        let data = route.unwrap().data.clone();
+        match data {
             Some(data) => {
                 match data {
+                    Data::SearchResult(d) => {
+                        self.search_results = d.clone();
+                    }
+
+                    Data::Suggestions(d) => {
+                        self.search_results = d.clone();
+                    }
+
                     Data::Anime(d) => {
                         self.anime_detail = Some(d.clone());
                     }
+
                     Data::Manga(d) => {
                         self.manga_detail = Some(d.clone());
                     }
+
                     Data::AnimeRanking(d) => {
                         self.anime_ranking_data = Some(d.clone());
                     }
+
                     Data::MangaRanking(d) => {
                         self.manga_ranking_data = Some(d.clone());
                     }
+
                     Data::UserInfo(d) => self.user_profile = Some(d.clone()),
-                    _ => {}
+
+                    Data::UserAnimeList(d) => {
+                        self.anime_list_status = d.status.clone();
+                        self.search_results.anime = Some(d.anime_list.clone());
+                    }
+
+                    Data::UserMangaList(d) => {
+                        self.manga_list_status = d.status.clone();
+                        self.search_results.manga = Some(d.manga_list.clone());
+                    }
                 }
 
-                self.active_display_block = self.navigation_stack[i].block.clone();
-                self.navigation_index = i as u32;
-                self.display_block_title = self.navigation_stack[i].title.clone();
+                self.active_display_block = self.navigator.get_current_block().clone();
+                self.display_block_title = self.navigator.get_current_title().clone();
+                self.active_block = ActiveBlock::DisplayBlock;
             }
 
-            None => {}
+            None => {
+                self.active_display_block = ActiveDisplayBlock::Empty;
+                self.display_block_title = "No data".to_string();
+            }
+        }
+    }
+
+    pub fn next_anime_list_status(&self) -> Option<UserWatchStatus> {
+        match &self.anime_list_status {
+            Some(s) => match s {
+                UserWatchStatus::Watching => Some(UserWatchStatus::Completed),
+                UserWatchStatus::Completed => Some(UserWatchStatus::OnHold),
+                UserWatchStatus::OnHold => Some(UserWatchStatus::Dropped),
+                UserWatchStatus::Dropped => Some(UserWatchStatus::PlanToWatch),
+                UserWatchStatus::PlanToWatch => None,
+                UserWatchStatus::Other(_) => None,
+            },
+            None => Some(UserWatchStatus::Watching),
+        }
+    }
+
+    pub fn previous_anime_list_status(&self) -> Option<UserWatchStatus> {
+        match &self.anime_list_status {
+            Some(s) => match s {
+                UserWatchStatus::Watching => None,
+                UserWatchStatus::Completed => Some(UserWatchStatus::Watching),
+                UserWatchStatus::OnHold => Some(UserWatchStatus::Completed),
+                UserWatchStatus::Dropped => Some(UserWatchStatus::OnHold),
+                UserWatchStatus::PlanToWatch => Some(UserWatchStatus::Dropped),
+                UserWatchStatus::Other(_) => Some(UserWatchStatus::PlanToWatch),
+            },
+            None => Some(UserWatchStatus::Watching),
         }
     }
 }
@@ -520,5 +684,61 @@ fn get_selected_season(season: &Season) -> u8 {
         &Season::Summer => 2,
         &Season::Fall => 3,
         &Season::Other(_) => panic!("no season selected"),
+    }
+}
+
+#[cfg(test)]
+pub mod test {
+    use super::*;
+    use crate::config::app_config::AppConfig;
+    pub fn get_app() -> App {
+        let config = AppConfig::load();
+        let (sync_io_tx, _) = std::sync::mpsc::channel::<IoEvent>();
+
+        let mut app = App::new(sync_io_tx, config.unwrap());
+        let route = Route {
+            data: None,
+            block: ActiveDisplayBlock::Empty,
+            title: "Home".to_string(),
+        };
+        app.push_navigation_stack(route.clone());
+        app.push_navigation_stack(route.clone());
+        app.push_navigation_stack(route.clone());
+        app.push_navigation_stack(route);
+        app
+    }
+    #[test]
+    fn test_navigation_push() {
+        let app = get_app();
+
+        assert_eq!(app.navigator.history.len(), 5);
+        assert_eq!(app.navigator.index, 4);
+    }
+
+    #[test]
+    fn test_backward_navigation() {
+        let mut app = get_app();
+        assert_eq!(app.navigator.index, 4);
+        app.load_previous_route();
+        assert_eq!(app.navigator.index, 3);
+        app.load_previous_route();
+        assert_eq!(app.navigator.index, 2);
+        app.load_previous_route();
+        assert_eq!(app.navigator.index, 1);
+        app.load_previous_route();
+        assert_eq!(app.navigator.index, 0);
+    }
+    #[test]
+    fn test_forward_navigation() {
+        let mut app = get_app();
+        app.navigator.index = 0;
+        app.load_next_route();
+        assert_eq!(app.navigator.index, 1);
+        app.load_next_route();
+        assert_eq!(app.navigator.index, 2);
+        app.load_next_route();
+        assert_eq!(app.navigator.index, 3);
+        app.load_next_route();
+        assert_eq!(app.navigator.index, 4);
     }
 }

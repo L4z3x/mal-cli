@@ -212,7 +212,7 @@ impl_serialize_deserialize!(
     AnimeRankingType,
     MangaRankingType,
     Season,
-    UserStatus,
+
     SortStyle,
     UserReadStatus,
     MangaMediaType,

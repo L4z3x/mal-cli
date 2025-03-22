@@ -4,13 +4,9 @@ mod display_block;
 mod help;
 mod input;
 mod option;
-mod ranking;
-mod result;
-mod seasonal;
-mod top_three;
 mod user;
 use crate::app::{
-    ActiveBlock, ActiveDisplayBlock, App, ANIME_OPTIONS_RANGE, DISPLAY_COLUMN_NUMBER,
+    ActiveBlock, ActiveDisplayBlock, App, Data, ANIME_OPTIONS_RANGE, DISPLAY_COLUMN_NUMBER,
     DISPLAY_RAWS_NUMBER, GENERAL_OPTIONS_RANGE, USER_OPTIONS_RANGE,
 };
 use crate::event::Key;
@@ -20,17 +16,21 @@ pub use input::handler as input_handler;
 pub fn handle_app(key: Key, app: &mut App) {
     // First handle any global event and then move to block event
     match key {
-        Key::Esc => app.load_previous_state(),
-        _ if key == app.app_config.keys.next_state => app.load_next_state(),
+        Key::Esc => app.load_previous_route(),
+
+        _ if key == app.app_config.keys.next_state => app.load_next_route(),
+
         _ if key == app.app_config.keys.help => {
             app.active_display_block = ActiveDisplayBlock::Help;
         }
+
         _ if key == app.app_config.keys.search => {
             app.input = vec![];
             app.input_idx = 0;
             app.input_cursor_position = 0;
             app.active_block = ActiveBlock::Input;
         }
+
         _ => handle_block_events(key, app),
     }
 }
@@ -49,7 +49,7 @@ fn handle_block_events(key: Key, app: &mut App) {
 
         ActiveBlock::Error => {}
 
-        ActiveBlock::TopThree => top_three::handler(key, app),
+        ActiveBlock::TopThree => display_block::top_three::handler(key, app),
 
         ActiveBlock::DisplayBlock => display_block::handle_display_block(key, app),
     }
@@ -145,6 +145,23 @@ pub fn handle_result_block(key: Key, app: &mut App) {
         Key::Enter => get_media_detail_page(app),
         _ => {}
     }
+}
+
+pub fn is_data_available(
+    app: &App,
+    data: &Data,
+    block: ActiveDisplayBlock,
+) -> (bool, Option<usize>) {
+    for (i, route) in app.navigator.data.iter().enumerate() {
+        if route.1.block == block && route.1.data.is_some() {
+            if std::mem::discriminant(data)
+                == std::mem::discriminant(route.1.data.as_ref().unwrap())
+            {
+                return (true, Some(i));
+            }
+        }
+    }
+    return (false, None);
 }
 
 pub fn get_media_detail_page(app: &mut App) {}

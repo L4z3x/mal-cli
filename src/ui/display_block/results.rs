@@ -163,6 +163,9 @@ pub fn draw_manga_search_results(f: &mut Frame, app: &App, chunk: Rect) {
     //
 
     for (index, component) in components.iter().enumerate() {
+        if index >= cards.len() {
+            break;
+        }
         let is_active =
             index == selected_card_index && app.active_block == ActiveBlock::DisplayBlock;
 
@@ -225,10 +228,6 @@ pub fn draw_manga_search_results(f: &mut Frame, app: &App, chunk: Rect) {
             app.app_config.theme.text,
         ));
 
-        if index >= cards.len() {
-            break;
-        }
-
         let card = Paragraph::new(vec![title, type_num_vol, score, start_date, num_user_list])
             .alignment(Alignment::Left)
             .wrap(ratatui::widgets::Wrap { trim: true })
@@ -242,7 +241,7 @@ pub fn draw_manga_search_results(f: &mut Frame, app: &App, chunk: Rect) {
     }
 }
 
-fn constract_cards_with_data<T: Clone + Debug>(
+pub fn constract_cards_with_data<T: Clone + Debug>(
     chunk: Rect,
     results: &PageableData<Vec<Node<T>>>,
 ) -> (Vec<Rect>, Vec<&T>) {

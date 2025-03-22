@@ -59,7 +59,7 @@ pub struct GetUserAnimeListQuery {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fields: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<UserStatus>,
+    pub status: Option<UserWatchStatus>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sort: Option<SortStyle>,
     pub limit: u64,
@@ -134,7 +134,7 @@ mod tests {
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
             status: None,
             sort: Some(SortStyle::ListScore),
-            limit: 100,
+            limit: 2,
             offset: 0,
             nsfw: true,
         };

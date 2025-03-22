@@ -41,24 +41,26 @@ pub fn handler(key: Key, app: &mut App) {
         // }
         // `library` should probably be an array of structs with enums rather than just using indexes
         // like this
-        Key::Enter => match app.library.selected_index {
-            // Seasonal
-            0 => get_seasonal(app),
-            // Ranking
-            1 => get_anime_ranking(app),
-            // Suggested
-            2 => get_suggestion(app),
-            // This is required because Rust can't tell if this pattern in exhaustive
-            _ => {} //# search is not neaded in the list.
-                    // // Search
-                    // 3 => {}
-        },
+        Key::Enter => {
+            match app.library.selected_index {
+                // Seasonal
+                0 => get_seasonal(app),
+                // Ranking
+                1 => get_anime_ranking(app),
+                // Suggested
+                2 => get_suggestion(app),
+                // This is required because Rust can't tell if this pattern in exhaustive
+                _ => {}
+            };
+            app.library.selected_index = 9;
+        }
+
         _ => (),
     };
 }
 
 fn get_seasonal(app: &mut App) {
-    let is_data_availabe = is_seasonal_data_available(app);
+    let (is_data_availabe, is_next, index) = is_seasonal_data_available(app);
     let is_current_route = app
         .get_current_route()
         .map_or(false, |r| r.block == ActiveDisplayBlock::Seasonal);
@@ -67,21 +69,13 @@ fn get_seasonal(app: &mut App) {
         return;
     }
 
-    if is_data_availabe.0 {
-        app.search_results = match app.navigation_stack[is_data_availabe.1.unwrap()]
-            .data
-            .as_ref()
-            .unwrap()
-        {
-            Data::SearchResult(d) => d.clone(),
-            _ => return,
-        };
-        app.display_block_title = app.navigation_stack[is_data_availabe.1.unwrap()]
-            .title
-            .clone();
-        app.active_display_block = ActiveDisplayBlock::Seasonal;
-        app.active_block = ActiveBlock::DisplayBlock;
-        app.navigation_index = is_data_availabe.1.unwrap() as u32;
+    if is_next {
+        app.load_next_route();
+        return;
+    }
+
+    if is_data_availabe {
+        app.load_route(index.unwrap() as usize);
     } else {
         app.active_display_block = ActiveDisplayBlock::Loading;
 
@@ -89,19 +83,21 @@ fn get_seasonal(app: &mut App) {
     }
 }
 
-fn is_seasonal_data_available(app: &mut App) -> (bool, Option<usize>) {
-    for i in 0..(app.navigation_stack.len() - 1) {
-        if app.navigation_stack[i].block == ActiveDisplayBlock::Seasonal
-            && app.navigation_stack[i].data.is_some()
+fn is_seasonal_data_available(app: &mut App) -> (bool, bool, Option<u16>) {
+    for i in 0..(app.navigator.history.len() - 1) {
+        let id = app.navigator.history[i];
+        if app.navigator.data[&id].block == ActiveDisplayBlock::Seasonal
+            && app.navigator.data[&id].data.is_some()
         {
-            return (true, Some(i));
+            let is_next = app.navigator.index + 1 == i as u16;
+            return (true, is_next, Some(id));
         }
     }
-    return (false, None);
+    return (false, false, None);
 }
 
 pub fn get_anime_ranking(app: &mut App) {
-    let is_data_available = is_anime_ranking_data_available(app);
+    let (is_data_available, is_next, index) = is_anime_ranking_data_available(app);
 
     let is_current_route = app
         .get_current_route()
@@ -111,22 +107,13 @@ pub fn get_anime_ranking(app: &mut App) {
         return;
     }
 
-    if is_data_available.0 {
-        app.anime_ranking_data = match app.navigation_stack[is_data_available.1.unwrap()]
-            .data
-            .as_ref()
-            .unwrap()
-        {
-            Data::AnimeRanking(d) => Some(d.clone()),
-            _ => return,
-        };
+    if is_next {
+        app.load_next_route();
+        return;
+    }
 
-        app.display_block_title = app.navigation_stack[is_data_available.1.unwrap()]
-            .title
-            .clone();
-        app.active_display_block = ActiveDisplayBlock::AnimeRanking;
-        app.active_block = ActiveBlock::DisplayBlock;
-        app.navigation_index = is_data_available.1.unwrap() as u32;
+    if is_data_available {
+        app.load_route(index.unwrap() as usize);
     } else {
         app.active_display_block = ActiveDisplayBlock::Loading;
 
@@ -135,7 +122,7 @@ pub fn get_anime_ranking(app: &mut App) {
 }
 
 pub fn get_manga_ranking(app: &mut App) {
-    let is_data_available = is_manga_ranking_data_available(app);
+    let (is_data_available, is_next, index) = is_manga_ranking_data_available(app);
 
     let is_current_route = app
         .get_current_route()
@@ -144,22 +131,13 @@ pub fn get_manga_ranking(app: &mut App) {
         return;
     }
 
-    if is_data_available.0 {
-        app.manga_ranking_data = match app.navigation_stack[is_data_available.1.unwrap()]
-            .data
-            .as_ref()
-            .unwrap()
-        {
-            Data::MangaRanking(d) => Some(d.clone()),
-            _ => return,
-        };
+    if is_next {
+        app.load_next_route();
+        return;
+    }
 
-        app.display_block_title = app.navigation_stack[is_data_available.1.unwrap()]
-            .title
-            .clone();
-        app.active_display_block = ActiveDisplayBlock::MangaRanking;
-        app.active_block = ActiveBlock::DisplayBlock;
-        app.navigation_index = is_data_available.1.unwrap() as u32;
+    if is_data_available {
+        app.load_route(index.unwrap() as usize);
     } else {
         app.active_display_block = ActiveDisplayBlock::Loading;
 
@@ -167,34 +145,38 @@ pub fn get_manga_ranking(app: &mut App) {
     }
 }
 
-fn is_anime_ranking_data_available(app: &mut App) -> (bool, Option<usize>) {
-    for i in 0..(app.navigation_stack.len()) {
-        if app.navigation_stack[i].block == ActiveDisplayBlock::AnimeRanking
-            && app.navigation_stack[i].data.is_some()
+fn is_anime_ranking_data_available(app: &App) -> (bool, bool, Option<u16>) {
+    for i in 0..(app.navigator.history.len()) {
+        let id = app.navigator.history[i];
+        if app.navigator.data[&id].block == ActiveDisplayBlock::AnimeRanking
+            && app.navigator.data[&id].data.is_some()
         {
-            if let Data::AnimeRanking(_) = app.navigation_stack[i].data.as_ref().unwrap() {
-                return (true, Some(i));
+            if let Data::AnimeRanking(_) = app.navigator.data[&id].data.as_ref().unwrap() {
+                let is_next = app.navigator.index + 1 == i as u16;
+                return (true, is_next, Some(id));
             }
         }
     }
-    return (false, None);
+    return (false, false, None);
 }
 
-fn is_manga_ranking_data_available(app: &mut App) -> (bool, Option<usize>) {
-    for i in 0..(app.navigation_stack.len()) {
-        if app.navigation_stack[i].block == ActiveDisplayBlock::MangaRanking
-            && app.navigation_stack[i].data.is_some()
+fn is_manga_ranking_data_available(app: &App) -> (bool, bool, Option<u16>) {
+    for i in 0..(app.navigator.history.len()) {
+        let id = app.navigator.history[i];
+        if app.navigator.data[&id].block == ActiveDisplayBlock::MangaRanking
+            && app.navigator.data[&id].data.is_some()
         {
-            if let Data::MangaRanking(_) = app.navigation_stack[i].data.as_ref().unwrap() {
-                return (true, Some(i));
+            if let Data::MangaRanking(_) = app.navigator.data[&id].data.as_ref().unwrap() {
+                let is_next = app.navigator.index + 1 == i as u16;
+                return (true, is_next, Some(id));
             }
         }
     }
-    return (false, None);
+    return (false, false, None);
 }
 
 fn get_suggestion(app: &mut App) {
-    let is_data_available = is_suggestion_data_available(app);
+    let (is_data_available, is_next, index) = is_suggestion_data_available(app);
 
     let is_current_route = app
         .get_current_route()
@@ -204,21 +186,13 @@ fn get_suggestion(app: &mut App) {
         return;
     }
 
-    if is_data_available.0 {
-        app.search_results = match app.navigation_stack[is_data_available.1.unwrap()]
-            .data
-            .as_ref()
-            .unwrap()
-        {
-            Data::SearchResult(d) => d.clone(),
-            _ => return,
-        };
-        app.display_block_title = app.navigation_stack[is_data_available.1.unwrap()]
-            .title
-            .clone();
-        app.active_display_block = ActiveDisplayBlock::Suggestions;
-        app.active_block = ActiveBlock::DisplayBlock;
-        app.navigation_index = is_data_available.1.unwrap() as u32;
+    if is_next {
+        app.load_next_route();
+        return;
+    }
+
+    if is_data_available {
+        app.load_route(index.unwrap() as usize);
     } else {
         app.active_display_block = ActiveDisplayBlock::Loading;
 
@@ -226,13 +200,15 @@ fn get_suggestion(app: &mut App) {
     }
 }
 
-fn is_suggestion_data_available(app: &mut App) -> (bool, Option<usize>) {
-    for i in 0..(app.navigation_stack.len() - 1) {
-        if app.navigation_stack[i].block == ActiveDisplayBlock::Suggestions
-            && app.navigation_stack[i].data.is_some()
+fn is_suggestion_data_available(app: &App) -> (bool, bool, Option<u16>) {
+    for i in 0..(app.navigator.history.len() - 1) {
+        let id = app.navigator.history[i];
+        if app.navigator.data[&id].block == ActiveDisplayBlock::Suggestions
+            && app.navigator.data[&id].data.is_some()
         {
-            return (true, Some(i));
+            let is_next = app.navigator.index + 1 == i as u16;
+            return (true, is_next, Some(id));
         }
     }
-    return (false, None);
+    return (false, false, None);
 }

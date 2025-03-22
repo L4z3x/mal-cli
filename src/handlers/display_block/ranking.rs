@@ -5,7 +5,7 @@ use crate::{
     network::IoEvent,
 };
 
-use super::{
+use crate::handlers::{
     anime::{get_anime_ranking, get_manga_ranking},
     common, handle_result_block,
 };

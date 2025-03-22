@@ -13,6 +13,9 @@ mod ranking;
 mod results;
 mod search;
 mod user;
+mod user_anime_list;
+mod user_manga_list;
+
 pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
     let current_display_block = &app.active_display_block;
 
@@ -29,14 +32,13 @@ pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
 
         ActiveDisplayBlock::Suggestions => search::draw_search_result(f, app, chunk),
 
-        ActiveDisplayBlock::UserAnimeList => {}
+        ActiveDisplayBlock::UserAnimeList => user_anime_list::draw_user_anime_list(f, app, chunk),
 
-        ActiveDisplayBlock::UserMangaList => {}
+        ActiveDisplayBlock::UserMangaList => user_manga_list::draw_user_manga_list(f, app, chunk),
 
         ActiveDisplayBlock::UserInfo => user::draw_user_info(f, app, chunk),
 
         ActiveDisplayBlock::SearchResultBlock => {
-            let chunk = search::draw_nav_bar(f, app, chunk);
             search::draw_search_result(f, app, chunk);
         }
         ActiveDisplayBlock::Seasonal => seasonal::draw_seasonal_anime(f, app, chunk),

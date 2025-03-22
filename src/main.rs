@@ -196,7 +196,7 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
                     handlers::input_handler(key, &mut app);
                 } else if key == app.app_config.keys.back {
                     if app.active_block != ActiveBlock::Input {
-                        app.load_previous_state();
+                        app.load_previous_route();
                         break;
                     }
                 } else {

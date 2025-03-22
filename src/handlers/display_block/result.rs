@@ -11,6 +11,6 @@ pub fn handler(key: Key, app: &mut App) {
                 app.search_results.selected_tab = SelectedSearchTab::Anime;
             }
         },
-        _ => super::handle_result_block(key, app),
+        _ => crate::handlers::handle_result_block(key, app),
     }
 }
