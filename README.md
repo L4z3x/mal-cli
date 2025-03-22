@@ -21,6 +21,7 @@ mvp:
 - [x] user anime list page
 - [x] user manga list page
 - [x] search page
+- [x] side top 3 (by type)
 - [ ] help section
 - [ ] anime details page
 - [ ] manga details page
