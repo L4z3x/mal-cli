@@ -25,7 +25,8 @@ pub fn draw_main_layout(f: &mut Frame, app: &App) {
     draw_input_and_help_box(f, app, parent_layout[0]);
 
     // Draw dashboard
-    side_menu::draw_routes(f, app, parent_layout[1]);
+    let chunk = side_menu::draw_routes(f, app, parent_layout[1]);
+    display_block::draw_display_layout(f, app, chunk);
 }
 
 pub fn draw_input_and_help_box(f: &mut Frame, app: &App, layout_chunk: Rect) {

@@ -56,9 +56,9 @@ pub struct Node<N: Clone + std::fmt::Debug> {
     pub node: N,
 }
 
-pub enum Media {
-    Anime(Anime),
-    Manga(Manga),
+pub enum Media<'a> {
+    Anime(&'a Anime),
+    Manga(&'a Manga),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

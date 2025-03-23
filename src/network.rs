@@ -1,7 +1,7 @@
 use crate::{
     api::{
-        self, model::*, GetAnimeRankingQuery, GetMangaRankingQuery, GetSeasonalAnimeQuery,
-        GetSuggestedAnimeQuery, GetUserInformationQuery,
+        self, model::*, GetAnimeDetailQuery, GetAnimeRankingQuery, GetMangaRankingQuery,
+        GetSeasonalAnimeQuery, GetSuggestedAnimeQuery, GetUserInformationQuery,
     },
     app::{
         ActiveBlock, ActiveDisplayBlock, App, Data, Route, SelectedSearchTab, TopThreeBlock,
@@ -9,6 +9,7 @@ use crate::{
     },
     auth::OAuth,
 };
+use image::DynamicImage;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -17,7 +18,7 @@ pub enum IoEvent {
     GetSearchResults(String),
     GetAnimeSearchResults(String),
     GetMangaSearchResults(String),
-    GetAnime(String),
+    GetAnime(u64),
     GetAnimeRanking(AnimeRankingType),
     GetMangaRanking(MangaRankingType),
     GetSeasonalAnime,
@@ -69,7 +70,7 @@ impl<'a> Network<'a> {
 
             // IoEvent::GetAnimeSearchResults(String) => {}
             // IoEvent::GetMangaSearchResults(String) => {}
-            // IoEvent::GetAnime(String) => {}
+            IoEvent::GetAnime(id) => self.get_anime_details(id).await,
             // IoEvent::GetSuggestedAnime(String) => {}
             // IoEvent::UpdateAnimeListStatus(String) => {}
             // IoEvent::DeleteAnimeListStatus(String) => {}
@@ -84,6 +85,46 @@ impl<'a> Network<'a> {
 
         let mut app = self.app.lock().await;
         app.is_loading = false
+    }
+
+    async fn get_anime_details(&mut self, id: u64) {
+        self.oauth.refresh().unwrap();
+        let mut app = self.app.lock().await;
+
+        let query = GetAnimeDetailQuery {
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+            nsfw: app.app_config.nsfw,
+        };
+
+        match api::get_anime_details(id, &query, &self.oauth).await {
+            Ok(result) => {
+                app.anime_details = Some(result.clone());
+            }
+            Err(e) => {
+                app.write_error(e);
+                app.active_display_block = ActiveDisplayBlock::Error;
+                return;
+            }
+        }
+
+        let mut image = None;
+        if app.picker.is_some() {
+            image = get_picture(&app.anime_details.as_ref().unwrap().pictures).await;
+        }
+        app.media_image = image.clone();
+
+        eprint!("{}", image.is_some());
+        eprint!("{}", app.picker.is_some());
+        let route = Route {
+            data: Some(Data::Anime(app.anime_details.as_ref().unwrap().clone())),
+            block: ActiveDisplayBlock::AnimeDetails,
+            title: app.anime_details.as_ref().unwrap().title.clone(),
+            image,
+        };
+        app.push_navigation_stack(route);
+        app.active_block = ActiveBlock::DisplayBlock;
+        app.active_display_block = ActiveDisplayBlock::AnimeDetails;
+        app.display_block_title = app.anime_details.as_ref().unwrap().title.clone();
     }
 
     async fn get_anime_ranking(&mut self, ranking_type: AnimeRankingType) {
@@ -114,6 +155,7 @@ impl<'a> Network<'a> {
             )),
             block: ActiveDisplayBlock::AnimeRanking,
             title: title.clone(),
+            image: None,
         };
         app.push_navigation_stack(route);
         app.active_block = ActiveBlock::DisplayBlock;
@@ -154,6 +196,7 @@ impl<'a> Network<'a> {
             )),
             block: ActiveDisplayBlock::MangaRanking,
             title: title.clone(),
+            image: None,
         };
         app.push_navigation_stack(route);
 
@@ -385,6 +428,7 @@ impl<'a> Network<'a> {
             data: Some(Data::UserInfo(app.user_profile.as_ref().unwrap().clone())),
             block: ActiveDisplayBlock::UserInfo,
             title: "Profile".to_string(),
+            image: None,
         };
         app.push_navigation_stack(route);
         app.active_block = ActiveBlock::DisplayBlock;
@@ -415,6 +459,7 @@ impl<'a> Network<'a> {
             data: Some(Data::Suggestions(app.search_results.clone())),
             block: ActiveDisplayBlock::Suggestions,
             title: "Suggested Anime".to_string(),
+            image: None,
         };
         app.push_navigation_stack(route);
         app.active_block = ActiveBlock::DisplayBlock;
@@ -450,6 +495,7 @@ impl<'a> Network<'a> {
             data: Some(Data::SearchResult(app.search_results.clone())),
             block: ActiveDisplayBlock::Seasonal,
             title: title.clone(),
+            image: None,
         };
         app.push_navigation_stack(route);
         app.active_block = ActiveBlock::DisplayBlock;
@@ -487,6 +533,7 @@ impl<'a> Network<'a> {
             block: ActiveDisplayBlock::UserAnimeList,
             data: Some(Data::UserAnimeList(data)),
             title: format!("My Anime List: {}", get_status_string(status)),
+            image: None,
         };
         app.active_block = ActiveBlock::DisplayBlock;
         app.active_display_block = ActiveDisplayBlock::UserAnimeList;
@@ -524,6 +571,7 @@ impl<'a> Network<'a> {
             block: ActiveDisplayBlock::UserMangaList,
             data: Some(Data::UserMangaList(data)),
             title: format!("My Manga List: {}", get_manga_status_string(status)),
+            image: None,
         };
 
         app.active_block = ActiveBlock::DisplayBlock;
@@ -578,6 +626,7 @@ impl<'a> Network<'a> {
             data: Some(Data::SearchResult(app.search_results.clone())),
             block: ActiveDisplayBlock::SearchResultBlock,
             title: format!("Search Results: {}", q.clone()).to_string(),
+            image: None,
         };
         app.push_navigation_stack(route);
 
@@ -613,4 +662,29 @@ fn get_manga_status_string(status: Option<UserReadStatus>) -> String {
         },
         None => "All".to_string(),
     }
+}
+
+async fn get_picture(pictures: &Option<Vec<Picture>>) -> Option<DynamicImage> {
+    if let Some(pictures) = pictures {
+        for p in pictures {
+            if let Some(url) = &p.medium {
+                if let Ok(img) = fetch_image(url).await {
+                    return Some(img);
+                }
+            }
+            if let Some(url) = &p.large {
+                if let Ok(img) = fetch_image(url).await {
+                    return Some(img);
+                }
+            }
+        }
+    }
+    None
+}
+
+async fn fetch_image(url: &str) -> Result<DynamicImage, Box<dyn std::error::Error>> {
+    let response = reqwest::get(url).await?;
+    let bytes = response.bytes().await?;
+    let img = image::load_from_memory(&bytes)?;
+    Ok(img)
 }

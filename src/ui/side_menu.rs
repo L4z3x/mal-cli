@@ -12,7 +12,7 @@ use ratatui::{
     Frame,
 };
 
-pub fn draw_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
+pub fn draw_routes(f: &mut Frame, app: &App, layout_chunk: Rect) -> Rect {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(18), Constraint::Percentage(82)])
@@ -21,8 +21,7 @@ pub fn draw_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
     draw_user_block(f, app, chunks[0]);
 
     // let current_route = app.active_block;
-
-    display_block::draw_display_layout(f, app, chunks[1]);
+    chunks[1]
 }
 
 pub fn draw_anime_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {

@@ -20,6 +20,8 @@ pub fn handle_display_block(key: Key, app: &mut App) {
         ActiveDisplayBlock::Seasonal => seasonal::handler(key, app),
         ActiveDisplayBlock::AnimeRanking => ranking::handler(key, app),
         ActiveDisplayBlock::MangaRanking => ranking::handler(key, app),
+        ActiveDisplayBlock::AnimeDetails => {}
+        ActiveDisplayBlock::MangaDetails => {}
         ActiveDisplayBlock::Loading => {}
         ActiveDisplayBlock::Error => {}
         ActiveDisplayBlock::Empty => {

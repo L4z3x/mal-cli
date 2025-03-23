@@ -113,7 +113,7 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
         app.active_top_three_anime = Some(app_config.top_three_anime_types[0].clone());
 
         app.active_top_three_manga = Some(app_config.top_three_manga_types[0].clone());
-
+        // todo: load top three from cache
         app.dispatch(IoEvent::GetTopThree(TopThreeBlock::Anime(
             app_config.top_three_anime_types[0].clone(),
         )));

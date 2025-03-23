@@ -2,15 +2,18 @@ use crate::api::{self, model::*};
 use crate::config::app_config::AppConfig;
 use crate::network::IoEvent;
 use chrono::Datelike;
+use image::DynamicImage;
 use ratatui::layout::Rect;
+use ratatui_image::{picker::Picker, protocol::StatefulProtocol, StatefulImage};
 use std::collections::{HashMap, HashSet};
+use std::fmt::Debug;
 use std::sync::mpsc::Sender;
 use strum_macros::IntoStaticStr;
-
 const DEFAULT_ROUTE: Route = Route {
     data: None,
-    block: ActiveDisplayBlock::Empty,
+    block: ActiveDisplayBlock::AnimeDetails, //todo: change to empty
     title: String::new(),
+    image: None,
 };
 
 pub const DISPLAY_RAWS_NUMBER: usize = 5;
@@ -55,16 +58,6 @@ pub const MANGA_RANKING_TYPES: [&str; 9] = [
     "Favorite",
 ];
 
-#[derive(Clone, PartialEq, Debug)]
-pub enum RouteId {
-    Search,
-    Home,
-    Seasonal,
-    Recommendations,
-    Ranking,
-    Error,
-}
-
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum ActiveBlock {
     Input,
@@ -90,6 +83,8 @@ pub enum ActiveDisplayBlock {
     Loading,
     Error,
     Empty,
+    AnimeDetails,
+    MangaDetails,
 }
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum SelectedSearchTab {
@@ -193,6 +188,7 @@ impl Navigator {
         &self.data[&id].block
     }
 }
+
 pub struct App {
     pub io_tx: Option<Sender<IoEvent>>,
     pub app_config: AppConfig,
@@ -208,7 +204,10 @@ pub struct App {
     pub help_menu_page: u32,
     pub help_menu_max_lines: u32,
     pub help_docs_size: u32,
-
+    // image:
+    pub picker: Option<Picker>,
+    pub media_image: Option<DynamicImage>,
+    // state:
     pub active_block: ActiveBlock,
     pub active_display_block: ActiveDisplayBlock,
     pub navigator: Navigator,
@@ -226,8 +225,8 @@ pub struct App {
     pub active_anime_rank_index: u32,
     pub active_manga_rank_index: u32,
     // detail
-    pub anime_detail: Option<Anime>,
-    pub manga_detail: Option<Manga>,
+    pub anime_details: Option<Anime>,
+    pub manga_details: Option<Manga>,
     // seasonal
     pub anime_season: Seasonal,
     //ranking
@@ -348,13 +347,19 @@ pub struct Route {
     pub data: Option<Data>,
     pub block: ActiveDisplayBlock,
     pub title: String,
+    pub image: Option<image::DynamicImage>,
 }
-
 impl App {
     pub fn new(io_tx: Sender<IoEvent>, app_config: AppConfig) -> Self {
+        // let can_render =
         let year = chrono::Utc::now().year_ce();
         let season = get_season();
         let selected_season = get_selected_season(&season);
+        let picker_res = Picker::from_query_stdio();
+        let mut picker: Option<Picker> = None;
+        if picker_res.is_ok() {
+            picker = Some(picker_res.unwrap());
+        }
         Self {
             io_tx: Some(io_tx),
             anime_season: Seasonal {
@@ -396,7 +401,7 @@ impl App {
             help_menu_max_lines: 0,
             help_docs_size: 0,
             active_block: ActiveBlock::DisplayBlock,
-            active_display_block: ActiveDisplayBlock::Empty,
+            active_display_block: DEFAULT_ROUTE.block,
             navigator: Navigator::new(),
             // top three
             top_three_anime: TopThreeAnime::default(),
@@ -418,11 +423,13 @@ impl App {
             // manga list
             manga_list_status: None,
             //
-            anime_detail: None,
-            manga_detail: None,
+            anime_details: None,
+            manga_details: None,
             user_profile: None,
             display_block_title: String::new(),
             popup: false,
+            media_image: None,
+            picker,
         }
     }
 
@@ -570,7 +577,7 @@ impl App {
         self.load_state_data(self.navigator.index + 1);
     }
 
-    pub fn load_route(&mut self, id: usize) {
+    pub fn load_route(&mut self, id: u16) {
         // todo: change to u16
         self.push_existing_route(id as u16);
         self.load_state_data(self.navigator.history.len() as u16 - 1);
@@ -581,11 +588,12 @@ impl App {
             return;
         }
         self.navigator.index = i;
-        let route = self.get_current_route();
-        if route.is_none() {
-            return;
-        }
-        let data = route.unwrap().data.clone();
+        let route = match self.get_current_route() {
+            Some(route) => route.clone(),
+            None => return,
+        };
+
+        let data = route.data.clone();
         match data {
             Some(data) => {
                 match data {
@@ -598,11 +606,15 @@ impl App {
                     }
 
                     Data::Anime(d) => {
-                        self.anime_detail = Some(d.clone());
+                        // self.set_image_from_route(route.as_ref().unwrap(), Some(d.clone()));
+                        self.anime_details = Some(d.clone());
+                        if let Some(image) = &route.image {
+                            self.media_image = Some(image.clone());
+                        }
                     }
 
                     Data::Manga(d) => {
-                        self.manga_detail = Some(d.clone());
+                        self.manga_details = Some(d.clone()); // todo: add here too.
                     }
 
                     Data::AnimeRanking(d) => {
@@ -700,6 +712,7 @@ pub mod test {
             data: None,
             block: ActiveDisplayBlock::Empty,
             title: "Home".to_string(),
+            image: None,
         };
         app.push_navigation_stack(route.clone());
         app.push_navigation_stack(route.clone());

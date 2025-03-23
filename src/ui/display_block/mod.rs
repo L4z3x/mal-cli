@@ -7,6 +7,7 @@ use ratatui::{layout::Rect, Frame};
 mod error;
 mod seasonal;
 use super::util::get_color;
+mod anime_details;
 mod empty;
 mod loading;
 mod ranking;
@@ -26,6 +27,10 @@ pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
 
         ActiveDisplayBlock::Help => {} // draw_help_menu(f, app);
 
+        ActiveDisplayBlock::AnimeDetails => anime_details::draw_anime_detail(f, app, chunk),
+
+        ActiveDisplayBlock::MangaDetails => {}
+
         ActiveDisplayBlock::AnimeRanking => ranking::draw_anime_ranking(f, app, chunk),
 
         ActiveDisplayBlock::MangaRanking => ranking::draw_manga_ranking(f, app, chunk),
@@ -38,14 +43,11 @@ pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
 
         ActiveDisplayBlock::UserInfo => user::draw_user_info(f, app, chunk),
 
-        ActiveDisplayBlock::SearchResultBlock => {
-            search::draw_search_result(f, app, chunk);
-        }
+        ActiveDisplayBlock::SearchResultBlock => search::draw_search_result(f, app, chunk),
+
         ActiveDisplayBlock::Seasonal => seasonal::draw_seasonal_anime(f, app, chunk),
 
-        ActiveDisplayBlock::Error => {
-            error::draw_error(f, app, chunk);
-        }
+        ActiveDisplayBlock::Error => error::draw_error(f, app, chunk),
 
         ActiveDisplayBlock::Loading => {
             if app.is_loading {

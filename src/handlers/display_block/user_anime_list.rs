@@ -21,13 +21,14 @@ fn change_tab(app: &mut App) {
     let next_status = app.next_anime_list_status();
     app.anime_list_status = next_status.clone();
 
-    let is_data_available = is_user_anime_list_data_available(app);
-    if is_data_available.1 {
+    let (is_data_available, is_next, index) = is_user_anime_list_data_available(app);
+
+    if is_next {
         app.load_next_route();
         return;
     }
-    if is_data_available.0 {
-        app.load_route(is_data_available.2.unwrap() as usize);
+    if is_data_available {
+        app.load_route(index.unwrap());
     } else {
         app.active_display_block = ActiveDisplayBlock::Loading;
         app.dispatch(IoEvent::GetAnimeList(next_status));

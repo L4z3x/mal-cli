@@ -180,7 +180,7 @@ pub enum AnimeRankingType {
     OVA,
     Movie,
     Special,
-    #[strum(serialize = "bypopularity")]
+    #[strum(serialize = "popularity")]
     ByPopularity,
     Favorite,
     Other(String),
@@ -200,6 +200,7 @@ pub enum UserWatchStatus {
     OnHold,
     Dropped,
     PlanToWatch,
+    #[strum(serialize = "add")]
     Other(String),
 }
 

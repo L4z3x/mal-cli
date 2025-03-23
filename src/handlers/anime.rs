@@ -75,7 +75,7 @@ fn get_seasonal(app: &mut App) {
     }
 
     if is_data_availabe {
-        app.load_route(index.unwrap() as usize);
+        app.load_route(index.unwrap());
     } else {
         app.active_display_block = ActiveDisplayBlock::Loading;
 
@@ -113,7 +113,7 @@ pub fn get_anime_ranking(app: &mut App) {
     }
 
     if is_data_available {
-        app.load_route(index.unwrap() as usize);
+        app.load_route(index.unwrap());
     } else {
         app.active_display_block = ActiveDisplayBlock::Loading;
 
@@ -137,7 +137,7 @@ pub fn get_manga_ranking(app: &mut App) {
     }
 
     if is_data_available {
-        app.load_route(index.unwrap() as usize);
+        app.load_route(index.unwrap());
     } else {
         app.active_display_block = ActiveDisplayBlock::Loading;
 
@@ -192,7 +192,7 @@ fn get_suggestion(app: &mut App) {
     }
 
     if is_data_available {
-        app.load_route(index.unwrap() as usize);
+        app.load_route(index.unwrap());
     } else {
         app.active_display_block = ActiveDisplayBlock::Loading;
 

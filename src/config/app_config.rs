@@ -4,6 +4,7 @@ use crate::{
     event::key::Key,
 };
 use ratatui::style::Color;
+use ratatui_image::picker::Picker;
 
 #[derive(Clone)]
 pub struct AppConfig {

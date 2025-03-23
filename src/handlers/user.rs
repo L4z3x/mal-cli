@@ -47,7 +47,7 @@ fn get_user_anime_list(app: &mut App) {
         return;
     }
     if is_data_available {
-        app.load_route(index.unwrap() as usize);
+        app.load_route(index.unwrap());
     } else {
         app.active_display_block = ActiveDisplayBlock::Loading;
         app.dispatch(IoEvent::GetAnimeList(app.anime_list_status.clone()));
@@ -61,7 +61,7 @@ fn get_user_manga_list(app: &mut App) {
         return;
     }
     if is_data_available {
-        app.load_route(index.unwrap() as usize);
+        app.load_route(index.unwrap());
     } else {
         app.active_display_block = ActiveDisplayBlock::Loading;
         app.dispatch(IoEvent::GetMangaList(app.manga_list_status.clone()));
@@ -75,7 +75,7 @@ fn get_user_profile(app: &mut App) {
         return;
     }
     if is_data_available {
-        app.load_route(index.unwrap() as usize);
+        app.load_route(index.unwrap());
     } else {
         app.active_display_block = ActiveDisplayBlock::Loading;
         app.dispatch(IoEvent::GetUserInfo);

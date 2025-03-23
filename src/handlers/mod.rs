@@ -5,11 +5,13 @@ mod help;
 mod input;
 mod option;
 mod user;
+use crate::api::model::Media;
 use crate::app::{
-    ActiveBlock, ActiveDisplayBlock, App, Data, ANIME_OPTIONS_RANGE, DISPLAY_COLUMN_NUMBER,
+    ActiveBlock, ActiveDisplayBlock, App, Data, Route, ANIME_OPTIONS_RANGE, DISPLAY_COLUMN_NUMBER,
     DISPLAY_RAWS_NUMBER, GENERAL_OPTIONS_RANGE, USER_OPTIONS_RANGE,
 };
 use crate::event::Key;
+use crate::network::IoEvent;
 
 pub use input::handler as input_handler;
 
@@ -142,6 +144,7 @@ pub fn handle_result_block(key: Key, app: &mut App) {
             }
             app.search_results.selected_display_card_index = Some(index);
         }
+
         Key::Enter => get_media_detail_page(app),
         _ => {}
     }
@@ -164,4 +167,58 @@ pub fn is_data_available(
     return (false, None);
 }
 
-pub fn get_media_detail_page(app: &mut App) {}
+pub fn get_media_detail_page(app: &mut App) {
+    let index = app.search_results.selected_display_card_index.unwrap_or(0);
+    let data = app.search_results.anime.as_ref().unwrap().data.get(index);
+    if let Some(data) = data {
+        let (is_data_available, is_next, index) =
+            is_anime_data_available(app, &Media::Anime(&data.node));
+        if is_next {
+            app.load_next_route();
+            return;
+        }
+        if is_data_available {
+            app.load_route(index.unwrap());
+        } else {
+            app.active_display_block = ActiveDisplayBlock::Loading;
+            app.dispatch(IoEvent::GetAnime(data.node.id));
+        }
+        app.active_block = ActiveBlock::DisplayBlock;
+    }
+}
+
+fn is_anime_data_available(app: &App, data: &Media) -> (bool, bool, Option<u16>) {
+    match data {
+        Media::Anime(data) => {
+            for i in 0..(app.navigator.history.len()) {
+                let id = app.navigator.history[i];
+                if app.navigator.data[&id].block == ActiveDisplayBlock::AnimeDetails
+                    && app.navigator.data[&id].data.is_some()
+                {
+                    if let Data::Anime(d) = app.navigator.data[&id].data.as_ref().unwrap() {
+                        if d.id == data.id {
+                            let is_next = app.navigator.index + 1 == i as u16;
+                            return (true, is_next, Some(id));
+                        }
+                    }
+                }
+            }
+        }
+        Media::Manga(data) => {
+            for i in 0..(app.navigator.history.len()) {
+                let id = app.navigator.history[i];
+                if app.navigator.data[&id].block == ActiveDisplayBlock::MangaDetails
+                    && app.navigator.data[&id].data.is_some()
+                {
+                    if let Data::Manga(d) = app.navigator.data[&id].data.as_ref().unwrap() {
+                        if d.id == data.id {
+                            let is_next = app.navigator.index + 1 == i as u16;
+                            return (true, is_next, Some(id));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return (false, false, None);
+}
