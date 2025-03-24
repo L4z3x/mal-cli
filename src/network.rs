@@ -1,7 +1,8 @@
 use crate::{
     api::{
-        self, model::*, GetAnimeDetailQuery, GetAnimeRankingQuery, GetMangaRankingQuery,
-        GetSeasonalAnimeQuery, GetSuggestedAnimeQuery, GetUserInformationQuery,
+        self, model::*, GetAnimeDetailQuery, GetAnimeRankingQuery, GetMangaDetailQuery,
+        GetMangaRankingQuery, GetSeasonalAnimeQuery, GetSuggestedAnimeQuery,
+        GetUserInformationQuery,
     },
     app::{
         ActiveBlock, ActiveDisplayBlock, App, Data, Route, SelectedSearchTab, TopThreeBlock,
@@ -9,7 +10,9 @@ use crate::{
     },
     auth::OAuth,
 };
-use image::DynamicImage;
+
+use bytes::Bytes;
+use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -19,6 +22,7 @@ pub enum IoEvent {
     GetAnimeSearchResults(String),
     GetMangaSearchResults(String),
     GetAnime(u64),
+    GetManga(u64),
     GetAnimeRanking(AnimeRankingType),
     GetMangaRanking(MangaRankingType),
     GetSeasonalAnime,
@@ -27,7 +31,6 @@ pub enum IoEvent {
     DeleteAnimeListStatus(String),
     GetAnimeList(Option<UserWatchStatus>),
     GetMangaList(Option<UserReadStatus>),
-    GetManga(String),
     UpdateMangaListStatus(String),
     DeleteMangaListStatus(String),
     GetUserInfo,
@@ -68,13 +71,15 @@ impl<'a> Network<'a> {
 
             IoEvent::GetMangaList(s) => self.get_user_manga_list(s).await,
 
+            IoEvent::GetAnime(id) => self.get_anime_details(id).await,
+
+            IoEvent::GetManga(id) => self.get_manga_details(id).await,
+
             // IoEvent::GetAnimeSearchResults(String) => {}
             // IoEvent::GetMangaSearchResults(String) => {}
-            IoEvent::GetAnime(id) => self.get_anime_details(id).await,
             // IoEvent::GetSuggestedAnime(String) => {}
             // IoEvent::UpdateAnimeListStatus(String) => {}
             // IoEvent::DeleteAnimeListStatus(String) => {}
-            // IoEvent::GetManga(String) => {}
             // IoEvent::GetMangaRanking(String) => {}
             // IoEvent::UpdateMangaListStatus(String) => {}
             // IoEvent::DeleteMangaListStatus(String) => {}
@@ -109,12 +114,15 @@ impl<'a> Network<'a> {
 
         let mut image = None;
         if app.picker.is_some() {
-            image = get_picture(&app.anime_details.as_ref().unwrap().pictures).await;
+            image = get_picture(
+                app.app_config.paths.picture_cache_dir_path.clone(),
+                app.anime_details.as_ref().unwrap().id,
+                &app.anime_details.as_ref().unwrap().main_picture,
+            )
+            .await;
         }
         app.media_image = image.clone();
 
-        eprint!("{}", image.is_some());
-        eprint!("{}", app.picker.is_some());
         let route = Route {
             data: Some(Data::Anime(app.anime_details.as_ref().unwrap().clone())),
             block: ActiveDisplayBlock::AnimeDetails,
@@ -125,6 +133,51 @@ impl<'a> Network<'a> {
         app.active_block = ActiveBlock::DisplayBlock;
         app.active_display_block = ActiveDisplayBlock::AnimeDetails;
         app.display_block_title = app.anime_details.as_ref().unwrap().title.clone();
+    }
+
+    async fn get_manga_details(&mut self, id: u64) {
+        self.oauth.refresh().unwrap();
+        let mut app = self.app.lock().await;
+
+        let query = GetMangaDetailQuery {
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+            nsfw: app.app_config.nsfw,
+        };
+
+        match api::get_manga_details(id, &query, &self.oauth).await {
+            Ok(result) => {
+                app.manga_details = Some(result.clone());
+            }
+            Err(e) => {
+                app.write_error(e);
+                app.active_display_block = ActiveDisplayBlock::Error;
+                return;
+            }
+        }
+
+        let mut image = None;
+        if app.picker.is_some() {
+            image = get_picture(
+                app.app_config.paths.picture_cache_dir_path.clone(),
+                app.manga_details.as_ref().unwrap().id,
+                &app.manga_details.as_ref().unwrap().main_picture,
+            )
+            .await;
+        }
+        app.media_image = image.clone();
+
+        eprint!("{}", image.is_some());
+        eprint!("{}", app.picker.is_some());
+        let route = Route {
+            data: Some(Data::Manga(app.manga_details.as_ref().unwrap().clone())),
+            block: ActiveDisplayBlock::MangaDetails,
+            title: app.manga_details.as_ref().unwrap().title.clone(),
+            image,
+        };
+        app.push_navigation_stack(route);
+        app.active_block = ActiveBlock::DisplayBlock;
+        app.active_display_block = ActiveDisplayBlock::MangaDetails;
+        app.display_block_title = app.manga_details.as_ref().unwrap().title.clone();
     }
 
     async fn get_anime_ranking(&mut self, ranking_type: AnimeRankingType) {
@@ -635,7 +688,6 @@ impl<'a> Network<'a> {
         app.display_block_title = format!("Search Results: {}", q).to_string()
     }
 }
-
 fn get_status_string(status: Option<UserWatchStatus>) -> String {
     match status {
         Some(s) => match s {
@@ -664,27 +716,48 @@ fn get_manga_status_string(status: Option<UserReadStatus>) -> String {
     }
 }
 
-async fn get_picture(pictures: &Option<Vec<Picture>>) -> Option<DynamicImage> {
-    if let Some(pictures) = pictures {
-        for p in pictures {
-            if let Some(url) = &p.medium {
-                if let Ok(img) = fetch_image(url).await {
-                    return Some(img);
-                }
-            }
-            if let Some(url) = &p.large {
-                if let Ok(img) = fetch_image(url).await {
-                    return Some(img);
+async fn fetch_image(url: &str) -> Result<Bytes, Box<dyn std::error::Error>> {
+    let response = reqwest::get(url).await?;
+    let bytes = response.bytes().await?;
+    Ok(bytes)
+}
+
+async fn get_picture(
+    image_dir_path: PathBuf,
+    id: u64,
+    pictures: &Option<Picture>,
+) -> Option<String> {
+    // check if the image is already in the cache, if not we fetch it and save it
+    // look for it in the cache first:
+    let file_path = image_dir_path.join(format!("{}.png", id));
+    if file_path.exists() {
+        return Some(file_path.to_string_lossy().to_string());
+    }
+    // fetch the image and save it
+    if let Some(p) = pictures {
+        let urls = vec![&p.large, &p.medium];
+        for url in urls {
+            if let Some(url) = url {
+                // save the image in the .cache/mal-tui/media-images folder
+                let image = fetch_image(url).await;
+                match image {
+                    Ok(bytes) => {
+                        let file_name = format!("{}.png", id);
+                        let file_path = image_dir_path.join(file_name);
+                        let image = image::load_from_memory(&bytes).ok();
+                        if let Some(image) = image {
+                            image
+                                .save_with_format(&file_path, image::ImageFormat::Png)
+                                .ok();
+                            return Some(file_path.to_string_lossy().to_string());
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error fetching image: {}", e);
+                    }
                 }
             }
         }
     }
     None
-}
-
-async fn fetch_image(url: &str) -> Result<DynamicImage, Box<dyn std::error::Error>> {
-    let response = reqwest::get(url).await?;
-    let bytes = response.bytes().await?;
-    let img = image::load_from_memory(&bytes)?;
-    Ok(img)
 }

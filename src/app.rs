@@ -2,16 +2,16 @@ use crate::api::{self, model::*};
 use crate::config::app_config::AppConfig;
 use crate::network::IoEvent;
 use chrono::Datelike;
-use image::DynamicImage;
 use ratatui::layout::Rect;
-use ratatui_image::{picker::Picker, protocol::StatefulProtocol, StatefulImage};
+use ratatui_image::picker::Picker;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::sync::mpsc::Sender;
 use strum_macros::IntoStaticStr;
+use tui_scrollview::ScrollViewState;
 const DEFAULT_ROUTE: Route = Route {
     data: None,
-    block: ActiveDisplayBlock::AnimeDetails, //todo: change to empty
+    block: ActiveDisplayBlock::Empty, //todo: change to empty
     title: String::new(),
     image: None,
 };
@@ -206,13 +206,14 @@ pub struct App {
     pub help_docs_size: u32,
     // image:
     pub picker: Option<Picker>,
-    pub media_image: Option<DynamicImage>,
+    pub media_image: Option<String>,
     // state:
     pub active_block: ActiveBlock,
     pub active_display_block: ActiveDisplayBlock,
     pub navigator: Navigator,
     pub display_block_title: String,
     pub popup: bool,
+    pub details_scroll_view_state: ScrollViewState,
     // top three bar:
     pub top_three_anime: TopThreeAnime,
     pub top_three_manga: TopThreeManga,
@@ -347,8 +348,9 @@ pub struct Route {
     pub data: Option<Data>,
     pub block: ActiveDisplayBlock,
     pub title: String,
-    pub image: Option<image::DynamicImage>,
+    pub image: Option<String>,
 }
+
 impl App {
     pub fn new(io_tx: Sender<IoEvent>, app_config: AppConfig) -> Self {
         // let can_render =
@@ -430,6 +432,7 @@ impl App {
             popup: false,
             media_image: None,
             picker,
+            details_scroll_view_state: ScrollViewState::default(),
         }
     }
 
@@ -608,6 +611,7 @@ impl App {
                     Data::Anime(d) => {
                         // self.set_image_from_route(route.as_ref().unwrap(), Some(d.clone()));
                         self.anime_details = Some(d.clone());
+
                         if let Some(image) = &route.image {
                             self.media_image = Some(image.clone());
                         }

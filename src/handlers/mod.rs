@@ -7,8 +7,8 @@ mod option;
 mod user;
 use crate::api::model::Media;
 use crate::app::{
-    ActiveBlock, ActiveDisplayBlock, App, Data, Route, ANIME_OPTIONS_RANGE, DISPLAY_COLUMN_NUMBER,
-    DISPLAY_RAWS_NUMBER, GENERAL_OPTIONS_RANGE, USER_OPTIONS_RANGE,
+    ActiveBlock, ActiveDisplayBlock, App, Data, SelectedSearchTab, ANIME_OPTIONS_RANGE,
+    DISPLAY_COLUMN_NUMBER, DISPLAY_RAWS_NUMBER, GENERAL_OPTIONS_RANGE, USER_OPTIONS_RANGE,
 };
 use crate::event::Key;
 use crate::network::IoEvent;
@@ -169,25 +169,49 @@ pub fn is_data_available(
 
 pub fn get_media_detail_page(app: &mut App) {
     let index = app.search_results.selected_display_card_index.unwrap_or(0);
-    let data = app.search_results.anime.as_ref().unwrap().data.get(index);
-    if let Some(data) = data {
-        let (is_data_available, is_next, index) =
-            is_anime_data_available(app, &Media::Anime(&data.node));
-        if is_next {
-            app.load_next_route();
-            return;
+    match app.search_results.selected_tab {
+        SelectedSearchTab::Anime => {
+            let data = app.search_results.anime.as_ref().unwrap().data.get(index);
+
+            if let Some(data) = data {
+                let (is_data_available, is_next, index) =
+                    is_media_data_available(app, &Media::Anime(&data.node));
+                if is_next {
+                    app.load_next_route();
+                    return;
+                }
+                if is_data_available {
+                    app.load_route(index.unwrap());
+                } else {
+                    app.active_display_block = ActiveDisplayBlock::Loading;
+                    app.dispatch(IoEvent::GetAnime(data.node.id));
+                }
+                app.active_block = ActiveBlock::DisplayBlock;
+            }
         }
-        if is_data_available {
-            app.load_route(index.unwrap());
-        } else {
-            app.active_display_block = ActiveDisplayBlock::Loading;
-            app.dispatch(IoEvent::GetAnime(data.node.id));
+        SelectedSearchTab::Manga => {
+            let data = app.search_results.manga.as_ref().unwrap().data.get(index);
+
+            if let Some(data) = data {
+                let (is_data_available, is_next, index) =
+                    is_media_data_available(app, &Media::Manga(&data.node));
+                if is_next {
+                    app.load_next_route();
+                    return;
+                }
+                if is_data_available {
+                    app.load_route(index.unwrap());
+                } else {
+                    app.active_display_block = ActiveDisplayBlock::Loading;
+                    app.dispatch(IoEvent::GetManga(data.node.id));
+                }
+                app.active_block = ActiveBlock::DisplayBlock;
+            }
         }
-        app.active_block = ActiveBlock::DisplayBlock;
     }
 }
 
-fn is_anime_data_available(app: &App, data: &Media) -> (bool, bool, Option<u16>) {
+fn is_media_data_available(app: &App, data: &Media) -> (bool, bool, Option<u16>) {
     match data {
         Media::Anime(data) => {
             for i in 0..(app.navigator.history.len()) {

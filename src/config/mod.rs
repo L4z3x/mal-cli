@@ -11,6 +11,10 @@ use std::path::PathBuf;
 
 const CONFIG_DIR: &str = ".config";
 const APP_CONFIG_DIR: &str = "mal-tui";
+const CACHE_DIR: &str = ".cache";
+const APP_CACHE_DIR: &str = "mal-tui";
+const PICTURE_CACHE_DIR: &str = "images";
+const DATA_FILE: &str = "mal_data.json";
 
 const DEFAULT_PORT: u16 = 2006;
 const DEFAULT_USER_AGENT: &str = "mal-tui";

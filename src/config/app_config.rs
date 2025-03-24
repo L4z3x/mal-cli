@@ -1,3 +1,5 @@
+use std::{fs, path::Path};
+
 use super::*;
 use crate::{
     api::model::{AnimeRankingType, MangaRankingType},
@@ -8,6 +10,7 @@ use ratatui_image::picker::Picker;
 
 #[derive(Clone)]
 pub struct AppConfig {
+    pub paths: CachePaths,
     pub keys: KeyBindings,
     pub theme: Theme,
     pub behavior: BehaviorConfig,
@@ -94,7 +97,9 @@ pub enum MangaDisplayType {
 // TODO: get app config from file
 impl AppConfig {
     pub fn load() -> Result<Self, ConfigError> {
+        let paths = get_cache_dir()?;
         Ok(Self {
+            paths,
             theme: Theme::default(),
             keys: KeyBindings {
                 help: Key::Char('?'),
@@ -123,4 +128,45 @@ impl AppConfig {
             navigation_stack_limit: 15,
         })
     }
+}
+
+fn get_cache_dir() -> Result<CachePaths, ConfigError> {
+    match dirs::home_dir() {
+        Some(home) => {
+            let path = Path::new(&home);
+
+            // cache dir:
+            let home_cache_dir = path.join(CACHE_DIR);
+
+            let cache_dir = home_cache_dir.join(APP_CACHE_DIR);
+
+            let picture_cache_dir = cache_dir.join(PICTURE_CACHE_DIR);
+
+            let data_file_path = cache_dir.join(DATA_FILE);
+
+            if !home_cache_dir.exists() {
+                fs::create_dir(&home_cache_dir)?;
+            }
+            if !cache_dir.exists() {
+                fs::create_dir(&cache_dir)?;
+            }
+
+            if !picture_cache_dir.exists() {
+                fs::create_dir(&picture_cache_dir)?;
+            }
+
+            let paths = CachePaths {
+                picture_cache_dir_path: picture_cache_dir.to_path_buf(),
+                data_file_path,
+            };
+
+            Ok(paths)
+        }
+        None => Err(ConfigError::PathError),
+    }
+}
+#[derive(Clone, Debug)]
+pub struct CachePaths {
+    pub picture_cache_dir_path: PathBuf,
+    pub data_file_path: PathBuf,
 }
