@@ -1,19 +1,6 @@
 use super::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use strum_macros::{EnumString, IntoStaticStr};
-
-#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
-#[strum(serialize_all = "snake_case")]
-pub enum UserWatchStatus {
-    Watching,
-    Completed,
-    OnHold,
-    Dropped,
-    PlanToWatch,
-    #[strum(serialize = "add")]
-    Other(String),
-}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AnimeStatistics {

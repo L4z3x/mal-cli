@@ -115,6 +115,21 @@ pub struct Studio {
     pub id: u64,
     pub name: String,
 }
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct MediaDetailStatistics {
+    num_list_users: u64,
+    status: MediaDetailStatisticsStatus,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct MediaDetailStatisticsStatus {
+    //# TODO: check if this is correct
+    watching: String,
+    completed: String,
+    on_hold: String,
+    dropped: String,
+    plan_to_watch: String,
+}
 
 pub const ALL_ANIME_AND_MANGA_FIELDS: &str = "id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,nsfw,genres,create_at,updated_at,media_type,status,my_list_status,num_episodes,broadcast,source,average_episode_duration,rating,pictures,background,related_anime,related_manga,recommendations,studios,statistics,num_volumes,num_chapters,authors";
 pub const ALL_USER_FIELDS: &str =
@@ -212,11 +227,11 @@ impl_serialize_deserialize!(
     AnimeRankingType,
     MangaRankingType,
     Season,
-
     SortStyle,
     UserReadStatus,
     MangaMediaType,
-    MangaStatus
+    MangaStatus,
+    RelationType
 );
 
 impl Serialize for Source {

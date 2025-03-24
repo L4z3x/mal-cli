@@ -105,6 +105,35 @@ pub struct Manga {
     pub num_volumes: Option<u64>,
     pub num_chapters: Option<u64>,
     pub authors: Option<Vec<PersonRole>>,
+    pub related_anime: Option<Vec<RelatedAnime>>,
+    pub related_manga: Option<Vec<RelatedManga>>,
+    pub recommendations: Option<Vec<MangaRecommendation>>,
+    pub serialization: Option<Vec<Serialization>>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Serialization {
+    pub node: Magasine,
+    pub role: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Magasine {
+    id: u64,
+    name: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct RelatedManga {
+    pub node: Manga,
+    pub relation_type: String,
+    pub relation_type_formatted: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MangaRecommendation {
+    pub node: Manga,
+    pub num_recommendations: u64,
 }
 
 impl Manga {

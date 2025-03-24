@@ -166,6 +166,37 @@ pub struct Anime {
     pub studios: Option<Vec<Studio>>,
     pub pictures: Option<Vec<Picture>>,
     pub background: Option<String>,
+    pub related_anime: Option<Vec<RelatedAnime>>,
+    pub related_manga: Option<Vec<RelatedManga>>,
+    pub recommendations: Option<Vec<AnimeRecommendation>>,
+    pub statistics: Option<MediaDetailStatistics>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct AnimeRecommendation {
+    pub node: Anime,
+    pub num_recommendations: u64,
+}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct RelatedAnime {
+    pub node: Anime,
+    pub relation_type: RelationType,
+    pub relation_type_formatted: String,
+}
+
+#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
+#[strum(serialize_all = "snake_case")]
+pub enum RelationType {
+    Sequel,
+    Prequel,
+    AlternativeSetting,
+    AlternativeVersion,
+    SideStory,
+    ParentStory,
+    Summary,
+    FullStory,
+    #[strum(serialize = "other")]
+    Other(String),
 }
 
 #[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr, Display)]
