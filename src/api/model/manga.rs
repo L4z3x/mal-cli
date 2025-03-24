@@ -90,6 +90,7 @@ pub struct Manga {
     pub start_date: Option<DateWrapper>,
     pub end_date: Option<DateWrapper>,
     pub synopsis: Option<String>,
+    pub background: Option<String>,
     pub mean: Option<f64>,
     pub rank: Option<u64>,
     pub popularity: Option<u64>,

@@ -2,6 +2,8 @@ use crate::{
     app::{ActiveDisplayBlock, App},
     event::Key,
 };
+mod anime_details;
+mod manga_details;
 mod ranking;
 mod result;
 mod seasonal;
@@ -20,8 +22,8 @@ pub fn handle_display_block(key: Key, app: &mut App) {
         ActiveDisplayBlock::Seasonal => seasonal::handler(key, app),
         ActiveDisplayBlock::AnimeRanking => ranking::handler(key, app),
         ActiveDisplayBlock::MangaRanking => ranking::handler(key, app),
-        ActiveDisplayBlock::AnimeDetails => {}
-        ActiveDisplayBlock::MangaDetails => {}
+        ActiveDisplayBlock::AnimeDetails => anime_details::handler(key, app),
+        ActiveDisplayBlock::MangaDetails => manga_details::handler(key, app),
         ActiveDisplayBlock::Loading => {}
         ActiveDisplayBlock::Error => {}
         ActiveDisplayBlock::Empty => {
