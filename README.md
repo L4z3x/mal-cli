@@ -5,6 +5,8 @@ A terminal interface for the official [myanimelist](https://myanimelist.net/) ap
 Under development.
 
 # HOW IT LOOKS
+## Demo
+![demo](./assets/mal-tui-demo.mp4)
 ## Home page
 ![home](./assets/mal-tui-home-screenshot-01.png)
 ## Profile page
