@@ -171,20 +171,3 @@ pub fn draw_selectable_list(
 
     f.render_stateful_widget(items, centered_rect, &mut state);
 }
-
-pub fn center_rect(area: Rect, line_num: u16) -> Rect {
-    // the split is just ughhh
-    let total_height = area.height;
-    let content_height = line_num; // Number of lines to center
-
-    let top_padding = (total_height.saturating_sub(content_height)) / 2;
-
-    Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(top_padding),    // Space before the text
-            Constraint::Length(content_height), // The actual text
-            Constraint::Min(0),                 // Space after the text (remaining area)
-        ])
-        .split(area)[1] // Get the centered text area
-}

@@ -14,7 +14,7 @@ use crate::{
         ActiveBlock, ActiveDisplayBlock, App, ANIME_RANKING_TYPES, DISPLAY_COLUMN_NUMBER,
         DISPLAY_RAWS_NUMBER, MANGA_RANKING_TYPES,
     },
-    ui::util::get_color,
+    ui::{format_number_with_commas, util::get_color},
 };
 
 use super::{center_area, get_anime_status_color};
@@ -90,7 +90,7 @@ pub fn draw_anime_ranking_results(f: &mut Frame, app: &App, chunk: Rect) {
         // draw_no_results(f, app, chunk);
         return;
     }
-    let cards_results = constract_cards_with_data(chunk, results);
+    let cards_results = construct_cards_with_data(chunk, results);
 
     let cards = cards_results.0;
     let components = cards_results.1;
@@ -189,7 +189,7 @@ pub fn draw_manga_ranking_results(f: &mut Frame, app: &App, chunk: Rect) {
         // draw_no_results(f,app,chunk);
         return;
     }
-    let cards_results = constract_cards_with_data(chunk, results);
+    let cards_results = construct_cards_with_data(chunk, results);
     let components = cards_results.1;
     let selected_card_index = app.search_results.selected_display_card_index.unwrap_or(0);
 
@@ -225,7 +225,9 @@ pub fn draw_manga_ranking_results(f: &mut Frame, app: &App, chunk: Rect) {
             .as_ref()
             .map_or("unknown".to_string(), |date| date.date.year().to_string());
 
-        let num_user_list: String = component.num_list_users.unwrap().to_string();
+        let num_user_list: String = component
+            .num_list_users
+            .map_or("N/A".to_string(), |n| format_number_with_commas(n));
 
         let score = Line::from(Span::styled(
             format!(
@@ -265,7 +267,7 @@ pub fn draw_manga_ranking_results(f: &mut Frame, app: &App, chunk: Rect) {
     }
 }
 
-fn constract_cards_with_data<T: Clone + Debug>(
+fn construct_cards_with_data<T: Clone + Debug>(
     chunk: Rect,
     results: &PageableData<Vec<T>>,
 ) -> (Vec<Rect>, Vec<&T>) {

@@ -125,7 +125,7 @@ fn draw_anime_top_three(
             let user_anime_status_color = get_anime_status_color(&user_anime_status, app);
 
             let user_anime_status: &str = user_anime_status.into();
-            // constracting lines and spans
+            // constructing lines and spans
 
             let title = Line::from(vec![
                 Span::raw(anime_title),

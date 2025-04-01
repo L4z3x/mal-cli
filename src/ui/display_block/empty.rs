@@ -1,10 +1,8 @@
 use crate::app::App;
-use crate::ui::side_menu::center_rect;
-use crate::BANNER;
 use figlet_rs::FIGfont;
 use ratatui::style::{Modifier, Style};
 use ratatui::text::Line;
-use ratatui::widgets::{Block, Borders, Padding};
+use ratatui::widgets::{Block, Padding};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     widgets::Paragraph,

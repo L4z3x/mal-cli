@@ -12,7 +12,7 @@ use crate::{
     ui::util::get_color,
 };
 
-use super::results::constract_cards_with_data;
+use super::results::construct_cards_with_data;
 
 pub fn draw_user_anime_list(f: &mut Frame, app: &App, chunk: Rect) {
     // order matters, it should be the same as the Status enum
@@ -110,7 +110,7 @@ fn draw_anime_list_results(f: &mut Frame, app: &App, chunk: Rect) {
         // draw_no_results(f, app, chunk);
         return;
     }
-    let cards_results = constract_cards_with_data(chunk, results);
+    let cards_results = construct_cards_with_data(chunk, results);
 
     let cards = cards_results.0;
     let components = cards_results.1;

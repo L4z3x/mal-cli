@@ -11,7 +11,7 @@ use crate::{
     ui::util::get_color,
 };
 
-use super::{results::constract_cards_with_data, user_anime_list::draw_user_list_nav_bar};
+use super::{results::construct_cards_with_data, user_anime_list::draw_user_list_nav_bar};
 
 pub fn draw_user_manga_list(f: &mut Frame, app: &App, chunk: Rect) {
     let statuses = vec![
@@ -32,7 +32,7 @@ fn draw_manga_list_results(f: &mut Frame, app: &App, chunk: Rect) {
     if results.data.is_empty() {
         return;
     }
-    let cards_results = constract_cards_with_data(chunk, results);
+    let cards_results = construct_cards_with_data(chunk, results);
 
     let cards = cards_results.0;
     let components = cards_results.1;

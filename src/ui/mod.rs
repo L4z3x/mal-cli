@@ -13,7 +13,7 @@ use ratatui::{
 use util::get_color;
 mod display_block;
 
-pub fn draw_main_layout(f: &mut Frame, app: &App) {
+pub fn draw_main_layout(f: &mut Frame, app: &mut App) {
     let margin = util::get_main_layout_margin(app);
     let parent_layout = Layout::default()
         .direction(Direction::Vertical)

@@ -2,8 +2,11 @@ use crate::api::{self, model::*};
 use crate::config::app_config::AppConfig;
 use crate::network::IoEvent;
 use chrono::Datelike;
+use image::{DynamicImage, ImageError};
 use ratatui::layout::Rect;
 use ratatui_image::picker::Picker;
+use ratatui_image::protocol::StatefulProtocol;
+use time::{Date, PrimitiveDateTime};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::sync::mpsc::Sender;
@@ -11,7 +14,7 @@ use strum_macros::IntoStaticStr;
 use tui_scrollview::ScrollViewState;
 const DEFAULT_ROUTE: Route = Route {
     data: None,
-    block: ActiveDisplayBlock::Empty, //todo: change to empty
+    block: ActiveDisplayBlock::AnimeDetails, //todo: change to empty
     title: String::new(),
     image: None,
 };
@@ -206,14 +209,18 @@ pub struct App {
     pub help_docs_size: u32,
     // image:
     pub picker: Option<Picker>,
-    pub media_image: Option<String>,
+    pub media_image: Option<(String, u32, u32)>,
+    pub image_state: Option<StatefulProtocol>,
     // state:
     pub active_block: ActiveBlock,
     pub active_display_block: ActiveDisplayBlock,
     pub navigator: Navigator,
     pub display_block_title: String,
     pub popup: bool,
-    pub details_scroll_view_state: ScrollViewState,
+    pub anime_details_synopsys_scroll_view_state: ScrollViewState,
+    pub anime_details_info_scroll_view_state: ScrollViewState,
+    pub manga_details_info_scroll_view_state: ScrollViewState,
+    pub manga_details_synopsys_scroll_view_state: ScrollViewState,
     // top three bar:
     pub top_three_anime: TopThreeAnime,
     pub top_three_manga: TopThreeManga,
@@ -348,13 +355,14 @@ pub struct Route {
     pub data: Option<Data>,
     pub block: ActiveDisplayBlock,
     pub title: String,
-    pub image: Option<String>,
+    pub image: Option<(String, u32, u32)>,
 }
 
 impl App {
     pub fn new(io_tx: Sender<IoEvent>, app_config: AppConfig) -> Self {
         // let can_render =
-        let year = chrono::Utc::now().year_ce();
+        
+        let year = chrono::Utc::now().year();
         let season = get_season();
         let selected_season = get_selected_season(&season);
         let picker_res = Picker::from_query_stdio();
@@ -366,13 +374,13 @@ impl App {
             io_tx: Some(io_tx),
             anime_season: Seasonal {
                 anime_season: AnimeSeason {
-                    year: year.1 as u64,
+                    year: year as u64,
                     season,
                 },
                 anime_sort: SortStyle::ListScore,
                 popup_season_highlight: true,
                 selected_season,
-                selected_year: year.1 as u16,
+                selected_year: year as u16,
             },
 
             available_anime_ranking_types: app_config.top_three_anime_types.clone(),
@@ -425,14 +433,19 @@ impl App {
             // manga list
             manga_list_status: None,
             //
-            anime_details: None,
+            anime_details: get_anime_example(),
             manga_details: None,
             user_profile: None,
             display_block_title: String::new(),
             popup: false,
+            // image:
             media_image: None,
             picker,
-            details_scroll_view_state: ScrollViewState::default(),
+            image_state: None,
+            anime_details_synopsys_scroll_view_state: ScrollViewState::default(),
+            anime_details_info_scroll_view_state: ScrollViewState::default(),
+            manga_details_info_scroll_view_state: ScrollViewState::default(),
+            manga_details_synopsys_scroll_view_state: ScrollViewState::default(),
         }
     }
 
@@ -614,6 +627,12 @@ impl App {
 
                         if let Some(image) = &route.image {
                             self.media_image = Some(image.clone());
+                            self.image_state = Some(
+                                self.picker
+                                    .as_ref()
+                                    .unwrap()
+                                    .new_resize_protocol(self.get_picture_from_cache().unwrap()),
+                            );
                         }
                     }
 
@@ -681,6 +700,16 @@ impl App {
             None => Some(UserWatchStatus::Watching),
         }
     }
+
+    pub fn get_picture_from_cache(&self) -> Result<DynamicImage, ImageError> {
+        // all images are stored in $HOME?/.cache/mal-tui/images/
+        let file_name = self.media_image.as_ref().unwrap().0.clone();
+        let file_path = self.app_config.paths.picture_cache_dir_path.join(file_name);
+        let image = image::ImageReader::open(file_path)?.decode()?;
+        let w = image.width();
+        let h = image.height();
+        Ok(image)
+    }
 }
 
 fn get_season() -> Season {
@@ -701,6 +730,730 @@ fn get_selected_season(season: &Season) -> u8 {
         &Season::Fall => 3,
         &Season::Other(_) => panic!("no season selected"),
     }
+}
+
+fn get_anime_example() -> Option<Anime> {
+ Some(Anime {
+    id: 5,
+    title: "Cowboy Bebop: Tengoku no Tobira".to_string(),
+    main_picture: Some(
+        Picture {
+            large: Some(
+                "https://cdn.myanimelist.net/images/anime/1439/93480l.webp".to_string(),
+            ),
+            medium: Some(
+                "https://cdn.myanimelist.net/images/anime/1439/93480.webp".to_string(),
+            ),
+        },
+    ),
+    alternative_titles: Some(
+        AlternativeTitles {
+            synonyms: Some(
+                vec![
+                    "Cowboy Bebop: Knockin' on Heaven's Door".to_string(),
+                ],
+            ),
+            en: Some(
+                "Cowboy Bebop: The Movie".to_string(),
+            ),
+            jp: None,
+        },
+    ),
+    start_date: Some(
+        DateWrapper {
+            date: Date::from_calendar_date(2001,time::Month::December,1).ok().unwrap(),
+        },
+    ),
+    end_date: Some(
+        DateWrapper {
+            date: Date::from_calendar_date(2001,time::Month::December,1).ok().unwrap(),
+            
+        },
+    ),
+    synopsis: Some(
+        "Another day, another bounty—such is the life of the often unlucky crew of the Bebop. However, this routine is interrupted when Faye, who is chasing a fairly worthless target on Mars, witnesses an oil tanker suddenly explode, causing mass hysteria. As casualties mount due to a strange disease spreading through the smoke from the blast, a whopping three hundred million woolong price is placed on the head of the supposed perpetrator.\n\nWith lives at stake and a solution to their money problems in sight, the Bebop crew springs into action. Spike, Jet, Faye, and Edward, followed closely by Ein, split up to pursue different leads across Alba City. Through their individual investigations, they discover a cover-up scheme involving a pharmaceutical company, revealing a plot that reaches much further than the ragtag team of bounty hunters could have realized.\n\n[Written by MAL Rewrite]".to_string(),
+    ),
+    mean: Some(
+        8.38,
+    ),
+    rank: Some(
+        214,
+    ),
+    popularity: Some(
+        637,
+    ),
+    num_list_users: Some(
+        394743,
+    ),
+    num_scoring_users: Some(
+        223765,
+    ),
+    nsfw: Some(
+        NSFW::White,
+    ),
+    genres: Some(
+        vec![
+            Genre {
+                id: 1,
+                name: "Action".to_string(),
+            },
+            Genre {
+                id: 50,
+                name: "Adult Cast".to_string(),
+            },
+            Genre {
+                id: 24,
+                name: "Sci-Fi".to_string(),
+            },
+            Genre {
+                id: 29,
+                name: "Space".to_string(),
+            },
+        ],
+    ),
+    created_at: None,
+    updated_at: Some(
+        DateTimeWrapper {
+            datetime: PrimitiveDateTime::new(Date::from_calendar_date(2001,time::Month::December,1).ok().unwrap(),time::Time::from_hms(04,35,30).ok().unwrap()),
+        },
+    ),
+    media_type: Some(
+        AnimeMediaType::Movie,
+    ),
+    status: Some(
+        AnimeStatus::FinishedAiring,
+    ),
+    my_list_status: None,
+    num_episodes: Some(
+        1,
+    ),
+    start_season: Some(
+        StartSeason {
+            season: Season::Spring,
+            year: 2001,
+        },
+    ),
+    broadcast: None,
+    source: Some(
+        Source::Original,
+    ),
+    average_episode_duration: Some(
+        6911,
+    ),
+    rating: Some(
+        "r".to_string(),
+    ),
+    studios: Some(
+        vec![
+            Studio {
+                id: 4,
+                name: "Bones".to_string(),
+            },
+        ],
+    ),
+    pictures: Some(
+        vec![
+            Picture {
+                large: Some(
+                    "https://cdn.myanimelist.net/images/anime/13/5171l.jpg".to_string(),
+                ),
+                medium: Some(
+                    "https://cdn.myanimelist.net/images/anime/13/5171.jpg".to_string(),
+                ),
+            },
+            Picture {
+                large: Some(
+                    "https://cdn.myanimelist.net/images/anime/6/14331l.jpg".to_string(),
+                ),
+                medium: Some(
+                    "https://cdn.myanimelist.net/images/anime/6/14331.jpg".to_string(),
+                ),
+            },
+            Picture {
+                large: Some(
+                    "https://cdn.myanimelist.net/images/anime/12/69601l.jpg".to_string(),
+                ),
+                medium: Some(
+                    "https://cdn.myanimelist.net/images/anime/12/69601.jpg".to_string(),
+                ),
+            },
+            Picture {
+                large: Some(
+                    "https://cdn.myanimelist.net/images/anime/10/74089l.jpg".to_string(),
+                ),
+                medium: Some(
+                    "https://cdn.myanimelist.net/images/anime/10/74089.jpg".to_string(),
+                ),
+            },
+            Picture {
+                large: Some(
+                    "https://cdn.myanimelist.net/images/anime/10/80113l.jpg".to_string(),
+                ),
+                medium: Some(
+                    "https://cdn.myanimelist.net/images/anime/10/80113.jpg".to_string(),
+                ),
+            },
+            Picture {
+                large: Some(
+                    "https://cdn.myanimelist.net/images/anime/1185/92795l.jpg".to_string(),
+                ),
+                medium: Some(
+                    "https://cdn.myanimelist.net/images/anime/1185/92795.jpg".to_string(),
+                ),
+            },
+            Picture {
+                large: Some(
+                    "https://cdn.myanimelist.net/images/anime/1439/93480l.jpg".to_string(),
+                ),
+                medium: Some(
+                    "https://cdn.myanimelist.net/images/anime/1439/93480.jpg".to_string(),
+                ),
+            },
+            Picture {
+                large: Some(
+                    "https://cdn.myanimelist.net/images/anime/1018/120197l.jpg".to_string(),
+                ),
+                medium: Some(
+                    "https://cdn.myanimelist.net/images/anime/1018/120197.jpg".to_string(),
+                ),
+            },
+        ],
+    ),
+    background: Some(
+        "".to_string(),
+    ),
+    related_anime: Some(
+        vec![
+            RelatedAnime {
+                node: Anime {
+                    id: 1,
+                    title: "Cowboy Bebop".to_string(),
+                    main_picture: Some(
+                        Picture {
+                            large: Some(
+                                "https://cdn.myanimelist.net/images/anime/4/19644l.webp".to_string(),
+                            ),
+                            medium: Some(
+                                "https://cdn.myanimelist.net/images/anime/4/19644.webp".to_string(),
+                            ),
+                        },
+                    ),
+                    alternative_titles: None,
+                    start_date: None,
+                    end_date: None,
+                    synopsis: None,
+                    mean: None,
+                    rank: None,
+                    popularity: None,
+                    num_list_users: None,
+                    num_scoring_users: None,
+                    nsfw: None,
+                    genres: None,
+                    created_at: None,
+                    updated_at: None,
+                    media_type: None,
+                    status: None,
+                    my_list_status: None,
+                    num_episodes: None,
+                    start_season: None,
+                    broadcast: None,
+                    source: None,
+                    average_episode_duration: None,
+                    rating: None,
+                    studios: None,
+                    pictures: None,
+                    background: None,
+                    related_anime: None,
+                    related_manga: None,
+                    recommendations: None,
+                    statistics: None,
+                },
+                relation_type: RelationType::ParentStory,
+                relation_type_formatted: "Parent story".to_string(),
+            },
+        ],
+    ),
+    related_manga: Some(
+       vec![],
+    ),
+    recommendations: Some(
+        vec![
+            AnimeRecommendation {
+                node: Anime {
+                    id: 4106,
+                    title: "Trigun: Badlands Rumble".to_string(),
+                    main_picture: Some(
+                        Picture {
+                            large: Some(
+                                "https://cdn.myanimelist.net/images/anime/1930/116400l.jpg".to_string(),
+                            ),
+                            medium: Some(
+                                "https://cdn.myanimelist.net/images/anime/1930/116400.jpg".to_string(),
+                            ),
+                        },
+                    ),
+                    alternative_titles: None,
+                    start_date: None,
+                    end_date: None,
+                    synopsis: None,
+                    mean: None,
+                    rank: None,
+                    popularity: None,
+                    num_list_users: None,
+                    num_scoring_users: None,
+                    nsfw: None,
+                    genres: None,
+                    created_at: None,
+                    updated_at: None,
+                    media_type: None,
+                    status: None,
+                    my_list_status: None,
+                    num_episodes: None,
+                    start_season: None,
+                    broadcast: None,
+                    source: None,
+                    average_episode_duration: None,
+                    rating: None,
+                    studios: None,
+                    pictures: None,
+                    background: None,
+                    related_anime: None,
+                    related_manga: None,
+                    recommendations: None,
+                    statistics: None,
+                },
+                num_recommendations: 3,
+            },
+            AnimeRecommendation {
+                node: Anime {
+                    id: 122,
+                    title: "Full Moon wo Sagashite".to_string(),
+                    main_picture: Some(
+                        Picture {
+                            large: Some(
+                                "https://cdn.myanimelist.net/images/anime/1900/99154l.jpg".to_string(),
+                            ),
+                            medium: Some(
+                                "https://cdn.myanimelist.net/images/anime/1900/99154.jpg".to_string(),
+                            ),
+                        },
+                    ),
+                    alternative_titles: None,
+                    start_date: None,
+                    end_date: None,
+                    synopsis: None,
+                    mean: None,
+                    rank: None,
+                    popularity: None,
+                    num_list_users: None,
+                    num_scoring_users: None,
+                    nsfw: None,
+                    genres: None,
+                    created_at: None,
+                    updated_at: None,
+                    media_type: None,
+                    status: None,
+                    my_list_status: None,
+                    num_episodes: None,
+                    start_season: None,
+                    broadcast: None,
+                    source: None,
+                    average_episode_duration: None,
+                    rating: None,
+                    studios: None,
+                    pictures: None,
+                    background: None,
+                    related_anime: None,
+                    related_manga: None,
+                    recommendations: None,
+                    statistics: None,
+                },
+                num_recommendations: 2,
+            },
+            AnimeRecommendation {
+                node: Anime {
+                    id: 21339,
+                    title: "Psycho-Pass Movie".to_string(),
+                    main_picture: Some(
+                        Picture {
+                            large: Some(
+                                "https://cdn.myanimelist.net/images/anime/8/71793l.jpg".to_string(),
+                            ),
+                            medium: Some(
+                                "https://cdn.myanimelist.net/images/anime/8/71793.jpg".to_string(),
+                            ),
+                        },
+                    ),
+                    alternative_titles: None,
+                    start_date: None,
+                    end_date: None,
+                    synopsis: None,
+                    mean: None,
+                    rank: None,
+                    popularity: None,
+                    num_list_users: None,
+                    num_scoring_users: None,
+                    nsfw: None,
+                    genres: None,
+                    created_at: None,
+                    updated_at: None,
+                    media_type: None,
+                    status: None,
+                    my_list_status: None,
+                    num_episodes: None,
+                    start_season: None,
+                    broadcast: None,
+                    source: None,
+                    average_episode_duration: None,
+                    rating: None,
+                    studios: None,
+                    pictures: None,
+                    background: None,
+                    related_anime: None,
+                    related_manga: None,
+                    recommendations: None,
+                    statistics: None,
+                },
+                num_recommendations: 2,
+            },
+            AnimeRecommendation {
+                node: Anime {
+                    id: 522,
+                    title: "Metropolis".to_string(),
+                    main_picture: Some(
+                        Picture {
+                            large: Some(
+                                "https://cdn.myanimelist.net/images/anime/4/75601l.jpg".to_string(),
+                            ),
+                            medium: Some(
+                                "https://cdn.myanimelist.net/images/anime/4/75601.jpg".to_string(),
+                            ),
+                        },
+                    ),
+                    alternative_titles: None,
+                    start_date: None,
+                    end_date: None,
+                    synopsis: None,
+                    mean: None,
+                    rank: None,
+                    popularity: None,
+                    num_list_users: None,
+                    num_scoring_users: None,
+                    nsfw: None,
+                    genres: None,
+                    created_at: None,
+                    updated_at: None,
+                    media_type: None,
+                    status: None,
+                    my_list_status: None,
+                    num_episodes: None,
+                    start_season: None,
+                    broadcast: None,
+                    source: None,
+                    average_episode_duration: None,
+                    rating: None,
+                    studios: None,
+                    pictures: None,
+                    background: None,
+                    related_anime: None,
+                    related_manga: None,
+                    recommendations: None,
+                    statistics: None,
+                },
+                num_recommendations: 1,
+            },
+            AnimeRecommendation {
+                node: Anime {
+                    id: 393,
+                    title: "Escaflowne".to_string(),
+                    main_picture: Some(
+                        Picture {
+                            large: Some(
+                                "https://cdn.myanimelist.net/images/anime/1539/94517l.jpg".to_string(),
+                            ),
+                            medium: Some(
+                                "https://cdn.myanimelist.net/images/anime/1539/94517.jpg".to_string(),
+                            ),
+                        },
+                    ),
+                    alternative_titles: None,
+                    start_date: None,
+                    end_date: None,
+                    synopsis: None,
+                    mean: None,
+                    rank: None,
+                    popularity: None,
+                    num_list_users: None,
+                    num_scoring_users: None,
+                    nsfw: None,
+                    genres: None,
+                    created_at: None,
+                    updated_at: None,
+                    media_type: None,
+                    status: None,
+                    my_list_status: None,
+                    num_episodes: None,
+                    start_season: None,
+                    broadcast: None,
+                    source: None,
+                    average_episode_duration: None,
+                    rating: None,
+                    studios: None,
+                    pictures: None,
+                    background: None,
+                    related_anime: None,
+                    related_manga: None,
+                    recommendations: None,
+                    statistics: None,
+                },
+                num_recommendations: 1,
+            },
+            AnimeRecommendation {
+                node: Anime {
+                    id: 570,
+                    title: "Jin-Rou".to_string(),
+                    main_picture: Some(
+                        Picture {
+                            large: Some(
+                                "https://cdn.myanimelist.net/images/anime/1323/103343l.jpg".to_string(),
+                            ),
+                            medium: Some(
+                                "https://cdn.myanimelist.net/images/anime/1323/103343.jpg".to_string(),
+                            ),
+                        },
+                    ),
+                    alternative_titles: None,
+                    start_date: None,
+                    end_date: None,
+                    synopsis: None,
+                    mean: None,
+                    rank: None,
+                    popularity: None,
+                    num_list_users: None,
+                    num_scoring_users: None,
+                    nsfw: None,
+                    genres: None,
+                    created_at: None,
+                    updated_at: None,
+                    media_type: None,
+                    status: None,
+                    my_list_status: None,
+                    num_episodes: None,
+                    start_season: None,
+                    broadcast: None,
+                    source: None,
+                    average_episode_duration: None,
+                    rating: None,
+                    studios: None,
+                    pictures: None,
+                    background: None,
+                    related_anime: None,
+                    related_manga: None,
+                    recommendations: None,
+                    statistics: None,
+                },
+                num_recommendations: 1,
+            },
+            AnimeRecommendation {
+                node: Anime {
+                    id: 1226,
+                    title: "Seihou Tenshi Angel Links".to_string(),
+                    main_picture: Some(
+                        Picture {
+                            large: Some(
+                                "https://cdn.myanimelist.net/images/anime/1578/117541l.jpg".to_string(),
+                            ),
+                            medium: Some(
+                                "https://cdn.myanimelist.net/images/anime/1578/117541.jpg".to_string(),
+                            ),
+                        },
+                    ),
+                    alternative_titles: None,
+                    start_date: None,
+                    end_date: None,
+                    synopsis: None,
+                    mean: None,
+                    rank: None,
+                    popularity: None,
+                    num_list_users: None,
+                    num_scoring_users: None,
+                    nsfw: None,
+                    genres: None,
+                    created_at: None,
+                    updated_at: None,
+                    media_type: None,
+                    status: None,
+                    my_list_status: None,
+                    num_episodes: None,
+                    start_season: None,
+                    broadcast: None,
+                    source: None,
+                    average_episode_duration: None,
+                    rating: None,
+                    studios: None,
+                    pictures: None,
+                    background: None,
+                    related_anime: None,
+                    related_manga: None,
+                    recommendations: None,
+                    statistics: None,
+                },
+                num_recommendations: 1,
+            },
+            AnimeRecommendation {
+                node: Anime {
+                    id: 1796,
+                    title: "Dirty Pair: The Movie".to_string(),
+                    main_picture: Some(
+                        Picture {
+                            large: Some(
+                                "https://cdn.myanimelist.net/images/anime/1855/92685l.jpg".to_string(),
+                            ),
+                            medium: Some(
+                                "https://cdn.myanimelist.net/images/anime/1855/92685.jpg".to_string(),
+                            ),
+                        },
+                    ),
+                    alternative_titles: None,
+                    start_date: None,
+                    end_date: None,
+                    synopsis: None,
+                    mean: None,
+                    rank: None,
+                    popularity: None,
+                    num_list_users: None,
+                    num_scoring_users: None,
+                    nsfw: None,
+                    genres: None,
+                    created_at: None,
+                    updated_at: None,
+                    media_type: None,
+                    status: None,
+                    my_list_status: None,
+                    num_episodes: None,
+                    start_season: None,
+                    broadcast: None,
+                    source: None,
+                    average_episode_duration: None,
+                    rating: None,
+                    studios: None,
+                    pictures: None,
+                    background: None,
+                    related_anime: None,
+                    related_manga: None,
+                    recommendations: None,
+                    statistics: None,
+                },
+                num_recommendations: 1,
+            },
+            AnimeRecommendation {
+                node: Anime {
+                    id: 9135,
+                    title: "Fullmetal Alchemist: The Sacred Star of Milos".to_string(),
+                    main_picture: Some(
+                        Picture {
+                            large: Some(
+                                "https://cdn.myanimelist.net/images/anime/2/29550l.jpg".to_string(),
+                            ),
+                            medium: Some(
+                                "https://cdn.myanimelist.net/images/anime/2/29550.jpg".to_string(),
+                            ),
+                        },
+                    ),
+                    alternative_titles: None,
+                    start_date: None,
+                    end_date: None,
+                    synopsis: None,
+                    mean: None,
+                    rank: None,
+                    popularity: None,
+                    num_list_users: None,
+                    num_scoring_users: None,
+                    nsfw: None,
+                    genres: None,
+                    created_at: None,
+                    updated_at: None,
+                    media_type: None,
+                    status: None,
+                    my_list_status: None,
+                    num_episodes: None,
+                    start_season: None,
+                    broadcast: None,
+                    source: None,
+                    average_episode_duration: None,
+                    rating: None,
+                    studios: None,
+                    pictures: None,
+                    background: None,
+                    related_anime: None,
+                    related_manga: None,
+                    recommendations: None,
+                    statistics: None,
+                },
+                num_recommendations: 1,
+            },
+            AnimeRecommendation {
+                node: Anime {
+                    id: 23279,
+                    title: "Gyakusatsu Kikan".to_string(),
+                    main_picture: Some(
+                        Picture {
+                            large: Some(
+                                "https://cdn.myanimelist.net/images/anime/12/83309l.jpg".to_string(),
+                            ),
+                            medium: Some(
+                                "https://cdn.myanimelist.net/images/anime/12/83309.jpg".to_string(),
+                            ),
+                        },
+                    ),
+                    alternative_titles: None,
+                    start_date: None,
+                    end_date: None,
+                    synopsis: None,
+                    mean: None,
+                    rank: None,
+                    popularity: None,
+                    num_list_users: None,
+                    num_scoring_users: None,
+                    nsfw: None,
+                    genres: None,
+                    created_at: None,
+                    updated_at: None,
+                    media_type: None,
+                    status: None,
+                    my_list_status: None,
+                    num_episodes: None,
+                    start_season: None,
+                    broadcast: None,
+                    source: None,
+                    average_episode_duration: None,
+                    rating: None,
+                    studios: None,
+                    pictures: None,
+                    background: None,
+                    related_anime: None,
+                    related_manga: None,
+                    recommendations: None,
+                    statistics: None,
+                },
+                num_recommendations: 1,
+            },
+        ],
+    ),
+    statistics: Some(
+        MediaDetailStatistics {
+            num_list_users: 394683,
+            status: MediaDetailStatisticsStatus {
+                watching: "7646".to_string(),
+                completed: "291616".to_string(),
+                on_hold: "3185".to_string(),
+                dropped: "1294".to_string(),
+                plan_to_watch: "90942".to_string(),
+            },
+        },
+    ),
+}
+ )
 }
 
 #[cfg(test)]

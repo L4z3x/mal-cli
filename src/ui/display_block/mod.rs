@@ -8,16 +8,17 @@ mod error;
 mod seasonal;
 use super::util::get_color;
 mod anime_details;
+mod details_utils;
 mod empty;
 mod loading;
+mod manga_details;
 mod ranking;
 mod results;
 mod search;
 mod user;
 mod user_anime_list;
 mod user_manga_list;
-
-pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
+pub fn draw_display_layout(f: &mut Frame, app: &mut App, chunk: Rect) {
     let current_display_block = &app.active_display_block;
 
     draw_main_display_layout(f, app, chunk);
@@ -29,7 +30,7 @@ pub fn draw_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
 
         ActiveDisplayBlock::AnimeDetails => anime_details::draw_anime_detail(f, app, chunk),
 
-        ActiveDisplayBlock::MangaDetails => {}
+        ActiveDisplayBlock::MangaDetails => manga_details::draw_manga_detail(f, app, chunk),
 
         ActiveDisplayBlock::AnimeRanking => ranking::draw_anime_ranking(f, app, chunk),
 
@@ -132,4 +133,33 @@ pub fn center_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
     let [area] = vertical.areas(area);
     let [area] = horizontal.areas(area);
     area
+}
+
+pub fn first_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
+    let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Start);
+    let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Start);
+    let [area] = vertical.areas(area);
+    let [area] = horizontal.areas(area);
+    area
+}
+pub fn last_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
+    let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::End);
+    let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::End);
+    let [area] = vertical.areas(area);
+    let [area] = horizontal.areas(area);
+    area
+}
+
+pub fn fixed_area(
+    area: Rect,
+    percent_x: u16,
+    percent_y: u16,
+    percent_width: u16,
+    percent_height: u16,
+) -> Rect {
+    let x = area.x + (area.width * percent_x / 100);
+    let y = area.y + (area.height * percent_y / 100);
+    let width = area.width * percent_width / 100;
+    let height = area.height * percent_height / 100;
+    Rect::new(x, y, width, height)
 }

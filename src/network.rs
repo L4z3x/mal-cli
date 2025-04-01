@@ -121,8 +121,14 @@ impl<'a> Network<'a> {
             )
             .await;
         }
-        app.media_image = image.clone();
 
+        app.media_image = image.clone();
+        app.image_state = Some(
+            app.picker
+                .as_ref()
+                .unwrap()
+                .new_resize_protocol(app.get_picture_from_cache().unwrap()),
+        );
         let route = Route {
             data: Some(Data::Anime(app.anime_details.as_ref().unwrap().clone())),
             block: ActiveDisplayBlock::AnimeDetails,
@@ -165,9 +171,12 @@ impl<'a> Network<'a> {
             .await;
         }
         app.media_image = image.clone();
-
-        eprint!("{}", image.is_some());
-        eprint!("{}", app.picker.is_some());
+        app.image_state = Some(
+            app.picker
+                .as_ref()
+                .unwrap()
+                .new_resize_protocol(app.get_picture_from_cache().unwrap()),
+        );
         let route = Route {
             data: Some(Data::Manga(app.manga_details.as_ref().unwrap().clone())),
             block: ActiveDisplayBlock::MangaDetails,
@@ -726,12 +735,17 @@ async fn get_picture(
     image_dir_path: PathBuf,
     id: u64,
     pictures: &Option<Picture>,
-) -> Option<String> {
+) -> Option<(String, u32, u32)> {
     // check if the image is already in the cache, if not we fetch it and save it
     // look for it in the cache first:
     let file_path = image_dir_path.join(format!("{}.png", id));
     if file_path.exists() {
-        return Some(file_path.to_string_lossy().to_string());
+        let image = image::open(&file_path).ok()?;
+        return Some((
+            file_path.to_string_lossy().to_string(),
+            image.width(),
+            image.height(),
+        ));
     }
     // fetch the image and save it
     if let Some(p) = pictures {
@@ -749,7 +763,11 @@ async fn get_picture(
                             image
                                 .save_with_format(&file_path, image::ImageFormat::Png)
                                 .ok();
-                            return Some(file_path.to_string_lossy().to_string());
+                            return Some((
+                                file_path.to_string_lossy().to_string(),
+                                image.width(),
+                                image.height(),
+                            ));
                         }
                     }
                     Err(e) => {

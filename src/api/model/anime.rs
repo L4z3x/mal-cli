@@ -85,7 +85,7 @@ pub enum AnimeStatus {
     Other(String),
 }
 
-#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
+#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr, Display)]
 #[strum(serialize_all = "snake_case")]
 pub enum Source {
     Other,
@@ -158,7 +158,7 @@ pub struct Anime {
     pub status: Option<AnimeStatus>,
     pub my_list_status: Option<UserAnimeListStatus>,
     pub num_episodes: Option<u64>,
-    pub start_season: Option<Season>,
+    pub start_season: Option<StartSeason>,
     pub broadcast: Option<Broadcast>,
     pub source: Option<Source>,
     pub average_episode_duration: Option<u64>,
@@ -182,6 +182,12 @@ pub struct RelatedAnime {
     pub node: Anime,
     pub relation_type: RelationType,
     pub relation_type_formatted: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct StartSeason {
+    pub season: Season,
+    pub year: u16,
 }
 
 #[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
@@ -223,7 +229,7 @@ pub struct RankingAnimePair {
     pub ranking: RankingInfo,
 }
 
-#[derive(Clone, Debug, PartialEq, EnumString, EnumIter, IntoStaticStr)]
+#[derive(Clone, Debug, PartialEq, Display, EnumString, EnumIter, IntoStaticStr)]
 #[strum(serialize_all = "snake_case")]
 pub enum UserWatchStatus {
     Watching,

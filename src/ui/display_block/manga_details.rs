@@ -1,44 +1,48 @@
-use image::{DynamicImage, ImageError};
+use super::{details_utils, draw_keys_bar};
+use crate::app::App;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     Frame,
 };
-use ratatui_image::StatefulImage;
 
-use crate::{app::App, ui::display_block::anime_details};
+use super::{center_area, details_utils::draw_bordered_block};
 
-use super::{
-    anime_details::{draw_bordered_block, draw_image_place_holder},
-    center_area,
-};
-
-pub fn draw_manga_detail(f: &mut Frame, app: &App, chunk: Rect) {
-    let layout: [Rect; 2] = Layout::default()
+pub fn draw_manga_detail(f: &mut Frame, app: &mut App, chunk: Rect) {
+    let chunk = draw_keys_bar(f, app, chunk);
+    let [_, upper_chunk, lower_chunk] = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Min(16), Constraint::Percentage(100)])
+        .constraints([
+            Constraint::Length(1),
+            Constraint::Min(16),
+            Constraint::Percentage(100),
+        ])
         .areas(chunk);
 
-    draw_top_info(f, app, layout[0]);
-    let layout: [Rect; 2_] = Layout::default()
+    draw_top_info(f, app, upper_chunk);
+    let [synopsis_chunk, side_info_chunk] = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(65), Constraint::Percentage(35)])
-        // .margin(1)
-        .areas(layout[1]);
-    draw_synopsis(f, app, layout[0]);
-    draw_side_info(f, app, layout[1]);
+        .areas(lower_chunk);
+
+    draw_synopsis(f, app, synopsis_chunk);
+    draw_side_info(f, app, side_info_chunk);
 }
 
-fn draw_top_info(f: &mut Frame, app: &App, chunk: Rect) {
+fn draw_top_info(f: &mut Frame, app: &mut App, chunk: Rect) {
     let layout = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Min(22), Constraint::Percentage(100)])
+        .constraints([
+            Constraint::Length(1),
+            Constraint::Min(26),
+            Constraint::Percentage(100),
+        ])
         // .margin(1)
         .split(chunk);
 
-    let picture_chunk = layout[0];
-    let top_info_chunk = layout[1];
+    let picture_chunk = layout[1];
+    let top_info_chunk = layout[2];
 
-    draw_picture(f, app, picture_chunk);
+    details_utils::draw_picture(f, app, picture_chunk);
     draw_info(f, app, top_info_chunk);
 }
 
@@ -52,18 +56,22 @@ fn draw_synopsis(f: &mut Frame, app: &App, chunk: Rect) {
         $(
             if let Some(content) = &$text {
                 if !content.is_empty() {
-                    let (title, text, height) = anime_details::get_text_prop($title.to_string(), content.clone(), $app);
+                    let (title, text, height) = details_utils::get_text_prop($title.to_string(), content.clone(), $app);
                     layout_items.push((title, text, height));
                     total_height += height + 6; // Add padding
                 }else {
                     // handle empty string
-                    let (title, text, height) = anime_details::get_text_prop($title.to_string(), format!("No {} available.",$title.to_string()).to_string(), $app);
+                    let mut title = $title.to_string();
+                    title.remove(title.len()-1);
+                    let (title, text, height) = details_utils::get_text_prop($title.to_string(), format!("No {} available.",title).to_ascii_lowercase(), $app);
                     layout_items.push((title, text, height));
                     total_height += height + 6  ; // Add padding
                 }
             }else {
                 // needed to duplicate this in case they decided a null value and  not ab empty string
-                let (title, text, height) = anime_details::get_text_prop($title.to_string(), format!("No {} available.",$title.to_string()).to_string(), $app);
+                let mut title = $title.to_string();
+                title.remove(title.len()-1);
+                let (title, text, height) = details_utils::get_text_prop($title.to_string(), format!("No {} available.",title).to_ascii_lowercase(), $app);
                 layout_items.push((title, text, height));
                 total_height += height + 6  ; // Add padding
         }
@@ -78,53 +86,81 @@ fn draw_synopsis(f: &mut Frame, app: &App, chunk: Rect) {
     let synopsis = app.manga_details.as_ref().unwrap().synopsis.clone();
     let background = app.manga_details.as_ref().unwrap().background.clone();
     // related anime:
-    // related
+    let related_anime = app.manga_details.as_ref().unwrap().related_anime.clone();
+    let related_anime_string;
+    if let Some(related_anime) = related_anime {
+        let strings = related_anime
+            .iter()
+            .map(|a| {
+                format!(
+                    "{}: {}",
+                    a.relation_type_formatted,
+                    a.node.get_title(&app.app_config, false)[0].clone()
+                )
+            })
+            .collect::<Vec<String>>();
+
+        related_anime_string = Some(strings.join("\n"));
+    } else {
+        related_anime_string = None;
+    }
+
+    // related manga:
+    let related_manga = app.manga_details.as_ref().unwrap().related_manga.clone();
+    let related_manga_string;
+    if let Some(related_manga) = related_manga {
+        let strings = related_manga
+            .iter()
+            .map(|a| {
+                format!(
+                    "{}: {}",
+                    a.relation_type_formatted,
+                    a.node.get_title(&app.app_config, false)[0].clone()
+                )
+            })
+            .collect::<Vec<String>>();
+
+        related_manga_string = Some(strings.join("\n"));
+    } else {
+        related_manga_string = None;
+    }
+    // recommendations:
+    let recommendations = app.manga_details.as_ref().unwrap().recommendations.clone();
+    let recommendations_string;
+    if let Some(recommendations) = recommendations {
+        let strings = recommendations
+            .iter()
+            .enumerate()
+            .map(|(i, a)| {
+                format!(
+                    "{:02}. {}",
+                    i + 1,
+                    a.node.get_title(&app.app_config, false)[0].clone()
+                )
+            })
+            .collect::<Vec<String>>();
+
+        recommendations_string = Some(strings.join("\n"));
+    } else {
+        recommendations_string = None;
+    }
 
     // call the macro
     let (total_height, layout_items) = construct_synopsis_layout!(
         app,
-        // "Synopsis:" =>synopsis,
-        // "Synopsis:" =>synopsis,
         "Synopsis:" =>synopsis,
-        "Background:" => background
+        "Background:" => background,
+        "Related Anime:" => related_anime_string,
+        "Related Manga:" => related_manga_string,
+        "Recommendations:" => recommendations_string
     );
-    anime_details::draw_synopsis_items(f, app, total_height, layout_items, chunk);
+    details_utils::draw_synopsis_items(f, app, total_height, layout_items, chunk);
 }
 
 fn draw_side_info(f: &mut Frame, app: &App, chunk: Rect) {
     draw_bordered_block(f, chunk);
 }
 
-fn draw_picture(f: &mut Frame, app: &App, chunk: Rect) {
-    let picker = app.picker.clone();
-    if picker.is_none() || app.media_image.is_none() {
-        draw_image_place_holder(f, chunk);
-        return;
-    }
-    let picker = picker.unwrap();
-
-    match get_picture_from_cache(app) {
-        Ok(image) => {
-            let mut image_state = picker.new_resize_protocol(image);
-            let image = StatefulImage::default();
-            f.render_stateful_widget(image, center_area(chunk, 90, 80), &mut image_state);
-            image_state.last_encoding_result().unwrap().unwrap();
-        }
-        Err(e) => {
-            // pass e to the place holder
-            draw_image_place_holder(f, chunk);
-        }
-    }
-}
-
 fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
     draw_bordered_block(f, chunk);
-}
-
-pub fn get_picture_from_cache(app: &App) -> Result<DynamicImage, ImageError> {
-    // all images are stored in $HOME?/.cache/mal-tui/images/
-    let file_name = app.media_image.as_ref().unwrap();
-    let file_path = app.app_config.paths.picture_cache_dir_path.join(file_name);
-    let image = image::ImageReader::open(file_path)?.decode()?;
-    Ok(image)
 }

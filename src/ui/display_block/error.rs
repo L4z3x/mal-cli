@@ -1,4 +1,4 @@
-use super::super::side_menu;
+use super::center_area;
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Style,
@@ -49,6 +49,6 @@ pub fn draw_error(f: &mut Frame, app: &App, chunk: Rect) {
         // .block(error_block)
         .wrap(Wrap { trim: true });
 
-    let centered_box = side_menu::center_rect(error_box, 1);
+    let centered_box = center_area(error_box, 100, 50);
     f.render_widget(error_paragraph, centered_box);
 }

@@ -6,6 +6,7 @@ use crate::api::model::PageableData;
 use crate::api::model::UserReadStatus;
 use crate::app::DISPLAY_COLUMN_NUMBER;
 use crate::app::DISPLAY_RAWS_NUMBER;
+use crate::ui::format_number_with_commas;
 use crate::{
     api::model::{AnimeMediaType, UserWatchStatus},
     app::{ActiveBlock, App, SelectedSearchTab},
@@ -46,7 +47,7 @@ pub fn draw_anime_search_results(f: &mut Frame, app: &App, chunk: Rect) {
         // draw_no_results(f, app, chunk);
         return;
     }
-    let cards_results = constract_cards_with_data(chunk, results);
+    let cards_results = construct_cards_with_data(chunk, results);
 
     let cards = cards_results.0;
     let components = cards_results.1;
@@ -98,7 +99,9 @@ pub fn draw_anime_search_results(f: &mut Frame, app: &App, chunk: Rect) {
             .as_ref()
             .map_or("unknown".to_string(), |date| date.date.year().to_string());
 
-        let num_user_list: String = component.num_list_users.unwrap().to_string();
+        let num_user_list: String = component
+            .num_list_users
+            .map_or("N/A".to_string(), |s| format_number_with_commas(s));
 
         let score = Line::from(Span::styled(
             format!(
@@ -153,7 +156,7 @@ pub fn draw_manga_search_results(f: &mut Frame, app: &App, chunk: Rect) {
         // draw_no_results(f, app, chunk);
         return;
     }
-    let cards_results = constract_cards_with_data(chunk, results);
+    let cards_results = construct_cards_with_data(chunk, results);
 
     let cards = cards_results.0;
     let components = cards_results.1;
@@ -213,7 +216,9 @@ pub fn draw_manga_search_results(f: &mut Frame, app: &App, chunk: Rect) {
             Style::default(), //? we can add a function to get color based on score
         ));
 
-        let num_user_list: String = component.num_list_users.unwrap().to_string();
+        let num_user_list: String = component
+            .num_list_users
+            .map_or("N/A".to_string(), |n| format_number_with_commas(n));
 
         //todo: add vols and ch based on app_config
         let type_num_vol = Line::from(Span::styled(
@@ -241,7 +246,7 @@ pub fn draw_manga_search_results(f: &mut Frame, app: &App, chunk: Rect) {
     }
 }
 
-pub fn constract_cards_with_data<T: Clone + Debug>(
+pub fn construct_cards_with_data<T: Clone + Debug>(
     chunk: Rect,
     results: &PageableData<Vec<Node<T>>>,
 ) -> (Vec<Rect>, Vec<&T>) {

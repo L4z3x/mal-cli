@@ -6,8 +6,10 @@ pub mod manga;
 pub use manga::*;
 /// User related structs
 pub mod user;
+use serde::de::{self, Visitor};
 pub use user::*;
 
+use core::fmt;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::Debug;
 use std::str::FromStr;
@@ -117,21 +119,64 @@ pub struct Studio {
 }
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct MediaDetailStatistics {
-    num_list_users: u64,
-    status: MediaDetailStatisticsStatus,
+    pub num_list_users: u64,
+    pub status: MediaDetailStatisticsStatus,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MediaDetailStatisticsStatus {
     //# TODO: check if this is correct
-    watching: String,
-    completed: String,
-    on_hold: String,
-    dropped: String,
-    plan_to_watch: String,
+    #[serde(deserialize_with = "string_or_int")]
+    pub watching: String,
+    #[serde(deserialize_with = "string_or_int")]
+    pub completed: String,
+    #[serde(deserialize_with = "string_or_int")]
+    pub on_hold: String,
+    #[serde(deserialize_with = "string_or_int")]
+    pub dropped: String,
+    #[serde(deserialize_with = "string_or_int")]
+    pub plan_to_watch: String,
+}
+// this function is used to deserialize the statistics status fields which might be received as either a string or an integer
+fn string_or_int<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct StringOrIntVisitor;
+
+    impl<'de> Visitor<'de> for StringOrIntVisitor {
+        type Value = String;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("an integer or a string")
+        }
+
+        fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(value.to_string())
+        }
+
+        fn visit_i64<E>(self, value: i64) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(value.to_string())
+        }
+
+        fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(value.to_string())
+        }
+    }
+
+    deserializer.deserialize_any(StringOrIntVisitor)
 }
 
-pub const ALL_ANIME_AND_MANGA_FIELDS: &str = "id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,nsfw,genres,create_at,updated_at,media_type,status,my_list_status,num_episodes,broadcast,source,average_episode_duration,rating,pictures,background,related_anime,related_manga,recommendations,studios,statistics,num_volumes,num_chapters,authors";
+pub const ALL_ANIME_AND_MANGA_FIELDS: &str = "id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,nsfw,genres,create_at,updated_at,media_type,status,my_list_status,num_episodes,broadcast,source,average_episode_duration,rating,pictures,background,related_anime,related_manga,recommendations,studios,statistics,num_volumes,num_chapters,authors,start_season";
 pub const ALL_USER_FIELDS: &str =
     "id,name,picture,gender,birthday,location,joined_at,anime_statistics,time_zone,is_supporter";
 

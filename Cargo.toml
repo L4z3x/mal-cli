@@ -39,6 +39,7 @@ strum_macros = "0.27.1"
 thiserror = "2.0.12"
 time = { version = "0.3.39" , features = ["parsing" , "formatting"] }
 tokio = {version = "1.44.0",features = ["full"]}
+tui-big-text = "0.7.1"
 tui-scrollview = "0.5.1"
 unicode-width = "0.2.0"
 url = "2.5.4"

@@ -134,7 +134,7 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
             //     ui::draw_error(&mut f, &app);
             // }
             _ => {
-                ui::draw_main_layout(&mut f, &app);
+                ui::draw_main_layout(&mut f, &mut app);
             }
         })?;
 

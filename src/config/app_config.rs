@@ -6,7 +6,6 @@ use crate::{
     event::key::Key,
 };
 use ratatui::style::Color;
-use ratatui_image::picker::Picker;
 
 #[derive(Clone)]
 pub struct AppConfig {
@@ -31,6 +30,7 @@ pub enum TitleLanguage {
 
 #[derive(Copy, Clone, Debug)]
 pub struct Theme {
+    pub mal_color: Color,
     pub active: Color,
     pub banner: Color,
     pub hint: Color,
@@ -51,6 +51,7 @@ pub struct Theme {
 impl Default for Theme {
     fn default() -> Self {
         Self {
+            mal_color: Color::Rgb(46, 81, 162),
             active: Color::Cyan,
             banner: Color::LightCyan,
             hint: Color::Yellow,
