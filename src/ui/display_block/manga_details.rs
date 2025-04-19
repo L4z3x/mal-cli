@@ -210,7 +210,7 @@ fn draw_side_info(f: &mut Frame, app: &App, chunk: Rect) {
     scrol_view.render_widget(alter_titles_title, alternative_titles_title_chunk);
     scrol_view.render_widget(alter_titles, alternative_title_chunk);
     scrol_view.render_widget(key_values_info, key_val_chunk);
-    let mut scroll_state = app.anime_details_info_scroll_view_state.clone();
+    let mut scroll_state = app.manga_details_info_scroll_view_state.clone();
 
     f.render_stateful_widget(scrol_view, chunk, &mut scroll_state);
 }

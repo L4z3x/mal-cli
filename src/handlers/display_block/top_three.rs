@@ -1,4 +1,4 @@
-use crate::handlers::common;
+use crate::handlers::{common, get_media_detail_page};
 use crate::{
     api::model::{AnimeRankingType, MangaRankingType, RankingType},
     app::{App, TopThreeBlock},
@@ -16,6 +16,7 @@ pub fn handler(key: Key, app: &mut App) {
                 index = 2;
             }
         }
+
         k if common::down_event(k) => {
             if index < 2 {
                 index = index + 1;
@@ -172,7 +173,7 @@ pub fn handler(key: Key, app: &mut App) {
             _ => {}
         },
 
-        Key::Enter => {}
+        Key::Enter => get_media_detail_page(app),
         _ => {}
     }
     app.selected_top_three = index;

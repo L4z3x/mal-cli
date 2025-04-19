@@ -143,24 +143,11 @@ pub fn first_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
     let [area] = horizontal.areas(area);
     area
 }
+
 pub fn last_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
     let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::End);
     let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::End);
     let [area] = vertical.areas(area);
     let [area] = horizontal.areas(area);
     area
-}
-
-pub fn fixed_area(
-    area: Rect,
-    percent_x: u16,
-    percent_y: u16,
-    percent_width: u16,
-    percent_height: u16,
-) -> Rect {
-    let x = area.x + (area.width * percent_x / 100);
-    let y = area.y + (area.height * percent_y / 100);
-    let width = area.width * percent_width / 100;
-    let height = area.height * percent_height / 100;
-    Rect::new(x, y, width, height)
 }

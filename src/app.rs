@@ -639,7 +639,16 @@ impl App {
                     }
 
                     Data::Manga(d) => {
-                        self.manga_details = Some(d.clone()); // todo: add here too.
+                        self.manga_details = Some(d.clone()); 
+                        if let Some(image) = &route.image {
+                            self.media_image = Some(image.clone());
+                            self.image_state = Some(
+                                self.picker
+                                    .as_ref()
+                                    .unwrap()
+                                    .new_resize_protocol(self.get_picture_from_cache().unwrap()),
+                            );
+                        }
                     }
 
                     Data::AnimeRanking(d) => {

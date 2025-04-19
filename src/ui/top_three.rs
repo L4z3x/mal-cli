@@ -44,7 +44,7 @@ fn draw_anime_top_three(
     rank_type: &AnimeRankingType,
 ) {
     let block = block.title(format!(
-        "Top {}",
+        "Top {}  (Anime)",
         capitalize_each_word(rank_type.to_string())
     ));
     f.render_widget(block, chunk);
@@ -176,7 +176,7 @@ fn draw_manga_top_three(
     // f.render_widget(block, chunk);
 
     let block = block.title(format!(
-        "Top {}",
+        "Top {}  (Manga)",
         capitalize_each_word(rank_type.to_string())
     ));
     f.render_widget(block, chunk);
@@ -275,11 +275,15 @@ fn draw_manga_top_three(
 
 fn draw_loading_top_three(f: &mut Frame, chunk: Rect, block: Block, rank_type: &RankingType) {
     let title = match rank_type {
-        RankingType::AnimeRankingType(rank) => capitalize_each_word(rank.to_string()),
-        RankingType::MangaRankingType(rank) => capitalize_each_word(rank.to_string()),
+        RankingType::AnimeRankingType(rank) => {
+            format!("Top {}  (Anime)", capitalize_each_word(rank.to_string()))
+        }
+        RankingType::MangaRankingType(rank) => {
+            format!("Top {}  (Manga)", capitalize_each_word(rank.to_string()))
+        }
     };
 
-    let block = block.title(format!("Top {}", title));
+    let block = block.title(title);
     f.render_widget(block, chunk);
 
     let middle_chunk = Layout::default()
