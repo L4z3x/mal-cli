@@ -1,5 +1,5 @@
 use super::common;
-use crate::app::{ActiveBlock, ActiveDisplayBlock, App, Data, ANIME_OPTIONS, ANIME_OPTIONS_RANGE};
+use crate::app::{ActiveDisplayBlock, App, Data, ANIME_OPTIONS, ANIME_OPTIONS_RANGE};
 
 use crate::event::Key;
 use crate::network::IoEvent;

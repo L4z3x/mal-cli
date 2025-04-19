@@ -117,6 +117,7 @@ pub fn handle_result_block(key: Key, app: &mut App) {
             }
             app.search_results.selected_display_card_index = Some(index);
         }
+
         k if common::right_event(k) => {
             let mut index = app.search_results.selected_display_card_index.unwrap_or(0);
             let mut edges = Vec::new();
@@ -129,16 +130,23 @@ pub fn handle_result_block(key: Key, app: &mut App) {
 
             app.search_results.selected_display_card_index = Some(index);
         }
+
         k if common::up_event(k) => {
             let mut index = app.search_results.selected_display_card_index.unwrap_or(0);
+            if (0..3).contains(&index) {
+                scroll_results_up(app, index);
+            }
             if !(0..3).contains(&index) {
                 index = index - DISPLAY_COLUMN_NUMBER;
             }
             app.search_results.selected_display_card_index = Some(index);
         }
+
         k if common::down_event(k) => {
             let mut index = app.search_results.selected_display_card_index.unwrap_or(0);
-
+            if ((max - DISPLAY_COLUMN_NUMBER)..(max - 1)).contains(&index) {
+                scroll_results_down(app, index);
+            }
             if !((max - DISPLAY_COLUMN_NUMBER)..(max - 1)).contains(&index) {
                 index = (index + DISPLAY_COLUMN_NUMBER) % max
             }
@@ -169,9 +177,9 @@ pub fn is_data_available(
 
 pub fn get_media_detail_page(app: &mut App) {
     let index = app.search_results.selected_display_card_index.unwrap_or(0);
-    match app.search_results.selected_tab {
-        SelectedSearchTab::Anime => {
-            let data = app.search_results.anime.as_ref().unwrap().data.get(index);
+    match app.active_display_block {
+        ActiveDisplayBlock::AnimeRanking => {
+            let data = app.anime_ranking_data.as_ref().unwrap().data.get(index);
 
             if let Some(data) = data {
                 let (is_data_available, is_next, index) =
@@ -189,8 +197,8 @@ pub fn get_media_detail_page(app: &mut App) {
                 app.active_block = ActiveBlock::DisplayBlock;
             }
         }
-        SelectedSearchTab::Manga => {
-            let data = app.search_results.manga.as_ref().unwrap().data.get(index);
+        ActiveDisplayBlock::MangaRanking => {
+            let data = app.manga_ranking_data.as_ref().unwrap().data.get(index);
 
             if let Some(data) = data {
                 let (is_data_available, is_next, index) =
@@ -208,7 +216,49 @@ pub fn get_media_detail_page(app: &mut App) {
                 app.active_block = ActiveBlock::DisplayBlock;
             }
         }
-    }
+        ActiveDisplayBlock::SearchResultBlock => match app.search_results.selected_tab {
+            SelectedSearchTab::Anime => {
+                let data = app.search_results.anime.as_ref().unwrap().data.get(index);
+
+                if let Some(data) = data {
+                    let (is_data_available, is_next, index) =
+                        is_media_data_available(app, &Media::Anime(&data.node));
+                    if is_next {
+                        app.load_next_route();
+                        return;
+                    }
+                    if is_data_available {
+                        app.load_route(index.unwrap());
+                    } else {
+                        app.active_display_block = ActiveDisplayBlock::Loading;
+                        app.dispatch(IoEvent::GetAnime(data.node.id));
+                    }
+                    app.active_block = ActiveBlock::DisplayBlock;
+                }
+            }
+            SelectedSearchTab::Manga => {
+                let data = app.search_results.manga.as_ref().unwrap().data.get(index);
+
+                if let Some(data) = data {
+                    let (is_data_available, is_next, index) =
+                        is_media_data_available(app, &Media::Manga(&data.node));
+                    if is_next {
+                        app.load_next_route();
+                        return;
+                    }
+                    if is_data_available {
+                        app.load_route(index.unwrap());
+                    } else {
+                        app.active_display_block = ActiveDisplayBlock::Loading;
+                        app.dispatch(IoEvent::GetManga(data.node.id));
+                    }
+                    app.active_block = ActiveBlock::DisplayBlock;
+                }
+            }
+        },
+
+        _ => {}
+    };
 }
 
 fn is_media_data_available(app: &App, data: &Media) -> (bool, bool, Option<u16>) {
@@ -246,3 +296,7 @@ fn is_media_data_available(app: &App, data: &Media) -> (bool, bool, Option<u16>)
     }
     return (false, false, None);
 }
+
+fn scroll_results_up(app: &mut App, index: usize) {}
+
+fn scroll_results_down(app: &mut App, index: usize) {}

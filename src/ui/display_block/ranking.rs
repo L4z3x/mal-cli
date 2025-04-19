@@ -334,8 +334,8 @@ fn draw_ranking_popup(f: &mut Frame, app: &App, chunk: Rect) {
         _ => Box::new(std::iter::empty()),
     };
     let index = match &app.active_display_block {
-        ActiveDisplayBlock::AnimeRanking => Some(app.anime_ranking_index as usize),
-        ActiveDisplayBlock::MangaRanking => Some(app.manga_ranking_index as usize),
+        ActiveDisplayBlock::AnimeRanking => Some(app.anime_ranking_type_index as usize),
+        ActiveDisplayBlock::MangaRanking => Some(app.manga_ranking_type_index as usize),
         _ => None,
     };
     let mut state = ListState::default();

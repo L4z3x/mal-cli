@@ -100,9 +100,9 @@ pub struct SearchResult {
     pub anime: Option<Page<Anime>>,
     pub manga: Option<Page<Manga>>,
     pub selected_tab: SelectedSearchTab,
-    pub selected_anime_index: Option<usize>,
     pub selected_display_card_index: Option<usize>,
-    pub selected_manga_index: Option<usize>,
+    pub max_index: u16,
+    pub max_page: u16,
 }
 
 #[derive(Clone)]
@@ -242,8 +242,8 @@ pub struct App {
     pub anime_ranking_type: AnimeRankingType,
     pub manga_ranking_data: Option<Ranking<RankingMangaPair>>,
     pub manga_ranking_type: MangaRankingType,
-    pub anime_ranking_index: u8,
-    pub manga_ranking_index: u8,
+    pub anime_ranking_type_index: u8,
+    pub manga_ranking_type_index: u8,
     //profile:
     pub user_profile: Option<UserInfo>,
     // use UserWatchStatus to determine the current tab
@@ -392,10 +392,10 @@ impl App {
             search_results: SearchResult {
                 anime: None,
                 manga: None,
-                selected_anime_index: None,
-                selected_manga_index: None,
                 selected_display_card_index: Some(0),
                 selected_tab: SelectedSearchTab::Anime,
+                max_index: 15,
+                max_page: 0,
             },
             size: Rect::default(),
             input: vec![],
@@ -424,10 +424,10 @@ impl App {
             // ranking page
             anime_ranking_data: None,
             anime_ranking_type: AnimeRankingType::All,
-            anime_ranking_index: 0,
+            anime_ranking_type_index: 0,
             manga_ranking_data: None,
             manga_ranking_type: MangaRankingType::All,
-            manga_ranking_index: 0,
+            manga_ranking_type_index: 0,
             // anime list
             anime_list_status: None,
             // manga list
@@ -614,7 +614,9 @@ impl App {
             Some(data) => {
                 match data {
                     Data::SearchResult(d) => {
-                        self.search_results = d.clone();
+                        self.search_results.anime = d.anime.clone();
+                        self.search_results.manga = d.manga.clone();
+
                     }
 
                     Data::Suggestions(d) => {

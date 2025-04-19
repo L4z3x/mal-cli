@@ -206,15 +206,15 @@ pub struct RankingInfo {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Person {
-    id: u64,
-    first_name: Option<String>,
-    last_name: Option<String>,
+    pub id: u64,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PersonRole {
-    node: Person,
-    role: String,
+    pub node: Person,
+    pub role: String,
 }
 
 macro_rules! impl_serialize_deserialize {

@@ -2,14 +2,16 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Flex, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{block::title, Block, BorderType, Borders, List, Paragraph, Wrap},
+    widgets::{Block, BorderType, Borders, List, Paragraph, Wrap},
     Frame,
 };
 use ratatui_image::StatefulImage;
 use tui_scrollview::{ScrollView, ScrollbarVisibility};
 
 use crate::{
-    api::model::{AlternativeTitles, AnimeMediaType, AnimeStatus, Source},
+    api::model::{
+        AlternativeTitles, AnimeMediaType, AnimeStatus, MangaMediaType, MangaStatus, Source,
+    },
     app::App,
 };
 
@@ -33,10 +35,10 @@ pub fn get_score_text(s: u8) -> String {
 }
 
 pub fn draw_picture(f: &mut Frame, app: &mut App, chunk: Rect) {
-    let chunk = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Length(1), Constraint::Fill(1)])
-        .split(chunk)[1];
+    // let chunk = Layout::default()
+    //     .direction(Direction::Vertical)
+    //     .constraints([Constraint::Length(1), Constraint::Fill(1)])
+    //     .split(chunk)[1];
 
     if let Some(_) = app.media_image {
         if let (Some(_), Some(_)) = (&app.picker, &app.image_state) {
@@ -58,7 +60,14 @@ pub fn draw_picture(f: &mut Frame, app: &mut App, chunk: Rect) {
     }
 }
 
-fn draw_image_place_holder(f: &mut Frame, chunk: Rect) {}
+fn draw_image_place_holder(f: &mut Frame, chunk: Rect) {
+    draw_bordered_block(f, chunk);
+    let paragraph = Paragraph::new("Unable to render the image.")
+        .alignment(Alignment::Center)
+        .wrap(Wrap { trim: true });
+
+    f.render_widget(paragraph, center_area(chunk, 95, 30));
+}
 
 pub fn draw_bordered_block(f: &mut Frame, chunk: Rect) {
     let block = Block::default()
@@ -458,6 +467,177 @@ pub fn get_anime_key_val_info(
     let rating_title = Span::styled("Rating: ", Style::default().add_modifier(Modifier::BOLD));
     let rating_line = Line::from(vec![rating_title, Span::raw(rating)]);
     key_vals_paragraph.push(rating_line);
+
+    let key_vals = Paragraph::new(key_vals_paragraph)
+        .block(Block::default().borders(Borders::NONE))
+        .alignment(Alignment::Left)
+        .wrap(Wrap { trim: true });
+    (
+        key_vals,
+        alter_titles,
+        alter_titles_title,
+        alter_titles_height,
+    )
+}
+
+pub fn get_manga_key_val_info(
+    app: &App,
+) -> (Paragraph<'static>, List<'static>, Span<'static>, u16) {
+    let mut key_vals_paragraph: Vec<Line> = Vec::new();
+    //* alternative titles:
+    let alternative_title = app
+        .manga_details
+        .as_ref()
+        .unwrap()
+        .alternative_titles
+        .clone();
+
+    let (alter_titles, alter_titles_height) = get_alternative_titles(alternative_title);
+    let alter_titles_title = Span::styled(
+        "Alternative Titles: ",
+        Style::default().add_modifier(Modifier::BOLD),
+    );
+
+    //* type:
+    let media_type = Into::<&str>::into(
+        app.manga_details
+            .as_ref()
+            .unwrap()
+            .media_type
+            .as_ref()
+            .map_or(MangaMediaType::Other("Unknown".to_string()), |m| m.clone()),
+    );
+    let media_type_title = Span::styled("Type: ", Style::default().add_modifier(Modifier::BOLD));
+    let media_type_line = Line::from(vec![media_type_title, Span::raw(media_type)]);
+    key_vals_paragraph.push(media_type_line);
+
+    //* volumes:
+    let volumes = app
+        .manga_details
+        .as_ref()
+        .unwrap()
+        .num_volumes
+        .map_or("?".to_string(), |n| n.to_string());
+    let ep_title = Span::styled("Volumes: ", Style::default().add_modifier(Modifier::BOLD));
+    let volumes_line = Line::from(vec![ep_title, Span::raw(volumes)]);
+    key_vals_paragraph.push(volumes_line);
+
+    //* chapters:
+    let chapters = app
+        .manga_details
+        .as_ref()
+        .unwrap()
+        .num_chapters
+        .map_or("?".to_string(), |n| n.to_string());
+    let ep_title = Span::styled("Chapters: ", Style::default().add_modifier(Modifier::BOLD));
+    let chapters_line = Line::from(vec![ep_title, Span::raw(chapters)]);
+    key_vals_paragraph.push(chapters_line);
+
+    //* status:
+    let status = Into::<&str>::into(
+        app.manga_details
+            .as_ref()
+            .unwrap()
+            .status
+            .as_ref()
+            .map_or(MangaStatus::Other("None".to_string()), |s| s.clone()),
+    );
+    let status_title = Span::styled("Status: ", Style::default().add_modifier(Modifier::BOLD));
+    let status_line = Line::from(vec![status_title, Span::raw(status)]);
+    key_vals_paragraph.push(status_line);
+
+    //* Published:
+    let start_date = app
+        .manga_details
+        .as_ref()
+        .unwrap()
+        .start_date
+        .as_ref()
+        .map_or("?".to_string(), |d| {
+            format!("{} {}, {}", d.date.month(), d.date.day(), d.date.year())
+        });
+    let end_date = app
+        .manga_details
+        .as_ref()
+        .unwrap()
+        .end_date
+        .as_ref()
+        .map_or("?".to_string(), |d| {
+            format!("{} {}, {}", d.date.month(), d.date.day(), d.date.year())
+        });
+    let published = format!("{} to {}", start_date, end_date);
+    let published_title =
+        Span::styled("Published: ", Style::default().add_modifier(Modifier::BOLD));
+    let published_line = Line::from(vec![published_title, Span::raw(published)]);
+    key_vals_paragraph.push(published_line);
+
+    //* genres:
+    let genres =
+        app.manga_details
+            .as_ref()
+            .unwrap()
+            .genres
+            .as_ref()
+            .map_or("Unknown".to_string(), |g| {
+                g.iter()
+                    .map(|g| g.name.clone())
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            });
+    let genres_title = Span::styled("Genres: ", Style::default().add_modifier(Modifier::BOLD));
+    let genres_line = Line::from(vec![genres_title, Span::raw(genres)]);
+    key_vals_paragraph.push(genres_line);
+
+    //* serialization:
+    let serialization = app
+        .manga_details
+        .as_ref()
+        .unwrap()
+        .serialization
+        .as_ref()
+        .map_or("Unknown".to_string(), |s| {
+            s.iter()
+                .map(|s| s.node.name.clone())
+                .collect::<Vec<String>>()
+                .join(", ")
+        });
+    let serialization_title = Span::styled(
+        "Serialization: ",
+        Style::default().add_modifier(Modifier::BOLD),
+    );
+    let serialization_line = Line::from(vec![serialization_title, Span::raw(serialization)]);
+    key_vals_paragraph.push(serialization_line);
+
+    //* authors:
+    let authors =
+        app.manga_details
+            .as_ref()
+            .unwrap()
+            .authors
+            .as_ref()
+            .map_or("unknown".to_string(), |s| {
+                s.iter()
+                    .map(|s| {
+                        format!(
+                            "{} {} ({})",
+                            s.node
+                                .first_name
+                                .as_ref()
+                                .map_or("".to_string(), |s| s.clone()),
+                            s.node
+                                .last_name
+                                .as_ref()
+                                .map_or("".to_string(), |s| s.clone()),
+                            s.role.clone()
+                        )
+                    })
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            });
+
+    let authors_title = Span::styled("Authors: ", Style::default().add_modifier(Modifier::BOLD));
+    let authors_line = Line::from(vec![authors_title, Span::raw(authors)]);
+    key_vals_paragraph.push(authors_line);
 
     let key_vals = Paragraph::new(key_vals_paragraph)
         .block(Block::default().borders(Borders::NONE))

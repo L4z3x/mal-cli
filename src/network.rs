@@ -517,6 +517,7 @@ impl<'a> Network<'a> {
                 return;
             }
         }
+
         let route = Route {
             data: Some(Data::Suggestions(app.search_results.clone())),
             block: ActiveDisplayBlock::Suggestions,
@@ -547,6 +548,7 @@ impl<'a> Network<'a> {
                 return;
             }
         }
+
         let title = format!(
             "Seasonal Anime: {} {}",
             app.anime_season.anime_season.season,
@@ -697,6 +699,7 @@ impl<'a> Network<'a> {
         app.display_block_title = format!("Search Results: {}", q).to_string()
     }
 }
+
 fn get_status_string(status: Option<UserWatchStatus>) -> String {
     match status {
         Some(s) => match s {

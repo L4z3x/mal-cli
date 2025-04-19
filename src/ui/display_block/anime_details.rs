@@ -1,8 +1,7 @@
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Flex, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Flex, Layout, Margin, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, BorderType, Borders},
     Frame,
 };
 use tui_big_text::{BigText, PixelSize};
@@ -36,24 +35,20 @@ pub fn draw_anime_detail(f: &mut Frame, app: &mut App, chunk: Rect) {
         ])
         .areas(chunk);
 
-    draw_top_info(f, app, upper_chunk);
+    draw_top_info(f, app, upper_chunk.inner(Margin::new(2, 0)));
     let [synopsis_chunk, side_info_chunk] = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(65), Constraint::Percentage(35)])
-        .areas(center_area(lower_chunk, 96, 100));
+        .areas(lower_chunk.inner(Margin::new(2, 0)));
 
     draw_synopsis(f, app, synopsis_chunk);
     draw_side_info(f, app, side_info_chunk);
 }
 
 fn draw_top_info(f: &mut Frame, app: &mut App, chunk: Rect) {
-    let [_, picture_chunk, top_info_chunk] = Layout::default()
+    let [picture_chunk, top_info_chunk] = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Length(2),
-            Constraint::Min(26),
-            Constraint::Percentage(100),
-        ])
+        .constraints([Constraint::Min(26), Constraint::Percentage(100)])
         .areas(chunk);
     details_utils::draw_picture(f, app, picture_chunk);
     draw_info(f, app, top_info_chunk);
@@ -190,10 +185,6 @@ fn draw_side_info(f: &mut Frame, app: &App, chunk: Rect) {
 }
 
 fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
-    let chunk = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(100), Constraint::Min(1)])
-        .split(chunk)[0];
     details_utils::draw_bordered_block(f, chunk);
     // splitting the layout
     let [upper_chunk, lower_chunk] = Layout::default()

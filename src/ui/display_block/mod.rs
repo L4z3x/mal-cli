@@ -15,6 +15,7 @@ mod manga_details;
 mod ranking;
 mod results;
 mod search;
+mod suggestion;
 mod user;
 mod user_anime_list;
 mod user_manga_list;
@@ -36,7 +37,7 @@ pub fn draw_display_layout(f: &mut Frame, app: &mut App, chunk: Rect) {
 
         ActiveDisplayBlock::MangaRanking => ranking::draw_manga_ranking(f, app, chunk),
 
-        ActiveDisplayBlock::Suggestions => search::draw_search_result(f, app, chunk),
+        ActiveDisplayBlock::Suggestions => suggestion::draw_suggestions(f, app, chunk),
 
         ActiveDisplayBlock::UserAnimeList => user_anime_list::draw_user_anime_list(f, app, chunk),
 

@@ -52,7 +52,7 @@ pub enum MangaStatus {
     Other(String),
 }
 
-#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
+#[derive(Clone, Debug, PartialEq, EnumString, Display, IntoStaticStr)]
 #[strum(serialize_all = "snake_case")]
 pub enum UserReadStatus {
     Reading,
@@ -120,8 +120,8 @@ pub struct Serialization {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Magasine {
-    id: u64,
-    name: String,
+    pub id: u64,
+    pub name: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

@@ -36,37 +36,37 @@ fn handle_popup(key: Key, app: &mut App) {
     match key {
         k if common::up_event(k) => {
             if app.active_display_block == ActiveDisplayBlock::AnimeRanking {
-                if app.anime_ranking_index > 0 {
-                    app.anime_ranking_index -= 1;
+                if app.anime_ranking_type_index > 0 {
+                    app.anime_ranking_type_index -= 1;
                 } else {
-                    app.anime_ranking_index = 8; // max index
+                    app.anime_ranking_type_index = 8; // max index
                 }
             } else {
-                if app.manga_ranking_index > 0 {
-                    app.manga_ranking_index -= 1;
+                if app.manga_ranking_type_index > 0 {
+                    app.manga_ranking_type_index -= 1;
                 } else {
-                    app.manga_ranking_index = 8; // max index
+                    app.manga_ranking_type_index = 8; // max index
                 }
             }
         }
 
         k if common::down_event(k) => {
             if app.active_display_block == ActiveDisplayBlock::AnimeRanking {
-                app.anime_ranking_index = (app.anime_ranking_index + 1) % 9;
+                app.anime_ranking_type_index = (app.anime_ranking_type_index + 1) % 9;
             } else {
-                app.manga_ranking_index = (app.manga_ranking_index + 1) % 9;
+                app.manga_ranking_type_index = (app.manga_ranking_type_index + 1) % 9;
             }
         }
         Key::Enter => {
             if app.active_display_block == ActiveDisplayBlock::AnimeRanking {
                 app.popup = false;
                 app.active_display_block = ActiveDisplayBlock::Loading;
-                app.anime_ranking_type = get_anime_rank(app.anime_ranking_index);
+                app.anime_ranking_type = get_anime_rank(app.anime_ranking_type_index);
                 app.dispatch(IoEvent::GetAnimeRanking(app.anime_ranking_type.clone()));
             } else {
                 app.popup = false;
                 app.active_display_block = ActiveDisplayBlock::Loading;
-                app.manga_ranking_type = get_manga_rank(app.manga_ranking_index);
+                app.manga_ranking_type = get_manga_rank(app.manga_ranking_type_index);
                 app.dispatch(IoEvent::GetMangaRanking(app.manga_ranking_type.clone()));
             }
         }
