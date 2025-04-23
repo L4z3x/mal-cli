@@ -1,13 +1,14 @@
 use super::{details_utils, draw_keys_bar};
 use crate::{
     api::model::{Manga, MangaMediaType},
-    app::App,
+    app::{ActiveMangaDetailBlock, App},
     ui::format_number_with_commas,
 };
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Flex, Layout, Margin, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
+    widgets::{Block, BorderType, Paragraph},
     Frame,
 };
 use tui_big_text::{BigText, PixelSize};
@@ -55,7 +56,11 @@ fn draw_top_info(f: &mut Frame, app: &mut App, chunk: Rect) {
 }
 
 fn draw_synopsis(f: &mut Frame, app: &App, chunk: Rect) {
-    draw_bordered_block(f, chunk);
+    if let ActiveMangaDetailBlock::Synopsis = app.active_manga_detail_block {
+        draw_bordered_block(f, chunk, app.app_config.theme.hovered)
+    } else {
+        draw_bordered_block(f, chunk, app.app_config.theme.inactive)
+    }
     macro_rules!   construct_synopsis_layout {
     ($app:ident, $($title:expr => $text:expr),+ ) => {{
         let mut layout_items = Vec::new();
@@ -166,7 +171,11 @@ fn draw_synopsis(f: &mut Frame, app: &App, chunk: Rect) {
 }
 
 fn draw_side_info(f: &mut Frame, app: &App, chunk: Rect) {
-    details_utils::draw_bordered_block(f, chunk);
+    if let ActiveMangaDetailBlock::SideInfo = app.active_manga_detail_block {
+        draw_bordered_block(f, chunk, app.app_config.theme.hovered)
+    } else {
+        draw_bordered_block(f, chunk, app.app_config.theme.inactive)
+    }
 
     let chunk = center_area(chunk, 90, 90);
     //*  info:
@@ -216,11 +225,23 @@ fn draw_side_info(f: &mut Frame, app: &App, chunk: Rect) {
 }
 
 fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
-    details_utils::draw_bordered_block(f, chunk);
+    if app.active_manga_detail_block == ActiveMangaDetailBlock::AddToList
+        || app.active_manga_detail_block == ActiveMangaDetailBlock::Rate
+        || app.active_manga_detail_block == ActiveMangaDetailBlock::Chapters
+        || app.active_manga_detail_block == ActiveMangaDetailBlock::Volumes
+    {
+        draw_bordered_block(f, chunk, app.app_config.theme.hovered)
+    } else {
+        draw_bordered_block(f, chunk, app.app_config.theme.inactive)
+    }
     // splitting the layout
-    let [upper_chunk, lower_chunk] = Layout::default()
+    let [upper_chunk, lower_chunk, _] = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(70), Constraint::Percentage(30)])
+        .constraints([
+            Constraint::Percentage(70),
+            Constraint::Length(3),
+            Constraint::Fill(1),
+        ])
         .areas(chunk);
 
     let [score_chunk, rest_chunk] = Layout::default()
@@ -234,17 +255,19 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
         .flex(Flex::Center)
         .areas(rest_chunk);
 
-    let [_, user_status_chunk, user_score_chunk, user_progress_chunk, _] = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Length(4),
-            Constraint::Min(20),
-            Constraint::Min(20),
-            Constraint::Min(20),
-            Constraint::Percentage(100),
-        ])
-        .flex(Flex::Start)
-        .areas(lower_chunk);
+    let [_, user_status_chunk, user_score_chunk, user_chapter_progress_chunk, user_volume_progress_chunk, _] =
+        Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Length(4),
+                Constraint::Min(23),
+                Constraint::Min(23),
+                Constraint::Min(23),
+                Constraint::Min(23),
+                Constraint::Percentage(100),
+            ])
+            .flex(Flex::Start)
+            .areas(lower_chunk);
     // draw_bordered_block(f, score_chunk);
     let [score_title_chunk, big_score_chunk, num_users_chunk] = Layout::default()
         .direction(Direction::Vertical)
@@ -365,6 +388,10 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
     ))
     .alignment(Alignment::Left);
 
+    let unhovered_block = Block::bordered()
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(app.app_config.theme.inactive));
+
     // user stats:
     let user_status_list = app.manga_details.as_ref().unwrap().my_list_status.clone();
     // user_status:
@@ -373,7 +400,9 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
         .map_or("add to list".to_string(), |s| {
             Into::<&str>::into(s.status.clone()).to_string()
         });
-    let user_status_line = Line::from(user_status).alignment(Alignment::Left);
+    let mut user_status_paragraph = Paragraph::new(user_status)
+        .alignment(Alignment::Center)
+        .block(unhovered_block.clone());
 
     // user score:
     let user_score = user_status_list
@@ -381,31 +410,63 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
         .map_or("rate ⭐ ".to_string(), |s| {
             format!("{} ⭐", details_utils::get_score_text(s.score))
         });
-    let user_score_line = Line::from(user_score).alignment(Alignment::Left);
+    let mut user_score_paragraph = Paragraph::new(user_score)
+        .alignment(Alignment::Center)
+        .block(unhovered_block.clone());
 
     // user progress:
-    let user_progress = user_status_list
-        .as_ref()
-        .map_or("Epsiodes: ".to_string(), |s| {
-            format!(
-                "Episodes: {} / {}",
-                s.num_chapters_read,
-                app.manga_details
-                    .as_ref()
-                    .unwrap()
-                    .num_chapters
-                    .map_or("?".to_string(), |n| n.to_string())
-            )
-        });
-    let user_progress_line = Line::from(user_progress).alignment(Alignment::Left);
 
-    // todo: draw boxes arround the info
-    // f.render_widget(ranked_line, first_area(ranked_chunk, 100, 50));
-    // f.render_widget(popularity_line, first_area(popularity_chunk, 100, 50));
-    // f.render_widget(members_line, first_area(memeber_chunk, 100, 50));
-    f.render_widget(user_score_line, user_score_chunk);
-    f.render_widget(user_progress_line, user_progress_chunk);
-    f.render_widget(user_status_line, user_status_chunk);
+    let read_ch = user_status_list.as_ref().map_or(0, |s| s.num_chapters_read);
+    let total_ch = app
+        .manga_details
+        .as_ref()
+        .unwrap()
+        .num_chapters
+        .map_or("?".to_string(), |n| {
+            (n > 0).then(|| n.to_string()).unwrap_or("?".to_string())
+        });
+    let user_chapter_progress = format!("Chapters: {}/{}", read_ch, total_ch);
+    let mut user_chapter_progress_paragraph = Paragraph::new(user_chapter_progress)
+        .alignment(Alignment::Center)
+        .block(unhovered_block.clone());
+
+    let read_vol = user_status_list.as_ref().map_or(0, |s| s.num_volumes_read);
+    let total_vol = app
+        .manga_details
+        .as_ref()
+        .unwrap()
+        .num_volumes
+        .map_or("?".to_string(), |n| {
+            (n > 0).then(|| n.to_string()).unwrap_or("?".to_string())
+        });
+    let user_volume_progress = format!("Volumes: {} / {}", read_vol, total_vol);
+
+    let mut user_volume_progress_paragraph = Paragraph::new(user_volume_progress)
+        .alignment(Alignment::Center)
+        .block(unhovered_block);
+
+    let hovered_block = Block::bordered()
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(app.app_config.theme.hovered));
+    match app.active_manga_detail_block {
+        ActiveMangaDetailBlock::AddToList => {
+            user_status_paragraph = user_status_paragraph.block(hovered_block)
+        }
+        ActiveMangaDetailBlock::Chapters => {
+            user_chapter_progress_paragraph = user_chapter_progress_paragraph.block(hovered_block);
+        }
+        ActiveMangaDetailBlock::Volumes => {
+            user_volume_progress_paragraph = user_volume_progress_paragraph.block(hovered_block);
+        }
+        ActiveMangaDetailBlock::Rate => {
+            user_score_paragraph = user_score_paragraph.block(hovered_block);
+        }
+        _ => {}
+    }
+    f.render_widget(user_score_paragraph, user_score_chunk);
+    f.render_widget(user_chapter_progress_paragraph, user_chapter_progress_chunk);
+    f.render_widget(user_volume_progress_paragraph, user_volume_progress_chunk);
+    f.render_widget(user_status_paragraph, user_status_chunk);
     f.render_widget(first_line, upper_rest_chunk);
     f.render_widget(info_line, lower_rest_chunk);
     f.render_widget(score_title, center_area(score_title_chunk, 45, 100));

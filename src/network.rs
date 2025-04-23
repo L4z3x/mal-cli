@@ -2,7 +2,7 @@ use crate::{
     api::{
         self, model::*, GetAnimeDetailQuery, GetAnimeRankingQuery, GetMangaDetailQuery,
         GetMangaRankingQuery, GetSeasonalAnimeQuery, GetSuggestedAnimeQuery,
-        GetUserInformationQuery,
+        GetUserInformationQuery, UpdateUserAnimeListStatusQuery,
     },
     app::{
         ActiveBlock, ActiveDisplayBlock, App, Data, Route, SelectedSearchTab, TopThreeBlock,
@@ -27,7 +27,7 @@ pub enum IoEvent {
     GetMangaRanking(MangaRankingType),
     GetSeasonalAnime,
     GetSuggestedAnime,
-    UpdateAnimeListStatus(String),
+    UpdateAnimeListStatus(UpdateUserAnimeListStatusQuery),
     DeleteAnimeListStatus(String),
     GetAnimeList(Option<UserWatchStatus>),
     GetMangaList(Option<UserReadStatus>),
@@ -41,7 +41,7 @@ pub enum IoEvent {
 pub struct Network<'a> {
     oauth: OAuth,
     large_search_limit: u64,
-    small_search_limit: u64,
+    // small_search_limit: u64,
     app: &'a Arc<Mutex<App>>,
 }
 
@@ -50,7 +50,7 @@ impl<'a> Network<'a> {
         Self {
             oauth,
             large_search_limit: 20,
-            small_search_limit: 3,
+            // small_search_limit: 3,
             app,
         }
     }

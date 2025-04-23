@@ -136,18 +136,18 @@ pub fn center_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
     area
 }
 
-pub fn first_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
-    let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Start);
-    let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Start);
-    let [area] = vertical.areas(area);
-    let [area] = horizontal.areas(area);
-    area
-}
+// pub fn first_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
+//     let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Start);
+//     let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Start);
+//     let [area] = vertical.areas(area);
+//     let [area] = horizontal.areas(area);
+//     area
+// }
 
-pub fn last_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
-    let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::End);
-    let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::End);
-    let [area] = vertical.areas(area);
-    let [area] = horizontal.areas(area);
-    area
-}
+// pub fn last_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
+//     let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::End);
+//     let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::End);
+//     let [area] = vertical.areas(area);
+//     let [area] = horizontal.areas(area);
+//     area
+// }

@@ -37,6 +37,20 @@ pub const USER_OPTIONS_RANGE: std::ops::Range<usize> = 3..6;
 
 pub const GENERAL_OPTIONS_RANGE: std::ops::Range<usize> = 6..9;
 
+pub const RATING_OPTIONS: [&str; 11] = [
+    "None",
+    "(1) Appalling",
+    "(2) Horrible",
+    "(3) Very Bad",
+    "(4) Bad",
+    "(5) Average",
+    "(6) Fi\ne",
+    "(7) Good",
+    "(8) Very Good",
+    "(9) Great",
+    "(10) Masterpiece",
+];
+
 pub const ANIME_RANKING_TYPES: [&str; 9] = [
     "All",
     "Airing",
@@ -235,6 +249,14 @@ pub struct App {
     // detail
     pub anime_details: Option<Anime>,
     pub manga_details: Option<Manga>,
+    pub active_detail_popup: DetailPopup,
+    pub active_anime_detail_block: ActiveAnimeDetailBlock,
+    pub active_manga_detail_block: ActiveMangaDetailBlock,
+    pub selected_popup_status: u8,
+    pub selected_popup_rate: u8,
+    pub temp_popup_chapter_num: u16,
+    pub temp_popup_volume_num: u16,
+    pub temp_popup_episode_num: u16,
     // seasonal
     pub anime_season: Seasonal,
     //ranking
@@ -250,6 +272,34 @@ pub struct App {
     pub anime_list_status: Option<UserWatchStatus>,
     // use UserReadStatus to determine the current tab
     pub manga_list_status: Option<UserReadStatus>,
+}
+#[derive(Debug,Clone)]
+pub enum DetailPopup{
+    AddToList,
+    Rate,
+    Episodes,
+    Chapters,
+    Volumes,
+}
+
+
+#[derive(Debug, Clone,PartialEq)]
+pub enum ActiveAnimeDetailBlock {
+    Synopsis,
+    SideInfo,
+    AddToList,
+    Rate,
+    Episodes,
+}
+
+#[derive(Debug, Clone,PartialEq)]
+pub enum ActiveMangaDetailBlock{
+    Synopsis,
+    SideInfo,
+    AddToList,
+    Rate,
+    Chapters,
+    Volumes,
 }
 
 pub struct Seasonal {
@@ -432,7 +482,16 @@ impl App {
             anime_list_status: None,
             // manga list
             manga_list_status: None,
-            //
+            // detail
+            active_detail_popup: DetailPopup::AddToList,
+            active_anime_detail_block: ActiveAnimeDetailBlock::Synopsis,
+            active_manga_detail_block: ActiveMangaDetailBlock::Synopsis,
+            selected_popup_status: 0,
+            selected_popup_rate: 0, 
+            temp_popup_episode_num: 0,
+            temp_popup_volume_num: 0,
+            temp_popup_chapter_num:0,
+
             anime_details: get_anime_example(),
             manga_details: None,
             user_profile: None,
@@ -717,8 +776,6 @@ impl App {
         let file_name = self.media_image.as_ref().unwrap().0.clone();
         let file_path = self.app_config.paths.picture_cache_dir_path.join(file_name);
         let image = image::ImageReader::open(file_path)?.decode()?;
-        let w = image.width();
-        let h = image.height();
         Ok(image)
     }
 }

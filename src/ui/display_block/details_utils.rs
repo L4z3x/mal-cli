@@ -2,17 +2,19 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Flex, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, BorderType, Borders, List, Paragraph, Wrap},
+    widgets::{Block, BorderType, Borders, Clear, List, ListState, Padding, Paragraph, Wrap},
     Frame,
 };
 use ratatui_image::StatefulImage;
+use strum::IntoEnumIterator;
 use tui_scrollview::{ScrollView, ScrollbarVisibility};
 
 use crate::{
     api::model::{
         AlternativeTitles, AnimeMediaType, AnimeStatus, MangaMediaType, MangaStatus, Source,
+        UserWatchStatus,
     },
-    app::App,
+    app::{App, RATING_OPTIONS},
 };
 
 use super::center_area;
@@ -56,12 +58,12 @@ pub fn draw_picture(f: &mut Frame, app: &mut App, chunk: Rect) {
             );
         }
     } else {
-        draw_image_place_holder(f, chunk);
+        draw_image_place_holder(f, chunk, app);
     }
 }
 
-fn draw_image_place_holder(f: &mut Frame, chunk: Rect) {
-    draw_bordered_block(f, chunk);
+fn draw_image_place_holder(f: &mut Frame, chunk: Rect, app: &App) {
+    draw_bordered_block(f, chunk, app.app_config.theme.inactive);
     let paragraph = Paragraph::new("Unable to render the image.")
         .alignment(Alignment::Center)
         .wrap(Wrap { trim: true });
@@ -69,11 +71,11 @@ fn draw_image_place_holder(f: &mut Frame, chunk: Rect) {
     f.render_widget(paragraph, center_area(chunk, 95, 30));
 }
 
-pub fn draw_bordered_block(f: &mut Frame, chunk: Rect) {
+pub fn draw_bordered_block(f: &mut Frame, chunk: Rect, color: Color) {
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Yellow));
+        .border_style(Style::default().fg(color));
 
     f.render_widget(block, chunk);
 }
@@ -649,4 +651,107 @@ pub fn get_manga_key_val_info(
         alter_titles_title,
         alter_titles_height,
     )
+}
+
+pub fn draw_user_status_popup(f: &mut Frame, app: &App, chunk: Rect) {
+    let chunk = center_area(chunk, 30, 40);
+    let popup = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double)
+        .border_style(app.app_config.theme.active);
+
+    f.render_widget(Clear, chunk);
+    f.render_widget(popup, chunk);
+
+    let block = Block::default()
+        .title_alignment(Alignment::Center)
+        .borders(Borders::NONE)
+        .padding(Padding::symmetric(1, 1));
+
+    let status_list = UserWatchStatus::iter()
+        .map(|status| {
+            Line::from(Span::raw(format!("{}", status)))
+                .style(Style::default().fg(app.app_config.theme.text))
+                .alignment(Alignment::Center)
+        })
+        .collect::<Vec<_>>();
+
+    let selected_status = Some(app.selected_popup_status.into());
+
+    let mut state = ListState::default();
+    state.select(selected_status);
+
+    let list = List::new(status_list).block(block).highlight_style(
+        Style::default()
+            .fg(app.app_config.theme.selected)
+            .add_modifier(Modifier::BOLD),
+    );
+    f.render_stateful_widget(list, center_area(chunk, 100, 70), &mut state);
+}
+
+pub fn draw_rate_popup(f: &mut Frame, app: &App, chunk: Rect) {
+    let chunk = center_area(chunk, 30, 40);
+    let popup = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double)
+        .border_style(app.app_config.theme.active);
+
+    f.render_widget(Clear, chunk);
+    f.render_widget(popup, chunk);
+
+    let block = Block::default()
+        .title_alignment(Alignment::Center)
+        .borders(Borders::NONE)
+        .padding(Padding::symmetric(1, 1));
+
+    let rate_list = RATING_OPTIONS
+        .iter()
+        .map(|rate| {
+            Line::from(Span::raw(format!("{}", rate)))
+                .style(Style::default().fg(app.app_config.theme.text))
+                .alignment(Alignment::Center)
+        })
+        .collect::<Vec<_>>();
+
+    let selected_rate = Some(app.selected_popup_rate.into());
+
+    let mut state = ListState::default();
+    state.select(selected_rate);
+
+    let list = List::new(rate_list).block(block).highlight_style(
+        Style::default()
+            .fg(app.app_config.theme.selected)
+            .add_modifier(Modifier::BOLD),
+    );
+    f.render_stateful_widget(list, center_area(chunk, 100, 80), &mut state);
+}
+
+pub fn draw_episodes_popup(f: &mut Frame, app: &App, chunk: Rect) {
+    let chunk = center_area(chunk, 30, 40);
+    let popup = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double)
+        .border_style(app.app_config.theme.active);
+    f.render_widget(Clear, chunk);
+    f.render_widget(popup, chunk);
+
+    let block = Block::default()
+        .title_alignment(Alignment::Center)
+        .borders(Borders::NONE)
+        .padding(Padding::symmetric(1, 1));
+
+    let total_episode_num = app
+        .anime_details
+        .as_ref()
+        .unwrap()
+        .num_episodes
+        .map_or("?".to_string(), |n| n.to_string());
+    let episode_paragraph = Paragraph::new(format!(
+        "Episode: {}/{}",
+        app.temp_popup_episode_num, total_episode_num
+    ))
+    .alignment(Alignment::Center)
+    .block(block);
+
+    f.render_widget(episode_paragraph, center_area(chunk, 100, 30));
 }

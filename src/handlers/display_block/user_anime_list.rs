@@ -1,5 +1,5 @@
 use crate::{
-    app::{ActiveDisplayBlock, App, Data},
+    app::{ActiveDisplayBlock, App},
     event::Key,
     handlers::user::is_user_anime_list_data_available,
     network::IoEvent,

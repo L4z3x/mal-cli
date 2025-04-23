@@ -2,14 +2,16 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Flex, Layout, Margin, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
+    widgets::{Block, BorderType, Paragraph},
     Frame,
 };
+use tokio::sync::watch;
 use tui_big_text::{BigText, PixelSize};
 use tui_scrollview::{ScrollView, ScrollbarVisibility};
 
 use crate::{
     api::model::AnimeMediaType,
-    app::App,
+    app::{ActiveAnimeDetailBlock, App},
     ui::{
         display_block::{
             center_area,
@@ -43,6 +45,20 @@ pub fn draw_anime_detail(f: &mut Frame, app: &mut App, chunk: Rect) {
 
     draw_synopsis(f, app, synopsis_chunk);
     draw_side_info(f, app, side_info_chunk);
+    if app.popup {
+        match app.active_anime_detail_block {
+            ActiveAnimeDetailBlock::AddToList => {
+                details_utils::draw_user_status_popup(f, app, chunk);
+            }
+            ActiveAnimeDetailBlock::Episodes => {
+                details_utils::draw_episodes_popup(f, app, chunk);
+            }
+            ActiveAnimeDetailBlock::Rate => {
+                details_utils::draw_rate_popup(f, app, chunk);
+            }
+            _ => {}
+        }
+    }
 }
 
 fn draw_top_info(f: &mut Frame, app: &mut App, chunk: Rect) {
@@ -55,7 +71,11 @@ fn draw_top_info(f: &mut Frame, app: &mut App, chunk: Rect) {
 }
 
 fn draw_synopsis(f: &mut Frame, app: &App, chunk: Rect) {
-    details_utils::draw_bordered_block(f, chunk);
+    if let ActiveAnimeDetailBlock::Synopsis = app.active_anime_detail_block {
+        details_utils::draw_bordered_block(f, chunk, app.app_config.theme.hovered)
+    } else {
+        details_utils::draw_bordered_block(f, chunk, app.app_config.theme.inactive)
+    }
 
     let chunk = center_area(chunk, 90, 90);
     let synopsis = app.anime_details.as_ref().unwrap().synopsis.clone();
@@ -135,7 +155,11 @@ fn draw_synopsis(f: &mut Frame, app: &App, chunk: Rect) {
 }
 
 fn draw_side_info(f: &mut Frame, app: &App, chunk: Rect) {
-    details_utils::draw_bordered_block(f, chunk);
+    if let ActiveAnimeDetailBlock::SideInfo = app.active_anime_detail_block {
+        details_utils::draw_bordered_block(f, chunk, app.app_config.theme.hovered)
+    } else {
+        details_utils::draw_bordered_block(f, chunk, app.app_config.theme.inactive)
+    }
 
     let chunk = center_area(chunk, 90, 90);
     //*  info:
@@ -185,11 +209,22 @@ fn draw_side_info(f: &mut Frame, app: &App, chunk: Rect) {
 }
 
 fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
-    details_utils::draw_bordered_block(f, chunk);
+    if app.active_anime_detail_block == ActiveAnimeDetailBlock::AddToList
+        || app.active_anime_detail_block == ActiveAnimeDetailBlock::Rate
+        || app.active_anime_detail_block == ActiveAnimeDetailBlock::Episodes
+    {
+        details_utils::draw_bordered_block(f, chunk, app.app_config.theme.hovered)
+    } else {
+        details_utils::draw_bordered_block(f, chunk, app.app_config.theme.inactive)
+    }
     // splitting the layout
-    let [upper_chunk, lower_chunk] = Layout::default()
+    let [upper_chunk, lower_chunk, _] = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(70), Constraint::Percentage(30)])
+        .constraints([
+            Constraint::Percentage(70),
+            Constraint::Length(3),
+            Constraint::Fill(1),
+        ])
         .areas(chunk);
 
     let [score_chunk, rest_chunk] = Layout::default()
@@ -207,12 +242,12 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
         .direction(Direction::Horizontal)
         .constraints([
             Constraint::Length(4),
-            Constraint::Min(20),
-            Constraint::Min(20),
-            Constraint::Min(20),
+            Constraint::Min(23),
+            Constraint::Min(23),
+            Constraint::Min(23),
             Constraint::Percentage(100),
         ])
-        .flex(Flex::Start)
+        .flex(Flex::Center)
         .areas(lower_chunk);
     // draw_bordered_block(f, score_chunk);
     let [score_title_chunk, big_score_chunk, num_users_chunk] = Layout::default()
@@ -287,8 +322,6 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
         format!("#{}", popularity),
         Style::default().add_modifier(Modifier::BOLD),
     );
-    // let popularity_line =
-    //     Paragraph::new(Line::from(popularity).alignment(Alignment::Center)).block(block.clone());
 
     //* Members
     let members = app
@@ -365,13 +398,19 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
     ))
     .alignment(Alignment::Left);
 
+    let unhovered_block = Block::bordered()
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(app.app_config.theme.inactive));
+
     // user stats:
     let user_status_list = app.anime_details.as_ref().unwrap().my_list_status.clone();
     // user_status:
     let user_status = user_status_list
         .as_ref()
         .map_or("add to list".to_string(), |s| s.status.clone().to_string());
-    let user_status_line = Line::from(user_status).alignment(Alignment::Left);
+    let mut user_status_paragraph = Paragraph::new(user_status)
+        .alignment(Alignment::Center)
+        .block(unhovered_block.clone());
 
     // user score:
     let user_score = user_status_list
@@ -379,31 +418,49 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
         .map_or("rate ⭐ ".to_string(), |s| {
             format!("{} ⭐", get_score_text(s.score))
         });
-    let user_score_line = Line::from(user_score).alignment(Alignment::Left);
+    let mut user_score_paragraph = Paragraph::new(user_score)
+        .alignment(Alignment::Center)
+        .block(unhovered_block.clone());
 
     // user progress:
-    let user_progress = user_status_list
+    let watched_ep = user_status_list
         .as_ref()
-        .map_or("Epsiodes: ".to_string(), |s| {
-            format!(
-                "Episodes: {} / {}",
-                s.num_episodes_watched,
-                app.anime_details
-                    .as_ref()
-                    .unwrap()
-                    .num_episodes
-                    .map_or("?".to_string(), |n| n.to_string())
-            )
+        .map_or(0, |s| s.num_episodes_watched);
+    let total_ep = app
+        .anime_details
+        .as_ref()
+        .unwrap()
+        .num_episodes
+        .map_or("?".to_string(), |n| {
+            (n > 0).then(|| n.to_string()).unwrap_or("?".to_string())
         });
-    let user_progress_line = Line::from(user_progress).alignment(Alignment::Left);
+
+    let user_progress = format!("Episodes: {}/{}", watched_ep, total_ep);
+    let mut user_progress_paragraph = Paragraph::new(user_progress)
+        .alignment(Alignment::Center)
+        .block(unhovered_block);
+
+    let hovered_block = Block::bordered()
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(app.app_config.theme.hovered));
+
+    match app.active_anime_detail_block {
+        ActiveAnimeDetailBlock::AddToList => {
+            user_status_paragraph = user_status_paragraph.block(hovered_block)
+        }
+        ActiveAnimeDetailBlock::Episodes => {
+            user_progress_paragraph = user_progress_paragraph.block(hovered_block);
+        }
+        ActiveAnimeDetailBlock::Rate => {
+            user_score_paragraph = user_score_paragraph.block(hovered_block);
+        }
+        _ => {}
+    }
 
     // todo: draw boxes arround the info
-    // f.render_widget(ranked_line, first_area(ranked_chunk, 100, 50));
-    // f.render_widget(popularity_line, first_area(popularity_chunk, 100, 50));
-    // f.render_widget(members_line, first_area(memeber_chunk, 100, 50));
-    f.render_widget(user_score_line, user_score_chunk);
-    f.render_widget(user_progress_line, user_progress_chunk);
-    f.render_widget(user_status_line, user_status_chunk);
+    f.render_widget(user_score_paragraph, user_score_chunk);
+    f.render_widget(user_progress_paragraph, user_progress_chunk);
+    f.render_widget(user_status_paragraph, user_status_chunk);
     f.render_widget(first_line, upper_rest_chunk);
     f.render_widget(info_line, lower_rest_chunk);
     f.render_widget(score_title, center_area(score_title_chunk, 45, 100));
