@@ -1,7 +1,7 @@
 use super::center_area;
 use super::{draw_keys_bar, results};
 use crate::app::{App, SEASONS};
-use ratatui::layout::{Alignment, Constraint, Direction, Layout};
+use ratatui::layout::{Alignment, Constraint, Direction, Flex, Layout};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::Line;
 use ratatui::widgets::{Clear, List, ListState, Padding, Paragraph};
@@ -20,7 +20,7 @@ pub fn draw_seasonal_anime(f: &mut Frame, app: &App, chunk: Rect) {
 }
 
 fn draw_seasonal_popup(f: &mut Frame, app: &App, chunk: Rect) {
-    let area = center_area(chunk, 30, 30);
+    let area = center_area(chunk, 30, 50);
 
     // draw popup:
 
@@ -80,7 +80,11 @@ fn draw_seasonal_popup(f: &mut Frame, app: &App, chunk: Rect) {
     // .highlight_symbol("> ");
     // .scroll_padding(2);
 
-    let centered_season_chunk = center_area(season_chunk, 60, 90);
+    let [centered_season_chunk] = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(4)])
+        .flex(Flex::Center)
+        .areas(season_chunk);
     f.render_stateful_widget(season_list, centered_season_chunk, &mut state);
 
     // ===> year
@@ -106,6 +110,10 @@ fn draw_seasonal_popup(f: &mut Frame, app: &App, chunk: Rect) {
         .block(year_block)
         .alignment(Alignment::Center);
 
-    let centered_year_chunk = center_area(year_chunk, 60, 90);
+    let [centered_year_chunk] = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(4)])
+        .flex(Flex::Center)
+        .areas(year_chunk);
     f.render_widget(year_paragraph, centered_year_chunk);
 }
