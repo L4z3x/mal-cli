@@ -1,0 +1,24 @@
+=> result:
+    - scroll trough the results 
+    - click p for next page pagination (not next route ?) 
+
+=> ui problems:
+    - search bar is no aligned with the side menujamais
+    - side menu box's elements are not responsive
+    - result cards navigation fix
+
+=> keys bar:
+    - keys bar for each display_block
+
+=> general:
+    - image cache clearing (LAST USED) ( WITH A JSON FILE ig)
+    -  exit verification
+    - cleaning the codebase
+
+=> detail page:
+    - add IoEvent to post the edit (for each button)
+
+=> bug:
+    - on ranking page col 1 row 2 , handlers/mod.rs 174
+    - stuck on loading, there is something ambigious that keeps the network thread busy, we neeed to figure out what it is.
+

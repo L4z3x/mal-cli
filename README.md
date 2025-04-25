@@ -7,6 +7,8 @@ Under development.
 # HOW IT LOOKS
 ## Demo
 ![demo](./assets/mal-tui-demo.mp4)
+## Detail page
+![demo](./assets/mal-tui-manga-details-page.png)
 ## Home page
 ![home](./assets/mal-tui-home-screenshot-01.png)
 ## Profile page
