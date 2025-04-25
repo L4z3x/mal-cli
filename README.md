@@ -4,6 +4,8 @@ A terminal interface for the official [myanimelist](https://myanimelist.net/) ap
 
 Under development.
 
+forked from [SaeedAnas/mal-cli](https://github.com/SaeedAnas/mal-cli)
+
 # HOW IT LOOKS
 ## Demo
 ![demo](./assets/mal-tui-demo.mp4)
