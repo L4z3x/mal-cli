@@ -5,7 +5,6 @@ use ratatui::{
     widgets::{Block, BorderType, Paragraph},
     Frame,
 };
-use tokio::sync::watch;
 use tui_big_text::{BigText, PixelSize};
 use tui_scrollview::{ScrollView, ScrollbarVisibility};
 
@@ -51,7 +50,7 @@ pub fn draw_anime_detail(f: &mut Frame, app: &mut App, chunk: Rect) {
                 details_utils::draw_user_status_popup(f, app, chunk);
             }
             ActiveAnimeDetailBlock::Episodes => {
-                details_utils::draw_episodes_popup(f, app, chunk);
+                details_utils::draw_count_popup(f, app, chunk);
             }
             ActiveAnimeDetailBlock::Rate => {
                 details_utils::draw_rate_popup(f, app, chunk);
@@ -457,7 +456,6 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
         _ => {}
     }
 
-    // todo: draw boxes arround the info
     f.render_widget(user_score_paragraph, user_score_chunk);
     f.render_widget(user_progress_paragraph, user_progress_chunk);
     f.render_widget(user_status_paragraph, user_status_chunk);

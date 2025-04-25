@@ -26,16 +26,8 @@ pub fn handler(key: Key, app: &mut App) {
                 app.anime_details_synopsys_scroll_view_state.scroll_down()
             }
             ActiveAnimeDetailBlock::Episodes => {
-                if app.popup {
-                    let total_ep = app
-                        .anime_details
-                        .as_ref()
-                        .unwrap()
-                        .num_episodes
-                        .unwrap_or(10000); //? is this the right move ? , we should inspect this later.
-                    if !app.temp_popup_episode_num as u64 == total_ep {
-                        app.temp_popup_episode_num += 1;
-                    }
+                if app.temp_popup_num != 0 {
+                    app.temp_popup_num -= 1;
                 }
             }
             ActiveAnimeDetailBlock::AddToList => {
@@ -65,8 +57,16 @@ pub fn handler(key: Key, app: &mut App) {
                 app.anime_details_synopsys_scroll_view_state.scroll_up()
             }
             ActiveAnimeDetailBlock::Episodes => {
-                if app.temp_popup_episode_num != 0 {
-                    app.temp_popup_episode_num -= 1;
+                if app.popup {
+                    let total_ep = app
+                        .anime_details
+                        .as_ref()
+                        .unwrap()
+                        .num_episodes
+                        .unwrap_or(10000); //? is this the right move ? , we should inspect this later.
+                    if app.temp_popup_num as u64 != total_ep {
+                        app.temp_popup_num += 1;
+                    }
                 }
             }
             ActiveAnimeDetailBlock::AddToList => {
@@ -177,7 +177,7 @@ fn open_popup(app: &mut App) {
         }
         ActiveAnimeDetailBlock::Episodes => {
             app.active_detail_popup = DetailPopup::Episodes;
-            app.temp_popup_episode_num = app
+            app.temp_popup_num = app
                 .anime_details
                 .as_ref()
                 .unwrap()
@@ -192,11 +192,11 @@ fn open_popup(app: &mut App) {
 
 pub fn get_user_status_index(status: &str) -> u8 {
     match status {
-        "watching" | "reading" => 1,
-        "completed" => 2,
-        "on_hold" => 3,
-        "dropped" => 4,
-        "plan_to_watch" | "plan_to_read" => 5,
+        "watching" | "reading" => 0,
+        "completed" => 1,
+        "on_hold" => 2,
+        "dropped" => 3,
+        "plan_to_watch" | "plan_to_read" => 4,
         _ => 0,
     }
 }
@@ -234,7 +234,12 @@ pub fn handle_edit(app: &mut App) {
                     rewatch_value: None,
                     tags: None,
                 };
-                app.dispatch(IoEvent::UpdateAnimeListStatus(status_query));
+
+                let anime_id = app.anime_details.as_ref().unwrap().id;
+                app.dispatch(IoEvent::UpdateAnimeListStatus(anime_id, status_query));
+
+                // TODO: handle displaying the success message, maybe we do a loading popup screen until we get the response
+                // TODO: let's worry with submitting the request first
                 app.popup = false;
             }
             ActiveAnimeDetailBlock::Episodes => {}
@@ -254,11 +259,11 @@ pub fn handle_edit(app: &mut App) {
 
 fn get_watch_status_from_index(index: u8) -> UserWatchStatus {
     match index {
-        1 => UserWatchStatus::Watching,
-        2 => UserWatchStatus::Completed,
-        3 => UserWatchStatus::OnHold,
-        4 => UserWatchStatus::Dropped,
-        5 => UserWatchStatus::PlanToWatch,
+        0 => UserWatchStatus::Watching,
+        1 => UserWatchStatus::Completed,
+        2 => UserWatchStatus::OnHold,
+        3 => UserWatchStatus::Dropped,
+        4 => UserWatchStatus::PlanToWatch,
         _ => UserWatchStatus::Other("None".to_string()),
     }
 }

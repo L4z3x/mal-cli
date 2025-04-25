@@ -101,7 +101,6 @@ pub fn draw_keys_bar(f: &mut Frame, app: &App, chunk: Rect) -> Rect {
             Paragraph::new(format!("{}: {}", key, description)).alignment(Alignment::Center);
         f.render_widget(block, key_chunks[i]);
     }
-    //todo: for the keys handle slpitting the bar into equal blocks and filling them with the keys
 
     splitted_layout[0]
 }

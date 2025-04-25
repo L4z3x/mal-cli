@@ -56,7 +56,7 @@ fn handle_block_events(key: Key, app: &mut App) {
 
         ActiveBlock::DisplayBlock => display_block::handle_display_block(key, app),
     }
-    // todo: move this to active_display_block_handler
+
     // help::handler(key, app);
 } // todo: move this to active_display_block_handler
   // ActiveBlock::BasicView => {}
@@ -90,16 +90,7 @@ pub fn handle_tab(app: &mut App) {
                 app.active_block = ActiveBlock::Input;
             }
             // todo: handle cases when exiting the Display_block.
-
-            // app.search_results.selected_block = match app.search_results.selected_block {
-            //     SearchResultBlock::AnimeSearch => SearchResultBlock::MangaSearch,
-            //     SearchResultBlock::MangaSearch => SearchResultBlock::AnimeSearch,
-            //     SearchResultBlock::Empty => SearchResultBlock::Empty,
-            // };
         }
-        // ActiveBlock::OptionStats => {
-        //     app.set_current_route_state(Some(ActiveBlock::Anime), Some(ActiveBlock::Anime));
-        // }
         _ => {}
     }
 }

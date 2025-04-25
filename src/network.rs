@@ -27,7 +27,7 @@ pub enum IoEvent {
     GetMangaRanking(MangaRankingType),
     GetSeasonalAnime,
     GetSuggestedAnime,
-    UpdateAnimeListStatus(UpdateUserAnimeListStatusQuery),
+    UpdateAnimeListStatus(u64, UpdateUserAnimeListStatusQuery),
     DeleteAnimeListStatus(String),
     GetAnimeList(Option<UserWatchStatus>),
     GetMangaList(Option<UserReadStatus>),
@@ -85,6 +85,11 @@ impl<'a> Network<'a> {
             // IoEvent::DeleteMangaListStatus(String) => {}
             IoEvent::GetUserInfo => self.get_user_info().await,
             IoEvent::GetTopThree(r) => self.get_top_three(r).await,
+
+            IoEvent::UpdateAnimeListStatus(anime_id, query) => {
+                self.update_anime_list_status(anime_id, query).await
+            }
+
             _ => (),
         }
 
@@ -697,6 +702,29 @@ impl<'a> Network<'a> {
         app.search_results.selected_tab = SelectedSearchTab::Anime;
         app.active_display_block = ActiveDisplayBlock::SearchResultBlock;
         app.display_block_title = format!("Search Results: {}", q).to_string()
+    }
+
+    async fn update_anime_list_status(
+        &mut self,
+        anime_id: u64,
+        query: UpdateUserAnimeListStatusQuery,
+    ) {
+        self.oauth.refresh().unwrap();
+        let mut app = self.app.lock().await;
+        match api::update_anime_list_status(anime_id, &query, &self.oauth).await {
+            Ok(result) => {
+                //
+                // app.success_message = Some(result.clone());
+                // app.success = true;
+            }
+            Err(e) => {
+                app.write_error(e);
+                // app.success = false;
+                // app.active_display_block = ActiveDisplayBlock::Error;
+
+                return;
+            }
+        }
     }
 }
 

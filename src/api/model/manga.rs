@@ -3,7 +3,7 @@ use crate::config::app_config::{AppConfig, MangaDisplayType, TitleLanguage};
 use super::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use strum_macros::{Display, EnumString, IntoStaticStr};
+use strum_macros::{Display, EnumIter, EnumString, IntoStaticStr};
 
 #[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr, Display)]
 #[strum(serialize_all = "snake_case")]
@@ -52,7 +52,7 @@ pub enum MangaStatus {
     Other(String),
 }
 
-#[derive(Clone, Debug, PartialEq, EnumString, Display, IntoStaticStr)]
+#[derive(Clone, Debug, PartialEq, EnumString, Display, EnumIter, IntoStaticStr)]
 #[strum(serialize_all = "snake_case")]
 pub enum UserReadStatus {
     Reading,

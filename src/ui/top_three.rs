@@ -157,8 +157,6 @@ fn draw_anime_top_three(
                 .wrap(ratatui::widgets::Wrap { trim: false })
                 .block(block);
             f.render_widget(card, *chunk);
-
-            //TODO: MAKE SURE THERE S DATA
         }
     } else {
         // draw error in the top three layout

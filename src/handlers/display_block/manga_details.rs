@@ -25,14 +25,8 @@ pub fn handler(key: Key, app: &mut App) {
             }
             ActiveMangaDetailBlock::Chapters => {
                 if app.popup {
-                    let total_ch = app
-                        .manga_details
-                        .as_ref()
-                        .unwrap()
-                        .num_chapters
-                        .unwrap_or(10000); //? is this the right move ? , we should inspect this later.
-                    if app.temp_popup_chapter_num as u64 != total_ch {
-                        app.temp_popup_chapter_num += 1;
+                    if app.temp_popup_num != 0 {
+                        app.temp_popup_num -= 1;
                     }
                 }
             }
@@ -56,30 +50,29 @@ pub fn handler(key: Key, app: &mut App) {
             }
             ActiveMangaDetailBlock::Volumes => {
                 if app.popup {
-                    let total_volumes = app
-                        .manga_details
-                        .as_ref()
-                        .unwrap()
-                        .my_list_status
-                        .as_ref()
-                        .map_or(1000, |list| list.num_volumes_read);
-                    if app.temp_popup_volume_num as u64 != total_volumes {
-                        app.temp_popup_volume_num += 1;
+                    if app.temp_popup_num != 0 {
+                        app.temp_popup_num -= 1;
                     }
                 }
             }
         },
         k if common::up_event(k) => match app.active_manga_detail_block {
             ActiveMangaDetailBlock::SideInfo => {
-                app.manga_details_info_scroll_view_state.scroll_up()
+                app.manga_details_info_scroll_view_state.scroll_up();
             }
             ActiveMangaDetailBlock::Synopsis => {
-                app.manga_details_synopsys_scroll_view_state.scroll_up()
+                app.manga_details_synopsys_scroll_view_state.scroll_up();
             }
             ActiveMangaDetailBlock::Chapters => {
                 if app.popup {
-                    if app.temp_popup_chapter_num != 0 {
-                        app.temp_popup_chapter_num -= 1;
+                    let total_ch = app
+                        .manga_details
+                        .as_ref()
+                        .unwrap()
+                        .num_chapters
+                        .unwrap_or(10000); //? is this the right move ? , we should inspect this later.
+                    if app.temp_popup_num as u64 != total_ch {
+                        app.temp_popup_num += 1;
                     }
                 }
             }
@@ -94,8 +87,8 @@ pub fn handler(key: Key, app: &mut App) {
             }
             ActiveMangaDetailBlock::Rate => {
                 if app.popup {
-                    app.selected_popup_rate = if app.selected_popup_rate == 10 {
-                        0
+                    app.selected_popup_rate = if app.selected_popup_rate == 0 {
+                        10
                     } else {
                         app.selected_popup_rate - 1
                     }
@@ -103,8 +96,15 @@ pub fn handler(key: Key, app: &mut App) {
             }
             ActiveMangaDetailBlock::Volumes => {
                 if app.popup {
-                    if app.temp_popup_volume_num != 0 {
-                        app.temp_popup_volume_num -= 1;
+                    let total_volumes = app
+                        .manga_details
+                        .as_ref()
+                        .unwrap()
+                        .my_list_status
+                        .as_ref()
+                        .map_or(1000, |list| list.num_volumes_read);
+                    if app.temp_popup_num as u64 != total_volumes {
+                        app.temp_popup_num += 1;
                     }
                 }
             }
@@ -149,7 +149,13 @@ pub fn handler(key: Key, app: &mut App) {
                 _ => {}
             }
         }
-
+        k if k == Key::Enter || k == app.app_config.keys.open_popup => {
+            if app.popup {
+                handle_edit(app)
+            } else {
+                open_popup(app)
+            }
+        }
         _ => {}
     }
 }
@@ -208,7 +214,7 @@ fn open_popup(app: &mut App) {
         }
         ActiveMangaDetailBlock::Chapters => {
             app.active_detail_popup = DetailPopup::Chapters;
-            app.temp_popup_chapter_num = app
+            app.temp_popup_num = app
                 .manga_details
                 .as_ref()
                 .unwrap()
@@ -219,7 +225,7 @@ fn open_popup(app: &mut App) {
         }
         ActiveMangaDetailBlock::Volumes => {
             app.active_detail_popup = DetailPopup::Volumes;
-            app.temp_popup_volume_num = app
+            app.temp_popup_num = app
                 .manga_details
                 .as_ref()
                 .unwrap()

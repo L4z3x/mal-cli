@@ -14,7 +14,7 @@ use strum_macros::IntoStaticStr;
 use tui_scrollview::ScrollViewState;
 const DEFAULT_ROUTE: Route = Route {
     data: None,
-    block: ActiveDisplayBlock::AnimeDetails, //todo: change to empty
+    block: ActiveDisplayBlock::AnimeDetails, //afterTest: change to empty
     title: String::new(),
     image: None,
 };
@@ -254,9 +254,7 @@ pub struct App {
     pub active_manga_detail_block: ActiveMangaDetailBlock,
     pub selected_popup_status: u8,
     pub selected_popup_rate: u8,
-    pub temp_popup_chapter_num: u16,
-    pub temp_popup_volume_num: u16,
-    pub temp_popup_episode_num: u16,
+    pub temp_popup_num: u16,
     // seasonal
     pub anime_season: Seasonal,
     //ranking
@@ -488,9 +486,7 @@ impl App {
             active_manga_detail_block: ActiveMangaDetailBlock::Synopsis,
             selected_popup_status: 0,
             selected_popup_rate: 0, 
-            temp_popup_episode_num: 0,
-            temp_popup_volume_num: 0,
-            temp_popup_chapter_num:0,
+            temp_popup_num: 0,
 
             anime_details: get_anime_example(),
             manga_details: None,
@@ -653,7 +649,6 @@ impl App {
     }
 
     pub fn load_route(&mut self, id: u16) {
-        // todo: change to u16
         self.push_existing_route(id as u16);
         self.load_state_data(self.navigator.history.len() as u16 - 1);
     }

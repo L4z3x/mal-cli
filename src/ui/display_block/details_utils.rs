@@ -12,9 +12,9 @@ use tui_scrollview::{ScrollView, ScrollbarVisibility};
 use crate::{
     api::model::{
         AlternativeTitles, AnimeMediaType, AnimeStatus, MangaMediaType, MangaStatus, Source,
-        UserWatchStatus,
+        UserReadStatus, UserWatchStatus,
     },
-    app::{App, RATING_OPTIONS},
+    app::{ActiveDisplayBlock, ActiveMangaDetailBlock, App, RATING_OPTIONS},
 };
 
 use super::center_area;
@@ -153,7 +153,11 @@ pub fn draw_synopsis_items(
         scroll_view.render_widget(title.clone(), title_chunk);
         scroll_view.render_widget(text.clone(), text_chunk);
     }
-    let mut state = app.anime_details_synopsys_scroll_view_state.clone();
+    let mut state = match app.active_display_block {
+        ActiveDisplayBlock::AnimeDetails => app.anime_details_synopsys_scroll_view_state.clone(),
+        ActiveDisplayBlock::MangaDetails => app.manga_details_synopsys_scroll_view_state.clone(),
+        _ => app.anime_details_synopsys_scroll_view_state.clone(),
+    };
     f.render_stateful_widget(scroll_view, chunk, &mut state);
 }
 
@@ -237,7 +241,6 @@ pub fn construct_synopsis_layout<T: AsRef<str>>(
 pub fn get_alternative_titles(
     alternative_titles: Option<AlternativeTitles>,
 ) -> (List<'static>, u16) {
-    // todo :return hight of the list
     let first_padding = " -";
     let second_padding = "   -";
     let mut height = 0;
@@ -668,14 +671,22 @@ pub fn draw_user_status_popup(f: &mut Frame, app: &App, chunk: Rect) {
         .borders(Borders::NONE)
         .padding(Padding::symmetric(1, 1));
 
-    let status_list = UserWatchStatus::iter()
-        .map(|status| {
-            Line::from(Span::raw(format!("{}", status)))
-                .style(Style::default().fg(app.app_config.theme.text))
-                .alignment(Alignment::Center)
-        })
-        .collect::<Vec<_>>();
-
+    let status_list: Vec<Line> = match app.active_display_block {
+        ActiveDisplayBlock::MangaDetails => UserReadStatus::iter()
+            .map(|status| {
+                Line::from(Span::raw(format!("{}", status)))
+                    .style(Style::default().fg(app.app_config.theme.text))
+                    .alignment(Alignment::Center)
+            })
+            .collect::<Vec<_>>(),
+        _ => UserWatchStatus::iter()
+            .map(|status| {
+                Line::from(Span::raw(format!("{}", status)))
+                    .style(Style::default().fg(app.app_config.theme.text))
+                    .alignment(Alignment::Center)
+            })
+            .collect::<Vec<_>>(),
+    };
     let selected_status = Some(app.selected_popup_status.into());
 
     let mut state = ListState::default();
@@ -726,7 +737,7 @@ pub fn draw_rate_popup(f: &mut Frame, app: &App, chunk: Rect) {
     f.render_stateful_widget(list, center_area(chunk, 100, 80), &mut state);
 }
 
-pub fn draw_episodes_popup(f: &mut Frame, app: &App, chunk: Rect) {
+pub fn draw_count_popup(f: &mut Frame, app: &App, chunk: Rect) {
     let chunk = center_area(chunk, 30, 40);
     let popup = Block::default()
         .borders(Borders::ALL)
@@ -740,18 +751,32 @@ pub fn draw_episodes_popup(f: &mut Frame, app: &App, chunk: Rect) {
         .borders(Borders::NONE)
         .padding(Padding::symmetric(1, 1));
 
-    let total_episode_num = app
-        .anime_details
-        .as_ref()
-        .unwrap()
-        .num_episodes
-        .map_or("?".to_string(), |n| n.to_string());
-    let episode_paragraph = Paragraph::new(format!(
-        "Episode: {}/{}",
-        app.temp_popup_episode_num, total_episode_num
-    ))
-    .alignment(Alignment::Center)
-    .block(block);
+    let total_num = match app.active_display_block {
+        ActiveDisplayBlock::AnimeDetails => app
+            .anime_details
+            .as_ref()
+            .unwrap()
+            .num_episodes
+            .map_or("?".to_string(), |n| n.to_string()),
+        _ => match app.active_manga_detail_block {
+            ActiveMangaDetailBlock::Chapters => app
+                .manga_details
+                .as_ref()
+                .unwrap()
+                .num_chapters
+                .map_or("?".to_string(), |n| n.to_string()),
+            _ => app
+                .manga_details
+                .as_ref()
+                .unwrap()
+                .num_volumes
+                .map_or("?".to_string(), |n| n.to_string()),
+        },
+    };
+    let episode_paragraph =
+        Paragraph::new(format!("Episode: {}/{}", app.temp_popup_num, total_num))
+            .alignment(Alignment::Center)
+            .block(block);
 
     f.render_widget(episode_paragraph, center_area(chunk, 100, 30));
 }

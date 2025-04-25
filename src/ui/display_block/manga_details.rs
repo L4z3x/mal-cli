@@ -35,6 +35,25 @@ pub fn draw_manga_detail(f: &mut Frame, app: &mut App, chunk: Rect) {
 
     draw_synopsis(f, app, synopsis_chunk);
     draw_side_info(f, app, side_info_chunk);
+    if app.popup {
+        match app.active_manga_detail_block {
+            ActiveMangaDetailBlock::AddToList => {
+                details_utils::draw_user_status_popup(f, app, chunk);
+            }
+            ActiveMangaDetailBlock::Chapters => {
+                details_utils::draw_count_popup(f, app, chunk);
+            }
+            ActiveMangaDetailBlock::Volumes => {
+                details_utils::draw_count_popup(f, app, chunk);
+            }
+            ActiveMangaDetailBlock::Rate => {
+                details_utils::draw_rate_popup(f, app, chunk);
+            }
+            _ => {
+                eprintln!("invalid block manga popup")
+            }
+        }
+    }
 }
 
 fn draw_top_info(f: &mut Frame, app: &mut App, chunk: Rect) {

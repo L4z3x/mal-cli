@@ -69,8 +69,9 @@ async fn main() -> Result<()> {
     // let opt: Opt = Opt::from_args();
 
     // Get config
+    println!("==> Loading Configiration");
     let app_config = AppConfig::load()?;
-
+    println!("==> Refreshing Token");
     let auth_config = AuthConfig::load()?;
     let oauth = OAuth::get_auth_async(auth_config).await?;
 
@@ -124,19 +125,7 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
         let mut app = app.lock().await;
 
         let current_block = app.active_block;
-        terminal.draw(|mut f| match current_block {
-            // todo: handle help inside the main_layout
-            // ActiveBlock::Help => {
-            //     ui::draw_help_menu(&mut f, &app);
-            // }
-            //todo: handle error inside the display block
-            // ActiveBlock::Error => {
-            //     ui::draw_error(&mut f, &app);
-            // }
-            _ => {
-                ui::draw_main_layout(&mut f, &mut app);
-            }
-        })?;
+        terminal.draw(|mut f| ui::draw_main_layout(&mut f, &mut app))?;
 
         if current_block == ActiveBlock::Input {
             terminal.show_cursor()?;
