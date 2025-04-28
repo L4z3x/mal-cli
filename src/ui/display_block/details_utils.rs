@@ -17,7 +17,7 @@ use crate::{
     app::{ActiveDisplayBlock, ActiveMangaDetailBlock, App, RATING_OPTIONS},
 };
 
-use super::center_area;
+use super::{center_area, loading};
 
 pub fn get_score_text(s: u8) -> String {
     let r = match s {
@@ -670,6 +670,20 @@ pub fn draw_user_status_popup(f: &mut Frame, app: &App, chunk: Rect) {
         .title_alignment(Alignment::Center)
         .borders(Borders::NONE)
         .padding(Padding::symmetric(1, 1));
+    // resutl case
+    if app.result_popup {
+        let message_line = if app.popup_is_loading {
+            "Loading..."
+        } else {
+            if app.popup_post_req_success {
+                &app.popup_post_req_success_message.as_ref().unwrap()
+            } else {
+                &app.api_error
+            }
+        };
+        loading::draw_centered_line(f, app, chunk, &message_line);
+        return;
+    }
 
     let status_list: Vec<Line> = match app.active_display_block {
         ActiveDisplayBlock::MangaDetails => UserReadStatus::iter()
@@ -715,6 +729,21 @@ pub fn draw_rate_popup(f: &mut Frame, app: &App, chunk: Rect) {
         .borders(Borders::NONE)
         .padding(Padding::symmetric(1, 1));
 
+    // resutl case
+    if app.result_popup {
+        let message_line = if app.popup_is_loading {
+            "Loading..."
+        } else {
+            if app.popup_post_req_success {
+                &app.popup_post_req_success_message.as_ref().unwrap()
+            } else {
+                &app.api_error
+            }
+        };
+        loading::draw_centered_line(f, app, chunk, &message_line);
+        return;
+    }
+
     let rate_list = RATING_OPTIONS
         .iter()
         .map(|rate| {
@@ -750,6 +779,20 @@ pub fn draw_count_popup(f: &mut Frame, app: &App, chunk: Rect) {
         .title_alignment(Alignment::Center)
         .borders(Borders::NONE)
         .padding(Padding::symmetric(1, 1));
+    // resutl case
+    if app.result_popup {
+        let message_line = if app.popup_is_loading {
+            "Loading..."
+        } else {
+            if app.popup_post_req_success {
+                &app.popup_post_req_success_message.as_ref().unwrap()
+            } else {
+                &app.api_error
+            }
+        };
+        loading::draw_centered_line(f, app, chunk, &message_line);
+        return;
+    }
 
     let total_num = match app.active_display_block {
         ActiveDisplayBlock::AnimeDetails => app

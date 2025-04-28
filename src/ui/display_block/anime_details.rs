@@ -49,9 +49,11 @@ pub fn draw_anime_detail(f: &mut Frame, app: &mut App, chunk: Rect) {
             ActiveAnimeDetailBlock::AddToList => {
                 details_utils::draw_user_status_popup(f, app, chunk);
             }
+
             ActiveAnimeDetailBlock::Episodes => {
                 details_utils::draw_count_popup(f, app, chunk);
             }
+
             ActiveAnimeDetailBlock::Rate => {
                 details_utils::draw_rate_popup(f, app, chunk);
             }

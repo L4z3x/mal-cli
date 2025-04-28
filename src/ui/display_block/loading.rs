@@ -1,5 +1,5 @@
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Flex, Layout, Rect},
     style::{Modifier, Style},
     text::Line,
     widgets::Paragraph,
@@ -8,31 +8,25 @@ use ratatui::{
 
 use crate::app::App;
 
-pub fn draw_loading(f: &mut Frame, app: &App, chunk: Rect) {
-    let banner_layout = Layout::default()
+pub fn draw_centered_line(f: &mut Frame, app: &App, chunk: Rect, line: &str) {
+    let [loading_layout] = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Percentage(40), // Top padding
-            Constraint::Percentage(20), // Height of the paragraph block
-            Constraint::Percentage(40), // Bottom padding
-        ])
-        .split(chunk)[1];
+        .constraints([Constraint::Length(2)])
+        .flex(Flex::Center)
+        .areas(chunk);
 
-    let banner_lines: Vec<&str> = "Loading...".lines().collect();
+    // let loading_str = "Loading...";
 
     let style = Style::new()
         .fg(app.app_config.theme.banner)
         .add_modifier(Modifier::BOLD);
 
-    let spans: Vec<Line> = banner_lines
-        .iter()
-        .map(|line| Line::styled(*line, style))
-        .collect();
+    let loading_line = Line::styled(line, style);
 
-    let paragraph = Paragraph::new(spans)
+    let paragraph = Paragraph::new(loading_line)
         // .block(paragraph_block)
         .alignment(Alignment::Center)
         .wrap(ratatui::widgets::Wrap { trim: true });
 
-    f.render_widget(paragraph, banner_layout);
+    f.render_widget(paragraph, loading_layout);
 }

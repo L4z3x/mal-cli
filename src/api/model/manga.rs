@@ -74,7 +74,7 @@ pub struct UserMangaListStatus {
     pub start_date: Option<DateWrapper>,
     pub finish_date: Option<DateWrapper>,
     pub priority: Option<u8>,
-    pub num_times_reread: Option<u64>,
+    pub num_times_reread: Option<u8>,
     pub reread_value: Option<u8>,
     pub tags: Option<Vec<String>>,
     pub comments: Option<String>,

@@ -252,6 +252,11 @@ pub struct App {
     pub active_detail_popup: DetailPopup,
     pub active_anime_detail_block: ActiveAnimeDetailBlock,
     pub active_manga_detail_block: ActiveMangaDetailBlock,
+    // detail popup
+    pub popup_post_req_success: bool,
+    pub result_popup: bool, 
+    pub popup_is_loading: bool,
+    pub popup_post_req_success_message: Option<String>,
     pub selected_popup_status: u8,
     pub selected_popup_rate: u8,
     pub temp_popup_num: u16,
@@ -484,14 +489,18 @@ impl App {
             active_detail_popup: DetailPopup::AddToList,
             active_anime_detail_block: ActiveAnimeDetailBlock::Synopsis,
             active_manga_detail_block: ActiveMangaDetailBlock::Synopsis,
-            selected_popup_status: 0,
-            selected_popup_rate: 0, 
-            temp_popup_num: 0,
-
             anime_details: get_anime_example(),
             manga_details: None,
             user_profile: None,
             display_block_title: String::new(),
+            // detail popup
+            selected_popup_status: 0,
+            selected_popup_rate: 0, 
+            temp_popup_num: 0,
+            popup_post_req_success: false,
+            popup_post_req_success_message: None,
+            popup_is_loading: false,
+            result_popup: false, 
             popup: false,
             // image:
             media_image: None,
@@ -608,7 +617,11 @@ impl App {
 
     pub fn load_previous_route(&mut self) {
         if self.popup {
+            // reset everything
             self.popup = false;
+            self.result_popup = false; 
+            self.popup_post_req_success = false;
+            self.popup_post_req_success_message = None;
             return;
         }
 
@@ -637,6 +650,9 @@ impl App {
     }
 
     pub fn load_next_route(&mut self) {
+        if self.popup {
+            return;
+        }
         if self.navigator.index >= self.navigator.history.len() as u16 {
             self.navigator.index = self.navigator.history.len().saturating_sub(2) as u16;
         }

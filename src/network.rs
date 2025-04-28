@@ -2,7 +2,7 @@ use crate::{
     api::{
         self, model::*, GetAnimeDetailQuery, GetAnimeRankingQuery, GetMangaDetailQuery,
         GetMangaRankingQuery, GetSeasonalAnimeQuery, GetSuggestedAnimeQuery,
-        GetUserInformationQuery, UpdateUserAnimeListStatusQuery,
+        GetUserInformationQuery, UpdateUserAnimeListStatusQuery, UpdateUserMangaStatus,
     },
     app::{
         ActiveBlock, ActiveDisplayBlock, App, Data, Route, SelectedSearchTab, TopThreeBlock,
@@ -31,7 +31,7 @@ pub enum IoEvent {
     DeleteAnimeListStatus(String),
     GetAnimeList(Option<UserWatchStatus>),
     GetMangaList(Option<UserReadStatus>),
-    UpdateMangaListStatus(String),
+    UpdateMangaListStatus(u64, UpdateUserMangaStatus),
     DeleteMangaListStatus(String),
     GetUserInfo,
     GetTopThree(TopThreeBlock),
@@ -89,7 +89,9 @@ impl<'a> Network<'a> {
             IoEvent::UpdateAnimeListStatus(anime_id, query) => {
                 self.update_anime_list_status(anime_id, query).await
             }
-
+            IoEvent::UpdateMangaListStatus(manga_id, query) => {
+                self.update_manga_list_status(manga_id, query).await
+            }
             _ => (),
         }
 
@@ -711,20 +713,37 @@ impl<'a> Network<'a> {
     ) {
         self.oauth.refresh().unwrap();
         let mut app = self.app.lock().await;
+
         match api::update_anime_list_status(anime_id, &query, &self.oauth).await {
             Ok(result) => {
-                //
-                // app.success_message = Some(result.clone());
-                // app.success = true;
+                app.anime_details.as_mut().unwrap().my_list_status = Some(result);
+                app.popup_post_req_success_message = Some("updated Successfully".to_string());
+                app.popup_post_req_success = true;
             }
             Err(e) => {
                 app.write_error(e);
-                // app.success = false;
-                // app.active_display_block = ActiveDisplayBlock::Error;
-
-                return;
+                app.popup_post_req_success = false;
             }
         }
+        app.popup_is_loading = false;
+    }
+
+    async fn update_manga_list_status(&mut self, manga_id: u64, query: UpdateUserMangaStatus) {
+        self.oauth.refresh().unwrap();
+        let mut app = self.app.lock().await;
+        match api::update_manga_list_status(manga_id, &query, &self.oauth).await {
+            Ok(result) => {
+                //
+                app.manga_details.as_mut().unwrap().my_list_status = Some(result);
+                app.popup_post_req_success = true;
+                app.popup_post_req_success_message = Some("updated Successfully".to_string());
+            }
+            Err(e) => {
+                app.write_error(e);
+                app.popup_post_req_success = false;
+            }
+        }
+        app.popup_is_loading = false;
     }
 }
 

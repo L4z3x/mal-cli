@@ -53,7 +53,7 @@ pub fn draw_display_layout(f: &mut Frame, app: &mut App, chunk: Rect) {
 
         ActiveDisplayBlock::Loading => {
             if app.is_loading {
-                loading::draw_loading(f, app, chunk);
+                loading::draw_centered_line(f, app, chunk, "Loading...");
             }
         }
     }

@@ -100,9 +100,8 @@ pub fn handler(key: Key, app: &mut App) {
                         .manga_details
                         .as_ref()
                         .unwrap()
-                        .my_list_status
-                        .as_ref()
-                        .map_or(1000, |list| list.num_volumes_read);
+                        .num_volumes
+                        .unwrap_or(10000);
                     if app.temp_popup_num as u64 != total_volumes {
                         app.temp_popup_num += 1;
                     }

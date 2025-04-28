@@ -13,11 +13,18 @@
 => general:
     - image cache clearing (LAST USED) ( WITH A JSON FILE ig)
     -  exit verification
+    - make 'q' return the user to the home screen and close the popup if there is one 
     - cleaning the codebase
+    - change demo video to a gif
 
 => detail page:
-    - add IoEvent to post the edit (for each button)
+    - [x] add IoEvent to post the edit (for each button)
 
+        - we need to find a good approach to handle displaying the data after the edit 
+        - first we display "loading" in the popup 
+        - then just overwrite the UserAnimeListStatus struct with the result 
+        - otherwise we ll display a error message in the popup
+        - add delete instead of "add" in the add_to_list popup (status)
 => bug:
     - on ranking page col 1 row 2 , handlers/mod.rs 174
     - stuck on loading, there is something ambigious that keeps the network thread busy, we neeed to figure out what it is.
