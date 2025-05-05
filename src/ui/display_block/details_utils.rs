@@ -6,15 +6,16 @@ use ratatui::{
     Frame,
 };
 use ratatui_image::StatefulImage;
-use strum::IntoEnumIterator;
 use tui_scrollview::{ScrollView, ScrollbarVisibility};
 
 use crate::{
     api::model::{
         AlternativeTitles, AnimeMediaType, AnimeStatus, MangaMediaType, MangaStatus, Source,
-        UserReadStatus, UserWatchStatus,
     },
-    app::{ActiveDisplayBlock, ActiveMangaDetailBlock, App, RATING_OPTIONS},
+    app::{
+        ActiveDisplayBlock, ActiveMangaDetailBlock, App, RATING_OPTIONS, USER_READ_STATUS,
+        USER_WATCH_STATUS,
+    },
 };
 
 use super::{center_area, loading};
@@ -686,14 +687,16 @@ pub fn draw_user_status_popup(f: &mut Frame, app: &App, chunk: Rect) {
     }
 
     let status_list: Vec<Line> = match app.active_display_block {
-        ActiveDisplayBlock::MangaDetails => UserReadStatus::iter()
+        ActiveDisplayBlock::MangaDetails => USER_READ_STATUS
+            .iter()
             .map(|status| {
                 Line::from(Span::raw(format!("{}", status)))
                     .style(Style::default().fg(app.app_config.theme.text))
                     .alignment(Alignment::Center)
             })
             .collect::<Vec<_>>(),
-        _ => UserWatchStatus::iter()
+        _ => USER_WATCH_STATUS
+            .iter()
             .map(|status| {
                 Line::from(Span::raw(format!("{}", status)))
                     .style(Style::default().fg(app.app_config.theme.text))

@@ -32,7 +32,7 @@ pub fn handler(key: Key, app: &mut App) {
             }
             ActiveMangaDetailBlock::AddToList => {
                 if app.popup {
-                    app.selected_popup_status = if app.selected_popup_status == 5 {
+                    app.selected_popup_status = if app.selected_popup_status == 4 {
                         0
                     } else {
                         app.selected_popup_status + 1
@@ -78,8 +78,8 @@ pub fn handler(key: Key, app: &mut App) {
             }
             ActiveMangaDetailBlock::AddToList => {
                 if app.popup {
-                    app.selected_popup_status = if app.selected_popup_status == 5 {
-                        0
+                    app.selected_popup_status = if app.selected_popup_status == 0 {
+                        4
                     } else {
                         app.selected_popup_status - 1
                     }

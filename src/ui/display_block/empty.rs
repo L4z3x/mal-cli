@@ -1,26 +1,21 @@
 use crate::app::App;
 use figlet_rs::FIGfont;
+use ratatui::layout::Flex;
 use ratatui::style::{Modifier, Style};
 use ratatui::text::Line;
-use ratatui::widgets::{Block, Padding};
+use ratatui::widgets::Block;
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     widgets::Paragraph,
     Frame,
 };
 
-use super::center_area;
-
 pub fn draw_empty(f: &mut Frame, app: &App, chunk: Rect) {
-    let banner_layout = Layout::default()
+    let [banner_layout] = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Percentage(40),
-            Constraint::Percentage(20),
-            Constraint::Percentage(40),
-        ])
-        .split(chunk)[1];
-
+        .constraints([Constraint::Length(6)])
+        .flex(Flex::Center)
+        .areas(chunk);
     draw_figlet(f, "MAL-TUI".to_string(), banner_layout, app);
 }
 
@@ -39,11 +34,10 @@ pub fn draw_figlet(f: &mut Frame, string: String, chunk: Rect, app: &App) {
         .iter()
         .map(|line| Line::styled(*line, style))
         .collect();
-    let block = Block::default().padding(Padding::new(0, 0, 1, 0));
+    let block = Block::default();
     let paragraph = Paragraph::new(spans)
         .block(block)
-        .alignment(Alignment::Center)
-        .wrap(ratatui::widgets::Wrap { trim: true });
-    let centered_chunk = center_area(chunk, 100, 80);
-    f.render_widget(paragraph, centered_chunk);
+        .alignment(Alignment::Center);
+
+    f.render_widget(paragraph, chunk);
 }

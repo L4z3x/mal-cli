@@ -1,30 +1,24 @@
 => result:
-    - scroll trough the results 
+    - [x]scroll trough the results 
     - click p for next page pagination (not next route ?) 
-
+    - opening detail pagees from various results
 => ui problems:
-    - search bar is no aligned with the side menujamais
-    - side menu box's elements are not responsive
     - result cards navigation fix
 
 => keys bar:
     - keys bar for each display_block
 
 => general:
+    - add make file
     - image cache clearing (LAST USED) ( WITH A JSON FILE ig)
-    -  exit verification
+    -  exit ve0rification
     - make 'q' return the user to the home screen and close the popup if there is one 
     - cleaning the codebase
     - change demo video to a gif
 
 => detail page:
-    - [x] add IoEvent to post the edit (for each button)
+    - add a key for deleting the list of the anime (delete endpoint) (feature)
 
-        - we need to find a good approach to handle displaying the data after the edit 
-        - first we display "loading" in the popup 
-        - then just overwrite the UserAnimeListStatus struct with the result 
-        - otherwise we ll display a error message in the popup
-        - add delete instead of "add" in the add_to_list popup (status)
 => bug:
     - on ranking page col 1 row 2 , handlers/mod.rs 174
     - stuck on loading, there is something ambigious that keeps the network thread busy, we neeed to figure out what it is.

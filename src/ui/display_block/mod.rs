@@ -19,6 +19,7 @@ mod suggestion;
 mod user;
 mod user_anime_list;
 mod user_manga_list;
+
 pub fn draw_display_layout(f: &mut Frame, app: &mut App, chunk: Rect) {
     let current_display_block = &app.active_display_block;
 
@@ -71,38 +72,44 @@ pub fn draw_main_display_layout(f: &mut Frame, app: &App, chunk: Rect) {
 }
 
 pub const NAVIGATION_KEYS: [(&str, &str); 5] = [
-    ("s", "Switch results"),
+    ("s", "Switch Type"),
     ("q", "Quit"),
     ("arrows", "Navigate"),
     ("n", "Next page"),
     ("p", "Previous page"),
 ];
+pub const DETAILS_NAVIGATION_KEYS: [(&str, &str); 3] =
+    [("s/arrows", "Navigate"), ("q", "Quit"), ("enter", "Select")];
 
 pub fn draw_keys_bar(f: &mut Frame, app: &App, chunk: Rect) -> Rect {
-    let splitted_layout = Layout::default()
+    let [display_chunk, keys_chunk] = Layout::default()
         .direction(Direction::Vertical)
         .margin(0)
-        .constraints([Constraint::Percentage(95), Constraint::Percentage(5)])
-        .split(chunk);
+        .constraints([Constraint::Percentage(95), Constraint::Length(2)])
+        .areas(chunk);
 
-    let key_bar = splitted_layout[1];
+    let keys = match app.active_display_block {
+        ActiveDisplayBlock::AnimeDetails | ActiveDisplayBlock::MangaDetails => {
+            DETAILS_NAVIGATION_KEYS.to_vec()
+        }
+        _ => NAVIGATION_KEYS.to_vec(),
+    };
     let key_chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(
-            NAVIGATION_KEYS
-                .iter()
-                .map(|_| Constraint::Percentage(100 / NAVIGATION_KEYS.len() as u16))
+            keys.iter()
+                .map(|_| Constraint::Percentage(100 / keys.len() as u16))
                 .collect::<Vec<Constraint>>(),
         )
-        .split(key_bar);
+        .split(keys_chunk);
 
-    for (i, (key, description)) in NAVIGATION_KEYS.iter().enumerate() {
+    for (i, (key, description)) in keys.iter().enumerate() {
         let block =
             Paragraph::new(format!("{}: {}", key, description)).alignment(Alignment::Center);
         f.render_widget(block, key_chunks[i]);
     }
 
-    splitted_layout[0]
+    display_chunk
 }
 
 pub fn get_anime_status_color(status: &UserWatchStatus, app: &App) -> Color {

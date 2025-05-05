@@ -14,7 +14,7 @@ use strum_macros::IntoStaticStr;
 use tui_scrollview::ScrollViewState;
 const DEFAULT_ROUTE: Route = Route {
     data: None,
-    block: ActiveDisplayBlock::AnimeDetails, //afterTest: change to empty
+    block: ActiveDisplayBlock::Empty, //afterTest: change to empty
     title: String::new(),
     image: None,
 };
@@ -30,6 +30,21 @@ pub const ANIME_OPTIONS: [&str; 3] = ["Seasonal", "Ranking", "Suggested"];
 pub const USER_OPTIONS: [&str; 3] = ["Stats", "AnimeList", "MangaList"];
 
 pub const GENERAL_OPTIONS: [&str; 3] = ["Help", "About", "Quit"];
+
+pub const USER_WATCH_STATUS : [&str; 5] = [
+    "Watching",
+    "Completed",
+    "On Hold",
+    "Dropped",
+    "Plan to Watch",
+];
+pub const USER_READ_STATUS : [&str; 5] = [
+    "Reading",
+    "Completed",
+    "On Hold",
+    "Dropped",
+    "Plan To Read"
+];
 
 pub const ANIME_OPTIONS_RANGE: std::ops::Range<usize> = 0..3;
 

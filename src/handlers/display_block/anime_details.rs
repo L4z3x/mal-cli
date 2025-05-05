@@ -35,7 +35,7 @@ pub fn handler(key: Key, app: &mut App) {
             }
             ActiveAnimeDetailBlock::AddToList => {
                 if app.popup {
-                    app.selected_popup_status = if app.selected_popup_status == 5 {
+                    app.selected_popup_status = if app.selected_popup_status == 4 {
                         0
                     } else {
                         app.selected_popup_status + 1
@@ -75,7 +75,7 @@ pub fn handler(key: Key, app: &mut App) {
             ActiveAnimeDetailBlock::AddToList => {
                 if app.popup {
                     app.selected_popup_status = if app.selected_popup_status == 0 {
-                        5
+                        4
                     } else {
                         app.selected_popup_status - 1
                     }
@@ -105,13 +105,21 @@ pub fn handler(key: Key, app: &mut App) {
                 ActiveAnimeDetailBlock::Episodes => {
                     app.active_anime_detail_block = ActiveAnimeDetailBlock::AddToList;
                 }
-                _ => {}
+                ActiveAnimeDetailBlock::SideInfo => {
+                    app.active_anime_detail_block = ActiveAnimeDetailBlock::Episodes;
+                }
+
+                ActiveAnimeDetailBlock::Synopsis => {
+                    app.active_anime_detail_block = ActiveAnimeDetailBlock::SideInfo
+                }
             }
         }
+
         k if common::left_event(k) => {
             if app.popup {
                 return;
             }
+
             match app.active_anime_detail_block {
                 ActiveAnimeDetailBlock::AddToList => {
                     app.active_anime_detail_block = ActiveAnimeDetailBlock::Episodes;
@@ -122,7 +130,13 @@ pub fn handler(key: Key, app: &mut App) {
                 ActiveAnimeDetailBlock::Episodes => {
                     app.active_anime_detail_block = ActiveAnimeDetailBlock::Rate;
                 }
-                _ => {}
+                ActiveAnimeDetailBlock::SideInfo => {
+                    app.active_anime_detail_block = ActiveAnimeDetailBlock::Synopsis;
+                }
+
+                ActiveAnimeDetailBlock::Synopsis => {
+                    app.active_anime_detail_block = ActiveAnimeDetailBlock::AddToList;
+                }
             }
         }
         _ => {}
@@ -212,7 +226,6 @@ pub fn handle_edit(app: &mut App) {
                 match app.active_anime_detail_block {
                     ActiveAnimeDetailBlock::AddToList => {
                         let status = get_watch_status_from_index(app.selected_popup_status);
-
                         if my_list.is_some() {
                             // if selected the current status do nothing
                             if my_list.as_ref().unwrap().status == status {
@@ -278,7 +291,6 @@ pub fn handle_edit(app: &mut App) {
             if anime_update_query.is_none() {
                 return;
             }
-            println!("Anime_update_query: {:?}", anime_update_query);
             let anime_id = app.anime_details.as_ref().unwrap().id;
             app.dispatch(IoEvent::UpdateAnimeListStatus(
                 anime_id,
@@ -287,6 +299,7 @@ pub fn handle_edit(app: &mut App) {
             app.popup_is_loading = true;
             app.result_popup = true;
         }
+
         ActiveDisplayBlock::MangaDetails => {
             let my_list = &app.manga_details.as_ref().unwrap().my_list_status;
             let manga_update_query: Option<UpdateUserMangaStatus> =
@@ -402,6 +415,7 @@ pub fn handle_edit(app: &mut App) {
             app.result_popup = true;
             app.popup_is_loading = true;
         }
+
         _ => {}
     }
 }
@@ -409,10 +423,15 @@ pub fn handle_edit(app: &mut App) {
 fn get_watch_status_from_index(index: u8) -> UserWatchStatus {
     match index {
         0 => UserWatchStatus::Watching,
+
         1 => UserWatchStatus::Completed,
+
         2 => UserWatchStatus::OnHold,
+
         3 => UserWatchStatus::Dropped,
+
         4 => UserWatchStatus::PlanToWatch,
+
         _ => UserWatchStatus::Other("None".to_string()),
     }
 }

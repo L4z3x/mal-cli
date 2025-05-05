@@ -61,3 +61,18 @@ pub fn on_up_press<T>(selection_data: &[T], selection_index: Option<usize>) -> u
         None => 0,
     }
 }
+
+pub fn quit_event(key: Key) -> bool {
+    match key {
+        Key::Char('q') | Key::Ctrl('C') | Key::Ctrl('c') => true,
+        _ => false,
+    }
+}
+
+pub fn get_lowercase_key(key: Key) -> Key {
+    match key {
+        Key::Char(c) => Key::Char(c.to_ascii_lowercase()),
+        Key::Ctrl(c) => Key::Ctrl(c.to_ascii_lowercase()),
+        _ => key,
+    }
+}

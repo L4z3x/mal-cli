@@ -15,7 +15,7 @@ pub fn handler(key: Key, app: &mut App) {
     } else {
         match key {
             // Key::Enter => open anime detail),
-            Key::Char('s') => app.popup = true,
+            k if k == app.app_config.keys.toggle => app.popup = true,
 
             // Key::Char('s') => app.active_display_block = ActiveDisplayBlock::,
             _ => crate::handlers::handle_result_block(key, app),

@@ -1,5 +1,5 @@
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Margin, Rect},
+    layout::{Alignment, Constraint, Direction, Flex, Layout, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, Paragraph, Wrap},
@@ -48,11 +48,18 @@ fn draw_anime_top_three(
         capitalize_each_word(rank_type.to_string())
     ));
     f.render_widget(block, chunk);
-
+    let [_, top_three_elemenets_chunk] = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(1), Constraint::Min(1)])
+        .areas(chunk);
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Ratio(1, 3); 3])
-        .split(chunk.inner(Margin::new(0, 1)));
+        .constraints([
+            Constraint::Ratio(1, 3),
+            Constraint::Ratio(1, 3),
+            Constraint::Ratio(1, 3),
+        ])
+        .split(top_three_elemenets_chunk);
 
     let list = match rank_type {
         AnimeRankingType::All => &app.top_three_anime.all,
@@ -170,19 +177,24 @@ fn draw_manga_top_three(
     block: Block,
     rank_type: &MangaRankingType,
 ) {
-    // let block = block.title(format!("Top {}", rank_type));
-    // f.render_widget(block, chunk);
-
     let block = block.title(format!(
         "Top {}  (Manga)",
         capitalize_each_word(rank_type.to_string())
     ));
     f.render_widget(block, chunk);
 
+    let [_, top_three_elemenets_chunk] = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(1), Constraint::Min(1)])
+        .areas(chunk);
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Ratio(1, 3); 3])
-        .split(chunk.inner(Margin::new(0, 1)));
+        .constraints([
+            Constraint::Ratio(1, 3),
+            Constraint::Ratio(1, 3),
+            Constraint::Ratio(1, 3),
+        ])
+        .split(top_three_elemenets_chunk);
 
     let list = match rank_type {
         MangaRankingType::All => &app.top_three_manga.all,
@@ -284,10 +296,11 @@ fn draw_loading_top_three(f: &mut Frame, chunk: Rect, block: Block, rank_type: &
     let block = block.title(title);
     f.render_widget(block, chunk);
 
-    let middle_chunk = Layout::default()
+    let [middle_chunk] = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Ratio(1, 5); 5])
-        .split(chunk.inner(Margin::new(0, 1)))[2];
+        .constraints([Constraint::Length(1)])
+        .flex(Flex::Center)
+        .areas(chunk);
 
     let loading = Paragraph::new(Line::from(Span::raw("Loading...")).alignment(Alignment::Center));
     f.render_widget(loading, middle_chunk);
@@ -297,10 +310,11 @@ fn draw_error_top_three(f: &mut Frame, app: &App, chunk: Rect, block: Block) {
     let block = block.title("Top Three List");
     f.render_widget(block, chunk);
 
-    let middle_chunk = Layout::default()
+    let [middle_chunk] = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Ratio(1, 5); 5])
-        .split(chunk.inner(Margin::new(0, 1)))[2];
+        .constraints([Constraint::Length(2)])
+        .flex(Flex::Center)
+        .areas(chunk);
 
     let error = Paragraph::new(
         Line::from(Span::raw(format!("Error: {}", app.api_error)))

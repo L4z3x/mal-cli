@@ -4,6 +4,7 @@ use crossterm::execute;
 use crossterm::terminal;
 use crossterm::{cursor::MoveTo, ExecutableCommand};
 use mal::api::model::RankingType;
+use mal::handlers::common;
 use ratatui::prelude::CrosstermBackend;
 use ratatui::Terminal;
 
@@ -171,13 +172,14 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
                 */
         match events.next()? {
             event::Event::Input(key) => {
-                if key == Key::Ctrl('c') {
+                let key = common::get_lowercase_key(key);
+                if common::quit_event(key) {
                     //todo: display confirmation to  quit
                     break;
                 }
 
                 let active_block = app.active_block;
-                //# change the default of menu selecting to None when leaving the block
+                // change the default of menu selecting to None when leaving the block
                 if key == Key::Tab {
                     // handle navigation between block
                     handlers::handle_tab(&mut app);

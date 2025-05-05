@@ -7,10 +7,8 @@ Under development.
 forked from [SaeedAnas/mal-cli](https://github.com/SaeedAnas/mal-cli)
 
 # HOW IT LOOKS
-## Demo
-![demo](./assets/mal-tui-demo.mp4)
 ## Detail page
-![demo](./assets/mal-tui-manga-details-page.png)
+![detail](./assets/mal-tui-manga-details-page.png)
 ## Home page
 ![home](./assets/mal-tui-home-screenshot-01.png)
 ## Profile page

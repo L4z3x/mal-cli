@@ -1,11 +1,11 @@
-use super::{display_block, top_three::draw_top_three, util::get_color};
+use super::{top_three::draw_top_three, util::get_color};
 use crate::app::{
     ActiveBlock, App, ANIME_OPTIONS, ANIME_OPTIONS_RANGE, GENERAL_OPTIONS, GENERAL_OPTIONS_RANGE,
     USER_OPTIONS, USER_OPTIONS_RANGE,
 };
 
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Margin, Rect},
+    layout::{Alignment, Constraint, Direction, Flex, Layout, Margin, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, List, ListState},
@@ -20,7 +20,6 @@ pub fn draw_routes(f: &mut Frame, app: &App, layout_chunk: Rect) -> Rect {
 
     draw_user_block(f, app, chunks[0]);
 
-    // let current_route = app.active_block;
     chunks[1]
 }
 
@@ -51,10 +50,11 @@ pub fn draw_anime_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
     if !ANIME_OPTIONS_RANGE.contains(&app.library.selected_index) {
         index = None;
     }
-    let list_layout = Layout::default()
+    let [list_layout] = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
-        .split(layout_chunk)[1];
+        .constraints([Constraint::Length(3)])
+        .flex(Flex::Center)
+        .areas(layout_chunk);
     draw_selectable_list(f, app, list_layout, items, index);
 }
 
@@ -85,10 +85,11 @@ pub fn draw_user_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
     if !USER_OPTIONS_RANGE.contains(&app.library.selected_index) {
         index = None;
     }
-    let list_layout = Layout::default()
+    let [list_layout] = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
-        .split(layout_chunk)[1];
+        .constraints([Constraint::Length(3)])
+        .flex(Flex::Center)
+        .areas(layout_chunk);
     draw_selectable_list(f, app, list_layout, items, index);
 }
 
@@ -120,31 +121,30 @@ pub fn draw_options_routes(f: &mut Frame, app: &App, layout_chunk: Rect) {
     if !GENERAL_OPTIONS_RANGE.contains(&app.library.selected_index) {
         index = None;
     }
-    let list_layout = Layout::default()
+    let [list_layout] = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
-        .split(layout_chunk)[1];
+        .constraints([Constraint::Length(3)])
+        .flex(Flex::Center)
+        .areas(layout_chunk);
     draw_selectable_list(f, app, list_layout, items, index);
 }
 
 pub fn draw_user_block(f: &mut Frame, app: &App, layout_chunk: Rect) {
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(
-            [
-                Constraint::Percentage(17),
-                Constraint::Percentage(17),
-                Constraint::Percentage(17),
-                Constraint::Percentage(100 - 17 * 3),
-            ]
-            .as_ref(),
-        )
-        .split(layout_chunk.inner(Margin::new(1, 0)));
+    let [anime_routes_chunk, user_routes_chunk, option_route_chunk, top_three_chunk] =
+        Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(5),
+                Constraint::Length(5),
+                Constraint::Length(5),
+                Constraint::Fill(1),
+            ])
+            .areas(layout_chunk.inner(Margin::new(1, 0)));
 
-    draw_anime_routes(f, app, chunks[0]);
-    draw_user_routes(f, app, chunks[1]);
-    draw_options_routes(f, app, chunks[2]);
-    draw_top_three(f, app, chunks[3]);
+    draw_anime_routes(f, app, anime_routes_chunk);
+    draw_user_routes(f, app, user_routes_chunk);
+    draw_options_routes(f, app, option_route_chunk);
+    draw_top_three(f, app, top_three_chunk);
 }
 
 pub fn draw_selectable_list(
@@ -167,7 +167,7 @@ pub fn draw_selectable_list(
             .add_modifier(Modifier::BOLD),
     );
 
-    let centered_rect = display_block::center_area(layout_chunk, 80, 60);
+    // let centered_rect = display_block::center_area(layout_chunk, 80, 60);
 
-    f.render_stateful_widget(items, centered_rect, &mut state);
+    f.render_stateful_widget(items, layout_chunk, &mut state);
 }

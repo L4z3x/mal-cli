@@ -1,5 +1,5 @@
 mod anime;
-mod common;
+pub mod common;
 mod display_block;
 mod help;
 mod input;

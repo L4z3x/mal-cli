@@ -30,12 +30,16 @@ pub fn draw_main_layout(f: &mut Frame, app: &mut App) {
 }
 
 pub fn draw_input_and_help_box(f: &mut Frame, app: &App, layout_chunk: Rect) {
-    let chunks = Layout::default()
+    let [search_chunk, title_chunk] = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(17), Constraint::Percentage(82)])
         .flex(Flex::SpaceBetween)
-        .split(layout_chunk);
-
+        .areas(layout_chunk);
+    // removing the little gap
+    let [_, search_chunk] = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Length(1), Constraint::Fill(1)])
+        .areas(search_chunk);
     let current_block = app.active_block;
 
     let highlight_state = current_block == ActiveBlock::Input;
@@ -52,7 +56,7 @@ pub fn draw_input_and_help_box(f: &mut Frame, app: &App, layout_chunk: Rect) {
             ))
             .border_style(get_color(highlight_state, app.app_config.theme)),
     );
-    f.render_widget(input, chunks[0]);
+    f.render_widget(input, search_chunk);
 
     let mut title = app.display_block_title.clone();
     if title.is_empty() {
@@ -71,7 +75,7 @@ pub fn draw_input_and_help_box(f: &mut Frame, app: &App, layout_chunk: Rect) {
         .block(block)
         .alignment(Alignment::Center)
         .style(Style::default().fg(app.app_config.theme.banner));
-    f.render_widget(help, chunks[1]);
+    f.render_widget(help, title_chunk);
 }
 
 pub fn format_number_with_commas(number: u64) -> String {
