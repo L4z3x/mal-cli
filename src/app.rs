@@ -215,13 +215,13 @@ impl Navigator {
             return false;
         }
         
-        // Check if current route ID exists in data
-        let current_id = self.history[self.index];
-        if !self.data.contains_key(&current_id) {
-            println!("Navigation state invalid: current route ID {} not in data map", 
-                     current_id);
-            return false;
-        }
+        // // Check if current route ID exists in data
+        // let current_id = self.history[self.index];
+        // if !self.data.contains_key(&current_id) {
+        //     println!("Navigation state invalid: current route ID {} not in data map", 
+        //              current_id);
+        //     return false;
+        // }
         
         // Check if all history route IDs exist in data
         for &route_id in &self.history {
@@ -275,6 +275,10 @@ pub struct App {
     pub help_menu_page: u32,
     pub help_menu_max_lines: u32,
     pub help_docs_size: u32,
+    // exit:
+    pub exit_flag: bool,
+    pub exit_confirmation_popup: bool,
+
     // image:
     pub picker: Option<Picker>,
     pub media_image: Option<(String, u32, u32)>,
@@ -569,6 +573,9 @@ impl App {
             manga_details_synopsys_scroll_view_state: ScrollViewState::default(),
             start_card_list_index: 0,
             end_card_list_index:  14,
+            // exit:
+            exit_flag: false,
+            exit_confirmation_popup: false,
         }
     }
 
@@ -742,6 +749,8 @@ impl App {
         debug!("{}",&self.navigator.history[0]);
         if !self.navigator.validate_state() {
             println!("Invalid navigation state");
+            self.navigator.index = 0; // reset index to home
+            return;
         }
         if i as usize >= self.navigator.history.len() {
             return;

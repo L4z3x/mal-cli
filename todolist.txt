@@ -1,18 +1,12 @@
 => result:
     - click p for next page pagination (feature) 
-=> ui problems:
-    - result cards navigation fix
-    - seasonal popup ui fix
-=> keys bar:
+
+    => keys bar:
     - keys bar for each display_block
 
-
-==> profile:
-    - check username rendering responsiveness
 => general:
     - add make file
     - image cache clearing (LAST USED) ( WITH A JSON FILE ig)
-    - exit verification
     - make 'q' return the user to the home screen and close the popup if there is one 
     - cleaning the codebase
     - change demo video to a gif

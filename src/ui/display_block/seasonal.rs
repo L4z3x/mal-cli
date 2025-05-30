@@ -4,7 +4,7 @@ use crate::app::{App, SEASONS};
 use ratatui::layout::{Alignment, Constraint, Direction, Flex, Layout};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::Line;
-use ratatui::widgets::{Clear, List, ListState, Padding, Paragraph};
+use ratatui::widgets::{Clear, List, ListState, Padding};
 use ratatui::{
     layout::Rect,
     widgets::{Block, BorderType, Borders},
@@ -21,8 +21,6 @@ pub fn draw_seasonal_anime(f: &mut Frame, app: &App, chunk: Rect) {
 
 fn draw_seasonal_popup(f: &mut Frame, app: &App, chunk: Rect) {
     let area = center_area(chunk, 30, 50);
-
-    // draw popup:
 
     let popup = Block::default()
         .title("Select Season")
@@ -75,14 +73,12 @@ fn draw_seasonal_popup(f: &mut Frame, app: &App, chunk: Rect) {
     let season_list = List::new(list).block(season_block).highlight_style(
         Style::default()
             .fg(app.app_config.theme.selected)
-            .add_modifier(Modifier::BOLD), // .add_modifier(Modifier::UNDERLINED),
+            .add_modifier(Modifier::BOLD),
     );
-    // .highlight_symbol("> ");
-    // .scroll_padding(2);
 
     let [centered_season_chunk] = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(4)])
+        .constraints([Constraint::Length(7)])
         .flex(Flex::Center)
         .areas(season_chunk);
     f.render_stateful_widget(season_list, centered_season_chunk, &mut state);
@@ -92,7 +88,7 @@ fn draw_seasonal_popup(f: &mut Frame, app: &App, chunk: Rect) {
     let mut year_block = Block::default()
         .title_alignment(Alignment::Center)
         .borders(Borders::NONE)
-        .padding(Padding::symmetric(1, 2));
+        .padding(Padding::symmetric(1, 1));
 
     if !is_popup_season_block {
         year_block = year_block
@@ -106,14 +102,34 @@ fn draw_seasonal_popup(f: &mut Frame, app: &App, chunk: Rect) {
         year_block = year_block.title("Year")
     }
 
-    let year_paragraph = Paragraph::new(app.anime_season.selected_year.to_string())
-        .block(year_block)
-        .alignment(Alignment::Center);
+    let list: Vec<Line> = vec![
+        (app.anime_season.selected_year + 1).to_string(),
+        (app.anime_season.selected_year).to_string(),
+        (app.anime_season.selected_year - 1).to_string(),
+    ]
+    .into_iter()
+    .map(|s| {
+        if s == app.anime_season.selected_year.to_string() {
+            return Line::raw(s)
+                .alignment(Alignment::Center)
+                .style(Style::default().fg(app.app_config.theme.selected));
+        }
+        Line::raw(s)
+            .alignment(Alignment::Center)
+            .style(Style::default().fg(app.app_config.theme.text))
+    })
+    .collect();
+
+    let year_list = List::new(list).block(year_block).highlight_style(
+        Style::default()
+            .fg(app.app_config.theme.selected)
+            .add_modifier(Modifier::BOLD),
+    );
 
     let [centered_year_chunk] = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(4)])
+        .constraints([Constraint::Length(7)])
         .flex(Flex::Center)
         .areas(year_chunk);
-    f.render_widget(year_paragraph, centered_year_chunk);
+    f.render_widget(year_list, centered_year_chunk);
 }

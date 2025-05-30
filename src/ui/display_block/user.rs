@@ -11,22 +11,22 @@ use crate::app::App;
 use super::{center_area, empty::draw_figlet};
 
 pub fn draw_user_info(f: &mut Frame, app: &App, chunk: Rect) {
-    let layout: [Rect; 2] = Layout::default()
+    let [username_chunk, info_chunk] = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Min(10), Constraint::Percentage(100)])
+        .constraints([Constraint::Length(10), Constraint::Fill(1)])
         .areas(chunk);
 
     // draw border:
     let block = Block::default().borders(Borders::BOTTOM);
-    f.render_widget(block, center_area(layout[0], 95, 100));
+    f.render_widget(block, center_area(username_chunk, 95, 100));
 
     let username = app.user_profile.as_ref().unwrap().name.clone();
-    draw_figlet(f, username, layout[0], app);
+    draw_figlet(f, username, username_chunk, app);
     // extracting data:
-    let layout = draw_info(f, app, layout[1]);
+    let gauge_chunk = draw_info(f, app, info_chunk);
     let block = Block::default().borders(Borders::RIGHT);
-    f.render_widget(block, center_area(layout, 100, 95));
-    draw_gauges(f, app, layout);
+    f.render_widget(block, center_area(gauge_chunk, 100, 95));
+    draw_gauges(f, app, gauge_chunk);
 }
 
 fn draw_gauges(f: &mut Frame, app: &App, layout: Rect) {
@@ -61,7 +61,10 @@ fn draw_gauges(f: &mut Frame, app: &App, layout: Rect) {
         .block(block.clone())
         .gauge_style(app.app_config.theme.status_watching)
         .ratio(watching as f64 / total_entries as f64)
-        .label(format!("{:.0}%", (watching as f64 / total_entries as f64)));
+        .label(format!(
+            "{:.0}%",
+            (watching as f64 / total_entries as f64) * 100.0
+        ));
 
     let completed_title = Paragraph::new(format!("Completed: {}", completed))
         .style(Style::default().fg(app.app_config.theme.text))
@@ -117,7 +120,7 @@ fn draw_gauges(f: &mut Frame, app: &App, layout: Rect) {
         .ratio(plan_to_watch as f64 / total_entries as f64)
         .label(format!(
             "{:.0}%",
-            plan_to_watch as f64 / total_entries as f64
+            (plan_to_watch as f64 / total_entries as f64) * 100.0
         ));
 
     let percent_y = 40;

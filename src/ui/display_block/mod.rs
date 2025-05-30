@@ -1,8 +1,8 @@
 use crate::api::model::{UserReadStatus, UserWatchStatus};
 use crate::app::{ActiveBlock, ActiveDisplayBlock, App};
 use ratatui::layout::{Alignment, Constraint, Direction, Flex, Layout};
-use ratatui::style::Color;
-use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
+use ratatui::style::{Color, Style};
+use ratatui::widgets::{Block, BorderType, Borders, Clear, Paragraph};
 use ratatui::{layout::Rect, Frame};
 mod error;
 mod seasonal;
@@ -57,6 +57,9 @@ pub fn draw_display_layout(f: &mut Frame, app: &mut App, chunk: Rect) {
                 loading::draw_centered_line(f, app, chunk, "Loading...");
             }
         }
+    }
+    if app.exit_confirmation_popup {
+        draw_exit_confirmation_popup(f, app, chunk)
     }
 }
 
@@ -157,3 +160,37 @@ pub fn center_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
 //     let [area] = horizontal.areas(area);
 //     area
 // }
+
+fn draw_exit_confirmation_popup(f: &mut Frame, app: &App, chunk: Rect) {
+    let popup_area = center_area(chunk, 100, 20);
+    // get popup area and then get the exact length of the sentence
+    let [popup_chunk] = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Max(40)])
+        .flex(Flex::Center)
+        .areas(popup_area);
+    let [popup_chunk] = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Max(9)])
+        .flex(Flex::Center)
+        .areas(popup_chunk);
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .title(" Exit Confirmation ")
+        .title_alignment(Alignment::Center)
+        .title_style(Style::default().fg(app.app_config.theme.text))
+        .border_style(get_color(true, app.app_config.theme));
+
+    f.render_widget(Clear, popup_chunk);
+    f.render_widget(block, popup_chunk);
+
+    let [popup_message_chunk] = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(1)])
+        .flex(Flex::Center)
+        .areas(popup_chunk);
+    let message = Paragraph::new("Are you sure you want to exit ?").alignment(Alignment::Center);
+    f.render_widget(message, popup_message_chunk);
+}

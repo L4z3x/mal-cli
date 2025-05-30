@@ -13,10 +13,20 @@ use crate::app::{
 use crate::event::Key;
 use crate::network::IoEvent;
 
+use common::get_lowercase_key;
 pub use input::handler as input_handler;
 
 pub fn handle_app(key: Key, app: &mut App) {
     // First handle any global event and then move to block event
+    if app.exit_confirmation_popup {
+        if key == Key::Esc || get_lowercase_key(key) == Key::Char('n') {
+            app.exit_confirmation_popup = false;
+            return;
+        } else if key == Key::Enter || get_lowercase_key(key) == Key::Char('y') {
+            app.exit_flag = true;
+            return;
+        }
+    }
     match key {
         Key::Esc => app.load_previous_route(),
 

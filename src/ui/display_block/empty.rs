@@ -35,9 +35,15 @@ pub fn draw_figlet(f: &mut Frame, string: String, chunk: Rect, app: &App) {
         .map(|line| Line::styled(*line, style))
         .collect();
     let block = Block::default();
+    let height = spans.len() as u16;
     let paragraph = Paragraph::new(spans)
         .block(block)
         .alignment(Alignment::Center);
 
-    f.render_widget(paragraph, chunk);
+    let [centered_chunk] = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(height)])
+        .flex(Flex::Center)
+        .areas(chunk);
+    f.render_widget(paragraph, centered_chunk);
 }

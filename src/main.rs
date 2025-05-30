@@ -80,7 +80,7 @@ async fn main() -> Result<()> {
     println!("==> Refreshing Token");
     let auth_config = AuthConfig::load()?;
     let oauth = OAuth::get_auth_async(auth_config).await?;
-
+    println!("==> Token Refreshed");
     let (sync_io_tx, sync_io_rx) = std::sync::mpsc::channel::<IoEvent>();
 
     // initialize app state
@@ -178,8 +178,8 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
         match events.next()? {
             event::Event::Input(key) => {
                 let key = common::get_lowercase_key(key);
-                if common::quit_event(key) {
-                    //todo: display confirmation to  quit
+                if app.exit_flag {
+                    // if exit_flag is set, we exit the app
                     break;
                 }
 
@@ -190,6 +190,9 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
                     handlers::handle_tab(&mut app);
                 } else if active_block == ActiveBlock::Input {
                     handlers::input_handler(key, &mut app);
+                } else if common::quit_event(key) {
+                    //todo: display confirmation to  quit
+                    app.exit_confirmation_popup = true;
                 } else if key == app.app_config.keys.back {
                     if app.active_block != ActiveBlock::Input {
                         app.load_previous_route();

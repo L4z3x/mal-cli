@@ -10,7 +10,7 @@ use super::result;
 pub fn handler(key: Key, app: &mut App) {
     match key {
         k if k == app.app_config.keys.toggle => change_tab(app),
-        k if k == app.app_config.keys.open_popup => open_popup(app),
+        k if k == app.app_config.keys.open_popup => {}
         _ => result::handler(key, app),
     }
 }
@@ -35,4 +35,4 @@ fn change_tab(app: &mut App) {
     }
 }
 
-fn open_popup(app: &mut App) {}
+// fn open_popup(app: &mut App) {}
