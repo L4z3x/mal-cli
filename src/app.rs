@@ -7,6 +7,7 @@ use ratatui::layout::Rect;
 use ratatui_image::picker::Picker;
 use ratatui_image::protocol::StatefulProtocol;
 use time::{Date, PrimitiveDateTime};
+use tracing::debug;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::sync::mpsc::Sender;
@@ -171,12 +172,19 @@ pub struct Library {
 #[derive(Debug)]
 pub struct Navigator {
     pub history: Vec<u16>,
-    pub index: u16,
+    pub index: usize,
     pub data: HashMap<u16, Route>,
     pub last_id: u16,
 }
 
 impl Navigator {
+
+    // explain every thing about the navigation system:
+    /*
+    navigator has the home route at initialization
+    it has a history of routes, where the first route is always the home route
+    each page has an id and it is mapped to its data in the data hashmap
+    */
     pub fn new() -> Self {
         let mut data = HashMap::new();
         data.insert(0, DEFAULT_ROUTE);
@@ -190,21 +198,52 @@ impl Navigator {
 
     pub fn add_existing_route(&mut self, id: u16) {
         self.history.push(id);
-        self.index = self.history.len() as u16 - 1;
+        self.index = self.history.len() - 1;
     }
 
     pub fn add_route(&mut self, r: Route) {
         self.last_id += 1;
         self.data.insert(self.last_id, r);
         self.history.push(self.last_id);
-        self.index = self.history.len() as u16 - 1;
+        self.index = self.history.len()  - 1;
     }
-
+    pub fn validate_state(&self) -> bool {
+        // Check if index is within bounds
+        if self.index >= self.history.len() {
+            println!("Navigation state invalid: index {} >= history length {}", 
+                     self.index, self.history.len());
+            return false;
+        }
+        
+        // Check if current route ID exists in data
+        let current_id = self.history[self.index];
+        if !self.data.contains_key(&current_id) {
+            println!("Navigation state invalid: current route ID {} not in data map", 
+                     current_id);
+            return false;
+        }
+        
+        // Check if all history route IDs exist in data
+        for &route_id in &self.history {
+            if !self.data.contains_key(&route_id) {
+                println!("Navigation state invalid: history route ID {} not in data map", 
+                         route_id);
+                return false;
+            }
+        }
+        
+        true
+    }
     pub fn remove_old_history(&mut self) {
+    // when the history length exceeds the limit, we remove the oldest page which is 1 (0 is the home page) 
+        
         self.history.remove(1);
         self.clear_unused_data();
     }
 
+    /// Removes route data for routes that are no longer in the navigation history.
+    /// This prevents memory leaks by cleaning up orphaned route data after history modifications.
+    /// Should be called after operations that remove entries from the history vector.
     pub fn clear_unused_data(&mut self) {
         let active_routes: HashSet<u16> = self.history.iter().copied().collect();
         self.data.retain(|k, _| active_routes.contains(k));
@@ -290,6 +329,9 @@ pub struct App {
     pub anime_list_status: Option<UserWatchStatus>,
     // use UserReadStatus to determine the current tab
     pub manga_list_status: Option<UserReadStatus>,
+    // to track pagination (with local data)
+    pub start_card_list_index: u16,
+    pub end_card_list_index: u16,
 }
 #[derive(Debug,Clone)]
 pub enum DetailPopup{
@@ -525,6 +567,8 @@ impl App {
             anime_details_info_scroll_view_state: ScrollViewState::default(),
             manga_details_info_scroll_view_state: ScrollViewState::default(),
             manga_details_synopsys_scroll_view_state: ScrollViewState::default(),
+            start_card_list_index: 0,
+            end_card_list_index:  14,
         }
     }
 
@@ -563,25 +607,31 @@ impl App {
         if let Some(io_tx) = &self.io_tx {
             if let Err(e) = io_tx.send(event) {
                 self.is_loading = false;
-                // dbg!(e);
                 println!("Error from dispatch {}", e);
             }
         };
     }
 
     pub fn clear_route_before_push(&mut self) {
-        let index = self.navigator.index as usize;
+        // here we take the current index (position) and delete everything after it in the history
+        let index = self.navigator.index ;
 
         if index < self.navigator.history.len() - 1 {
             for _ in index + 1..self.navigator.history.len() {
                 self.navigator.history.pop();
-                self.navigator.clear_unused_data();
             }
         }
-        self.remove_old_history();
+        self.navigator.clear_unused_data();
     }
 
     fn push_existing_route(&mut self, id: u16) {
+        //
+        if !self.navigator.data.contains_key(&id) {
+            debug!("Route ID {} does not exist in data map, cannot push", id);
+            println!("Route ID {} does not exist in data map, cannot push", id);
+            self.navigator.index = 0; // reset index to home
+            return;
+        }
         self.clear_route_before_push();
         self.navigator.add_existing_route(id);
     }
@@ -593,6 +643,7 @@ impl App {
     }
 
     fn remove_old_history(&mut self) {
+        // when the history length exceeds the limit, we remove the oldest page wich is 1 (0 is the home page)
         if self.navigator.history.len() - 1 > self.app_config.navigation_stack_limit as usize {
             self.navigator.remove_old_history();
         }
@@ -668,11 +719,14 @@ impl App {
         if self.popup {
             return;
         }
-        if self.navigator.index >= self.navigator.history.len() as u16 {
-            self.navigator.index = self.navigator.history.len().saturating_sub(2) as u16;
+        if self.navigator.index >= self.navigator.history.len() {
+            // if we exceeded the history length, we reset the index to the last route
+            debug!("Navigator index exceeded history length, resetting to last route");
+            self.navigator.index = self.navigator.history.len().saturating_sub(2);
         }
 
-        if self.navigator.index == self.navigator.history.len() as u16 - 1 {
+        if self.navigator.index == self.navigator.history.len() - 1 {
+            // if we are at the last route, we do nothing
             return;
         }
 
@@ -681,11 +735,20 @@ impl App {
 
     pub fn load_route(&mut self, id: u16) {
         self.push_existing_route(id as u16);
-        self.load_state_data(self.navigator.history.len() as u16 - 1);
+        self.load_state_data(self.navigator.history.len() - 1);
     }
 
-    fn load_state_data(&mut self, i: u16) {
+    fn load_state_data(&mut self, i: usize) {
+        debug!("{}",&self.navigator.history[0]);
+        if !self.navigator.validate_state() {
+            println!("Invalid navigation state");
+        }
         if i as usize >= self.navigator.history.len() {
+            return;
+        }
+        let route_id = self.navigator.history[i];
+        if !self.navigator.data.contains_key(&route_id) {
+            println!("Error: Route ID {} not found in data map when loading state", route_id);
             return;
         }
         self.navigator.index = i;

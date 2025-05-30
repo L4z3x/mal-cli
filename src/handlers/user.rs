@@ -90,7 +90,7 @@ pub fn is_user_anime_list_data_available(app: &App) -> (bool, bool, Option<u16>)
         {
             if let Data::UserAnimeList(d) = app.navigator.data[&id].data.as_ref().unwrap() {
                 if d.status == app.anime_list_status {
-                    let is_next = app.navigator.index + 1 == i as u16;
+                    let is_next = app.navigator.index + 1 == i;
                     return (true, is_next, Some(id));
                 }
             }
@@ -107,7 +107,7 @@ pub fn is_user_manga_list_data_available(app: &App) -> (bool, bool, Option<u16>)
         {
             if let Data::UserMangaList(d) = app.navigator.data[&id].data.as_ref().unwrap() {
                 if d.status == app.manga_list_status {
-                    let is_next = app.navigator.index + 1 == i as u16;
+                    let is_next = app.navigator.index + 1 == i;
                     return (true, is_next, Some(id));
                 }
             }
@@ -122,7 +122,7 @@ fn is_user_profile_data_available(app: &App) -> (bool, bool, Option<u16>) {
         if app.navigator.data[&id].block == ActiveDisplayBlock::UserInfo
             && app.navigator.data[&id].data.is_some()
         {
-            let is_next = app.navigator.index + 1 == i as u16;
+            let is_next = app.navigator.index + 1 == i;
             return (true, is_next, Some(id));
         }
     }

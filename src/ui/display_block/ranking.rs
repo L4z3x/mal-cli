@@ -14,7 +14,7 @@ use crate::{
         ActiveBlock, ActiveDisplayBlock, App, ANIME_RANKING_TYPES, DISPLAY_COLUMN_NUMBER,
         DISPLAY_RAWS_NUMBER, MANGA_RANKING_TYPES,
     },
-    ui::{format_number_with_commas, util::get_color},
+    ui::{format_number_with_commas, get_end_card_index, util::get_color},
 };
 
 use super::{center_area, get_anime_status_color};
@@ -90,15 +90,15 @@ pub fn draw_anime_ranking_results(f: &mut Frame, app: &App, chunk: Rect) {
         // draw_no_results(f, app, chunk);
         return;
     }
-    let cards_results = construct_cards_with_data(chunk, results);
+    let (cards, components) = construct_cards_with_data(chunk, results);
+    let start_index = app.start_card_list_index as usize;
+    let end_index = get_end_card_index(app);
 
-    let cards = cards_results.0;
-    let components = cards_results.1;
+    let component_page = components[start_index..=end_index].to_vec();
 
-    // let's just use the search card index for now
     let selected_card_index = app.search_results.selected_display_card_index.unwrap_or(0);
 
-    for (index, component_pair) in components.iter().enumerate() {
+    for (index, component_pair) in component_page.iter().enumerate() {
         let component = component_pair.node.clone();
         let is_active =
             index == selected_card_index && app.active_block == ActiveBlock::DisplayBlock;
@@ -189,11 +189,16 @@ pub fn draw_manga_ranking_results(f: &mut Frame, app: &App, chunk: Rect) {
         // draw_no_results(f,app,chunk);
         return;
     }
-    let cards_results = construct_cards_with_data(chunk, results);
-    let components = cards_results.1;
+    let (cards, components) = construct_cards_with_data(chunk, results);
+
+    let start_index = app.start_card_list_index as usize;
+    let end_index = get_end_card_index(app);
+
+    let component_page = components[start_index..=end_index].to_vec();
+
     let selected_card_index = app.search_results.selected_display_card_index.unwrap_or(0);
 
-    for (index, component_pair) in components.iter().enumerate() {
+    for (index, component_pair) in component_page.iter().enumerate() {
         let component = component_pair.node.clone();
         let is_active =
             index == selected_card_index && app.active_block == ActiveBlock::DisplayBlock;
@@ -249,7 +254,7 @@ pub fn draw_manga_ranking_results(f: &mut Frame, app: &App, chunk: Rect) {
             app.app_config.theme.text,
         ));
 
-        if index >= cards_results.0.len() {
+        if index >= cards.len() {
             break;
         }
 
@@ -263,7 +268,7 @@ pub fn draw_manga_ranking_results(f: &mut Frame, app: &App, chunk: Rect) {
                     .title(component_pair.ranking.rank.to_string())
                     .title_style(get_color(is_active, app.app_config.theme)),
             );
-        f.render_widget(card, cards_results.0[index]);
+        f.render_widget(card, cards[index]);
     }
 }
 

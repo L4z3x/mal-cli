@@ -156,7 +156,6 @@ pub fn draw_selectable_list(
 ) {
     let mut state = ListState::default();
     if selected_index.is_some() {
-        // dbg!(selected_index.unwrap() % items.len());
         state.select(Some(selected_index.unwrap() % items.len()));
     }
 

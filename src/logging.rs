@@ -1,10 +1,9 @@
 //this code is from https://ratatui.rs/recipes/apps/log-with-tracing/
 use std::path::PathBuf;
 
-use color_eyre::eyre::{Context, Result};
+use color_eyre::eyre::Result;
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
-use tracing::error;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{self, layer::SubscriberExt, util::SubscriberInitExt, Layer};
 
@@ -51,7 +50,13 @@ pub fn initialize_logging() -> Result<()> {
         .with_target(false)
         .with_ansi(false)
         .with_filter(tracing_subscriber::filter::EnvFilter::from_default_env());
+
+    let console_subscriber = tracing_subscriber::fmt::layer()
+        .with_target(false)
+        .with_filter(tracing_subscriber::filter::EnvFilter::from_default_env());
+
     tracing_subscriber::registry()
+        .with(console_subscriber)
         .with(file_subscriber)
         .with(ErrorLayer::default())
         .init();

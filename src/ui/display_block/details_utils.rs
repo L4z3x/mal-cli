@@ -149,8 +149,6 @@ pub fn draw_synopsis_items(
             layout[index * 4 + 2].width,
             layout[index * 4 + 2].height,
         );
-        // dbg!(&title_chunk.height, &text_chunk.height);
-        // dbg!(&total_height);
         scroll_view.render_widget(title.clone(), title_chunk);
         scroll_view.render_widget(text.clone(), text_chunk);
     }

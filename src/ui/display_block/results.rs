@@ -7,6 +7,7 @@ use crate::api::model::UserReadStatus;
 use crate::app::DISPLAY_COLUMN_NUMBER;
 use crate::app::DISPLAY_RAWS_NUMBER;
 use crate::ui::format_number_with_commas;
+use crate::ui::get_end_card_index;
 use crate::{
     api::model::{AnimeMediaType, UserWatchStatus},
     app::{ActiveBlock, App, SelectedSearchTab},
@@ -47,16 +48,19 @@ pub fn draw_anime_search_results(f: &mut Frame, app: &App, chunk: Rect) {
         // draw_no_results(f, app, chunk);
         return;
     }
-    let cards_results = construct_cards_with_data(chunk, results);
+    let start_index = app.start_card_list_index as usize;
+    let end_index = get_end_card_index(app);
+    // let end_index = app.end_card_list_index as usize;
 
-    let cards = cards_results.0;
-    let components = cards_results.1;
+    let (cards, components_result) = construct_cards_with_data(chunk, results);
+    // we need to calculate the end index carefully
+    let component_page = components_result[start_index..=end_index].to_vec();
 
     let selected_card_index = app.search_results.selected_display_card_index.unwrap_or(0);
 
-    //
+    // let selected_card_index = 5;
 
-    for (index, component) in components.iter().enumerate() {
+    for (index, component) in component_page.iter().enumerate() {
         let is_active =
             index == selected_card_index && app.active_block == ActiveBlock::DisplayBlock;
 
@@ -123,9 +127,9 @@ pub fn draw_anime_search_results(f: &mut Frame, app: &App, chunk: Rect) {
             app.app_config.theme.text,
         ));
 
-        if index >= cards.len() {
-            break;
-        }
+        // if index >= cards.len() {
+        //     break;
+        //
 
         let card = Paragraph::new(vec![title, num_ep, score, start_date, num_user_list])
             .alignment(Alignment::Left)
@@ -153,19 +157,18 @@ pub fn draw_anime_search_results(f: &mut Frame, app: &App, chunk: Rect) {
 pub fn draw_manga_search_results(f: &mut Frame, app: &App, chunk: Rect) {
     let results = app.search_results.manga.as_ref().unwrap();
     if results.data.is_empty() {
+        //TODO: handle no results
         // draw_no_results(f, app, chunk);
         return;
     }
-    let cards_results = construct_cards_with_data(chunk, results);
-
-    let cards = cards_results.0;
-    let components = cards_results.1;
+    let start_index = app.start_card_list_index as usize;
+    let end_index = get_end_card_index(app);
+    let (cards, components_result) = construct_cards_with_data(chunk, results);
+    let component_page = components_result[start_index..=end_index].to_vec();
 
     let selected_card_index = app.search_results.selected_display_card_index.unwrap_or(0);
 
-    //
-
-    for (index, component) in components.iter().enumerate() {
+    for (index, component) in component_page.iter().enumerate() {
         if index >= cards.len() {
             break;
         }
@@ -183,7 +186,7 @@ pub fn draw_manga_search_results(f: &mut Frame, app: &App, chunk: Rect) {
 
         let title_style = get_color(is_active, app.app_config.theme);
         let title = &component.get_title(&app.app_config, false)[0];
-        // panic!("title: {:?}", title);
+
         let title: Line<'_> = Line::from(vec![
             Span::styled(title, title_style.add_modifier(Modifier::BOLD)),
             Span::raw(" "),

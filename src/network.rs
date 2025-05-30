@@ -46,10 +46,10 @@ pub struct Network<'a> {
 }
 
 impl<'a> Network<'a> {
-    pub fn new(oauth: OAuth, app: &'a Arc<Mutex<App>>) -> Self {
+    pub fn new(oauth: OAuth, app: &'a Arc<Mutex<App>>, search_limit: u64) -> Self {
         Self {
             oauth,
-            large_search_limit: 20,
+            large_search_limit: search_limit,
             // small_search_limit: 3,
             app,
         }

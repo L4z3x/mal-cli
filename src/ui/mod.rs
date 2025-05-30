@@ -94,3 +94,73 @@ pub fn format_number_with_commas(number: u64) -> String {
 
     result.chars().rev().collect()
 }
+
+fn get_end_index(app: &App, typ: &str) -> usize {
+    match typ {
+        "anime" => {
+            let data_len = app.search_results.anime.as_ref().unwrap().data.len();
+            if app.start_card_list_index as usize + DISPLAY_RAWS_NUMBER * DISPLAY_COLUMN_NUMBER
+                > data_len - 1
+            // end is bigger than last index
+            {
+                data_len - 1
+            } else {
+                // start index + 14 to get the last index
+                app.start_card_list_index as usize + DISPLAY_COLUMN_NUMBER * DISPLAY_RAWS_NUMBER - 1
+            }
+        }
+        "manga" => {
+            let data_len = app.search_results.manga.as_ref().unwrap().data.len();
+            if app.start_card_list_index as usize + DISPLAY_RAWS_NUMBER * DISPLAY_COLUMN_NUMBER
+                > data_len - 1
+            // end is bigger than last index in the data
+            {
+                data_len - 1
+            } else {
+                // start index + 14 to get the last index
+                app.start_card_list_index as usize + DISPLAY_COLUMN_NUMBER * DISPLAY_RAWS_NUMBER - 1
+            }
+        }
+        //TODO: handle these cases:
+        "anime_ranking" => {
+            let data_len = app.anime_ranking_data.as_ref().unwrap().data.len();
+            if app.start_card_list_index as usize + DISPLAY_RAWS_NUMBER * DISPLAY_COLUMN_NUMBER
+                > data_len - 1
+            // end is bigger than last index in the data
+            {
+                data_len - 1
+            } else {
+                // start index + 14 to get the last index
+                app.start_card_list_index as usize + DISPLAY_COLUMN_NUMBER * DISPLAY_RAWS_NUMBER - 1
+            }
+        }
+        "manga_ranking" => {
+            let data_len = app.manga_ranking_data.as_ref().unwrap().data.len();
+            if app.start_card_list_index as usize + DISPLAY_RAWS_NUMBER * DISPLAY_COLUMN_NUMBER
+                > data_len - 1
+            // end is bigger than last index in the data
+            {
+                data_len - 1
+            } else {
+                // start index + 14 to get the last index
+                app.start_card_list_index as usize + DISPLAY_COLUMN_NUMBER * DISPLAY_RAWS_NUMBER - 1
+            }
+        }
+        _ => panic!("Unknown type: {}", typ),
+    }
+}
+
+pub fn get_end_card_index(app: &App) -> usize {
+    match app.active_display_block {
+        ActiveDisplayBlock::SearchResultBlock => match app.search_results.selected_tab {
+            SelectedSearchTab::Manga => get_end_index(app, "manga"),
+            SelectedSearchTab::Anime => get_end_index(app, "anime"),
+        },
+        ActiveDisplayBlock::AnimeRanking => get_end_index(app, "anime_ranking"),
+        ActiveDisplayBlock::MangaRanking => get_end_index(app, "manga_ranking"),
+        _ => {
+            // Default case, if no specific block is active
+            get_end_index(app, "anime")
+        }
+    }
+}

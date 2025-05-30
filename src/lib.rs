@@ -1,13 +1,4 @@
-pub const BANNER: &str = "
- __  __    _    _           ____ _     ___ 
-|  \\/  |  / \\  | |         / ___| |   |_ _|
-| |\\/| | / _ \\ | |   _____| |   | |    | | 
-| |  | |/ ___ \\| |__|_____| |___| |___ | | 
-|_|  |_/_/   \\_\\_____|     \\____|_____|___|
-";
-
 /*
-
 App State
 - The actual app state
 
@@ -55,3 +46,5 @@ pub mod handlers;
 
 /// Cli
 pub mod cli;
+
+pub mod logging;

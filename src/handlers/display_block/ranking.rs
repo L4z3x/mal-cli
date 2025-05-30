@@ -5,9 +5,11 @@ use crate::{
     network::IoEvent,
 };
 
+use super::result::handle_result_block;
+
 use crate::handlers::{
     anime::{get_anime_ranking, get_manga_ranking},
-    common, handle_result_block,
+    common,
 };
 
 pub fn handler(key: Key, app: &mut App) {

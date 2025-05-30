@@ -20,6 +20,7 @@ pub struct AppConfig {
     pub top_three_anime_types: Vec<AnimeRankingType>,
     pub top_three_manga_types: Vec<MangaRankingType>,
     pub navigation_stack_limit: u32,
+    pub search_limit: u64,
 }
 
 #[derive(Clone, Debug)]
@@ -127,6 +128,7 @@ impl AppConfig {
             ],
             top_three_manga_types: vec![MangaRankingType::All, MangaRankingType::Manga],
             navigation_stack_limit: 15,
+            search_limit: 30,
         })
     }
 }

@@ -5,8 +5,10 @@ use crossterm::terminal;
 use crossterm::{cursor::MoveTo, ExecutableCommand};
 use mal::api::model::RankingType;
 use mal::handlers::common;
+use mal::logging::initialize_logging;
 use ratatui::prelude::CrosstermBackend;
 use ratatui::Terminal;
+use tracing::debug;
 
 use std::sync::Arc;
 use std::{
@@ -67,7 +69,10 @@ async fn main() -> Result<()> {
     better_panic::install();
     setup_panic_hook();
 
-    // let opt: Opt = Opt::from_args();
+    // initialize logging
+    initialize_logging()?;
+
+    debug!("==> Starting MAL Client");
 
     // Get config
     println!("==> Loading Configiration");
@@ -83,7 +88,7 @@ async fn main() -> Result<()> {
 
     let cloned_app = Arc::clone(&app);
     std::thread::spawn(move || {
-        let mut network = Network::new(oauth, &app);
+        let mut network = Network::new(oauth, &app, app_config.search_limit);
         start_network(sync_io_rx, &mut network);
     });
 

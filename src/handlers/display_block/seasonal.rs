@@ -1,5 +1,6 @@
 use chrono::Datelike;
 
+use super::result::handle_result_block;
 use crate::{
     api::model::Season,
     app::{ActiveDisplayBlock, App},
@@ -18,7 +19,7 @@ pub fn handler(key: Key, app: &mut App) {
             k if k == app.app_config.keys.toggle => app.popup = true,
 
             // Key::Char('s') => app.active_display_block = ActiveDisplayBlock::,
-            _ => crate::handlers::handle_result_block(key, app),
+            _ => handle_result_block(key, app),
         }
     }
 }

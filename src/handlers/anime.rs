@@ -26,21 +26,6 @@ pub fn handler(key: Key, app: &mut App) {
             app.library.selected_index = next_index;
         }
 
-        //? idk what this means ??
-        // k if common::high_event(k) => {
-        //     let next_index = common::on_high_press();
-        //     app.library.selected_index = next_index;
-        // }
-        // k if common::middle_event(k) => {
-        //     let next_index = common::on_middle_press(&ANIME_OPTIONS);
-        //     app.library.selected_index = next_index;
-        // }
-        // k if common::low_event(k) => {
-        //     let next_index = common::on_low_press(&ANIME_OPTIONS);
-        //     app.library.selected_index = next_index
-        // }
-        // `library` should probably be an array of structs with enums rather than just using indexes
-        // like this
         Key::Enter => {
             match app.library.selected_index {
                 // Seasonal
@@ -68,6 +53,8 @@ fn get_seasonal(app: &mut App) {
     if is_current_route {
         return;
     }
+    app.start_card_list_index = 0;
+    app.search_results.selected_display_card_index = Some(0);
 
     if is_next {
         app.load_next_route();
@@ -89,7 +76,7 @@ fn is_seasonal_data_available(app: &mut App) -> (bool, bool, Option<u16>) {
         if app.navigator.data[&id].block == ActiveDisplayBlock::Seasonal
             && app.navigator.data[&id].data.is_some()
         {
-            let is_next = app.navigator.index + 1 == i as u16;
+            let is_next = app.navigator.index + 1 == i;
             return (true, is_next, Some(id));
         }
     }
@@ -106,6 +93,9 @@ pub fn get_anime_ranking(app: &mut App) {
     if is_current_route {
         return;
     }
+
+    app.start_card_list_index = 0;
+    app.search_results.selected_display_card_index = Some(0);
 
     if is_next {
         app.load_next_route();
@@ -131,6 +121,9 @@ pub fn get_manga_ranking(app: &mut App) {
         return;
     }
 
+    app.start_card_list_index = 0;
+    app.search_results.selected_display_card_index = Some(0);
+
     if is_next {
         app.load_next_route();
         return;
@@ -152,7 +145,7 @@ fn is_anime_ranking_data_available(app: &App) -> (bool, bool, Option<u16>) {
             && app.navigator.data[&id].data.is_some()
         {
             if let Data::AnimeRanking(_) = app.navigator.data[&id].data.as_ref().unwrap() {
-                let is_next = app.navigator.index + 1 == i as u16;
+                let is_next = app.navigator.index + 1 == i;
                 return (true, is_next, Some(id));
             }
         }
@@ -167,7 +160,7 @@ fn is_manga_ranking_data_available(app: &App) -> (bool, bool, Option<u16>) {
             && app.navigator.data[&id].data.is_some()
         {
             if let Data::MangaRanking(_) = app.navigator.data[&id].data.as_ref().unwrap() {
-                let is_next = app.navigator.index + 1 == i as u16;
+                let is_next = app.navigator.index + 1 == i;
                 return (true, is_next, Some(id));
             }
         }
@@ -185,6 +178,9 @@ fn get_suggestion(app: &mut App) {
     if is_current_route {
         return;
     }
+
+    app.start_card_list_index = 0;
+    app.search_results.selected_display_card_index = Some(0);
 
     if is_next {
         app.load_next_route();
@@ -206,7 +202,7 @@ fn is_suggestion_data_available(app: &App) -> (bool, bool, Option<u16>) {
         if app.navigator.data[&id].block == ActiveDisplayBlock::Suggestions
             && app.navigator.data[&id].data.is_some()
         {
-            let is_next = app.navigator.index + 1 == i as u16;
+            let is_next = app.navigator.index + 1 == i;
             return (true, is_next, Some(id));
         }
     }

@@ -167,6 +167,7 @@ fn change_tab(app: &mut App) {
 }
 
 fn open_popup(app: &mut App) {
+    app.result_popup = false;
     match app.active_anime_detail_block {
         ActiveAnimeDetailBlock::AddToList => {
             app.active_detail_popup = DetailPopup::AddToList;

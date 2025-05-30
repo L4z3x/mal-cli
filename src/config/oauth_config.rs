@@ -1,5 +1,5 @@
 use super::*;
-use crate::BANNER;
+use figlet_rs::FIGfont;
 use serde::{Deserialize, Serialize};
 use serde_yaml;
 use std::{
@@ -7,7 +7,6 @@ use std::{
     io::{stdin, Write},
     path::Path,
 };
-
 #[derive(Serialize, Deserialize, Default, Clone, Debug, PartialEq)]
 pub struct AuthConfig {
     pub client_id: String,
@@ -25,7 +24,10 @@ impl AuthConfig {
 
             Ok(config_yml)
         } else {
-            println!("{}", BANNER);
+            let standard_font = FIGfont::standard().unwrap();
+            let figlet = standard_font.convert("MAL-TUI");
+            let banner = figlet.unwrap().to_string();
+            println!("{}", banner);
             println!(
                 "Config will be saved to {}",
                 paths.config_file_path.display()
