@@ -17,10 +17,10 @@ jobs:
     continue-on-error: ${{ matrix.rust == 'nightly' }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
+      uses: actions-rs/toolchain@v1.0.6
       with:
         toolchain: ${{ matrix.rust }}
         default: true
@@ -44,9 +44,10 @@ jobs:
   build-linux-musl:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v4
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
+      uses: actions-rs/toolchain@v1.0.6
+
       with:
         toolchain: stable
         profile: minimal
@@ -66,9 +67,9 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v4
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
+      uses: actions-rs/toolchain@v1.0.6
       with:
         toolchain: stable
         components: rustfmt
@@ -78,7 +79,8 @@ jobs:
     name: Security audit
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions-rs/audit-check@v1
+    - uses: actions/checkout@v4
+    - uses: actions-rs/audit-check@v1.2.0
+
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
