@@ -10,11 +10,11 @@ use crate::{
     },
     auth::OAuth,
 };
-
 use bytes::Bytes;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use tracing::warn;
 
 #[derive(Debug)]
 pub enum IoEvent {
@@ -125,6 +125,7 @@ impl<'a> Network<'a> {
                 app.app_config.paths.picture_cache_dir_path.clone(),
                 app.anime_details.as_ref().unwrap().id,
                 &app.anime_details.as_ref().unwrap().main_picture,
+                app.app_config.max_cached_images,
             )
             .await;
         }
@@ -174,6 +175,7 @@ impl<'a> Network<'a> {
                 app.app_config.paths.picture_cache_dir_path.clone(),
                 app.manga_details.as_ref().unwrap().id,
                 &app.manga_details.as_ref().unwrap().main_picture,
+                app.app_config.max_cached_images,
             )
             .await;
         }
@@ -785,6 +787,7 @@ async fn get_picture(
     image_dir_path: PathBuf,
     id: u64,
     pictures: &Option<Picture>,
+    max_limit: u16,
 ) -> Option<(String, u32, u32)> {
     // check if the image is already in the cache, if not we fetch it and save it
     // look for it in the cache first:
@@ -797,9 +800,38 @@ async fn get_picture(
             image.height(),
         ));
     }
+
     // fetch the image and save it
+    // after fetch we need to look into the total count of files and if it exceeds the limit we delete the last one used
+    //? make the image number limit a conf var
+    //? we ll implement a FIFO mechanisme
+    // so the flow is:
+    // when an image is fetchead we enter its name  in the array (just use array for poping and pushing)
+
+    // checking the json file
+    let cache_index_file = image_dir_path.join("cache_index.json");
+    if !cache_index_file.exists() {
+        // create an empty  file with emtpy array
+        let cache_index = Vec::<String>::new();
+        // Read all existing images in the folder and create an array
+        let mut existing_images = Vec::<String>::new();
+        if let Ok(entries) = std::fs::read_dir(&image_dir_path) {
+            for entry in entries.flatten() {
+                if let Some(file_name) = entry.file_name().to_str() {
+                    if file_name != "cache_index.json" {
+                        existing_images.push(file_name.to_string());
+                    }
+                }
+            }
+        }
+        let cache_index_json =
+            serde_json::to_string(&cache_index).unwrap_or_else(|_| "[]".to_string());
+        std::fs::write(&cache_index_file, cache_index_json).ok();
+    }
+
     if let Some(p) = pictures {
         let urls = vec![&p.large, &p.medium];
+        // loop all image urls and return the first fetched one
         for url in urls {
             if let Some(url) = url {
                 // save the image in the .cache/mal-tui/media-images folder
@@ -807,12 +839,25 @@ async fn get_picture(
                 match image {
                     Ok(bytes) => {
                         let file_name = format!("{}.png", id);
-                        let file_path = image_dir_path.join(file_name);
+                        let file_path = image_dir_path.join(file_name.clone());
                         let image = image::load_from_memory(&bytes).ok();
                         if let Some(image) = image {
                             image
                                 .save_with_format(&file_path, image::ImageFormat::Png)
                                 .ok();
+                            // after saving the image we need to update the index file
+                            // first push to array then check if it reached the max size if yes then we remove the first element(image then array element)
+                            let res = update_image_cache(
+                                &cache_index_file,
+                                &image_dir_path,
+                                &file_name,
+                                max_limit,
+                            )
+                            .await;
+                            if let Err(e) = res {
+                                warn!("error updating the cache index file: {}", e)
+                            }
+
                             return Some((
                                 file_path.to_string_lossy().to_string(),
                                 image.width(),
@@ -828,4 +873,34 @@ async fn get_picture(
         }
     }
     None
+}
+
+async fn update_image_cache(
+    cache_index_file: &PathBuf,
+    image_dir_path: &PathBuf,
+    file_name: &str,
+    max_limit: u16,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // read the current cache index
+    let cache_content = std::fs::read_to_string(cache_index_file)?;
+    let mut cache_index: Vec<String> = serde_json::from_str(&cache_content).unwrap_or_default();
+
+    // add the new image name to the array
+    cache_index.push(file_name.to_string());
+
+    // Check if we've reached the capacity limit
+    if cache_index.len() > max_limit as usize {
+        // Remove the first element and delete the corresponding image
+        let oldest_image = cache_index.remove(0);
+        let oldest_image_path = image_dir_path.join(&oldest_image);
+        if oldest_image_path.exists() {
+            std::fs::remove_file(oldest_image_path).ok();
+        }
+    }
+
+    // Write the updated cache index back to the file
+    let updated_cache_json = serde_json::to_string(&cache_index)?;
+    std::fs::write(cache_index_file, updated_cache_json)?;
+
+    Ok(())
 }
