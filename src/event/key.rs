@@ -5,6 +5,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 pub enum Key {
     Enter,
     Tab,
+    BackTab,
     Backspace,
     Esc,
     Left,
@@ -73,6 +74,10 @@ impl From<KeyEvent> for Key {
             KeyEvent {
                 code: KeyCode::Tab, ..
             } => Key::Tab,
+            KeyEvent {
+                code: KeyCode::BackTab,
+                ..
+            } => Key::BackTab,
             KeyEvent {
                 code: KeyCode::Backspace,
                 ..

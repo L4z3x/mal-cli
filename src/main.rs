@@ -188,10 +188,12 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
                 if key == Key::Tab {
                     // handle navigation between block
                     handlers::handle_tab(&mut app);
+                } else if key == Key::BackTab {
+                    // handle navigation between block
+                    handlers::handle_back_tab(&mut app);
                 } else if active_block == ActiveBlock::Input {
                     handlers::input_handler(key, &mut app);
                 } else if common::quit_event(key) {
-                    //todo: display confirmation to  quit
                     app.exit_confirmation_popup = true;
                 } else if key == app.app_config.keys.back {
                     if app.active_block != ActiveBlock::Input {

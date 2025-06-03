@@ -65,10 +65,7 @@ fn handle_block_events(key: Key, app: &mut App) {
 
         ActiveBlock::DisplayBlock => display_block::handle_display_block(key, app),
     }
-
-    // help::handler(key, app);
-} // todo: move this to active_display_block_handler
-  // ActiveBlock::BasicView => {}
+}
 
 pub fn handle_tab(app: &mut App) {
     match app.active_block {
@@ -82,14 +79,17 @@ pub fn handle_tab(app: &mut App) {
             app.library.selected_index = USER_OPTIONS_RANGE.start;
             app.active_block = ActiveBlock::User;
         }
+
         ActiveBlock::User => {
             app.library.selected_index = GENERAL_OPTIONS_RANGE.start;
             app.active_block = ActiveBlock::Option;
         }
+
         ActiveBlock::Option => {
             app.library.selected_index = 10; // out of range to not display anything
             app.active_block = ActiveBlock::TopThree;
         }
+
         ActiveBlock::TopThree => {
             app.active_block = ActiveBlock::DisplayBlock;
         }
@@ -98,7 +98,42 @@ pub fn handle_tab(app: &mut App) {
             if !app.popup {
                 app.active_block = ActiveBlock::Input;
             }
-            // todo: handle cases when exiting the Display_block.
+        }
+        _ => {}
+    }
+}
+
+pub fn handle_back_tab(app: &mut App) {
+    match app.active_block {
+        ActiveBlock::Input => {
+            app.library.selected_index = 10; // out of range to not display anything
+            app.active_block = ActiveBlock::DisplayBlock;
+        }
+
+        ActiveBlock::DisplayBlock => {
+            if !app.popup {
+                app.active_block = ActiveBlock::TopThree;
+            }
+        }
+
+        ActiveBlock::TopThree => {
+            app.library.selected_index = GENERAL_OPTIONS_RANGE.end;
+            app.active_block = ActiveBlock::Option;
+        }
+
+        ActiveBlock::Option => {
+            app.library.selected_index = USER_OPTIONS_RANGE.end;
+            app.active_block = ActiveBlock::User;
+        }
+
+        ActiveBlock::User => {
+            app.library.selected_index = ANIME_OPTIONS_RANGE.end;
+            app.active_block = ActiveBlock::Anime;
+        }
+
+        ActiveBlock::Anime => {
+            app.library.selected_index = 10; // out of range to not display anything
+            app.active_block = ActiveBlock::Input;
         }
         _ => {}
     }
