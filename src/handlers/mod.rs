@@ -157,7 +157,9 @@ pub fn is_data_available(
 }
 
 pub fn get_media_detail_page(app: &mut App) {
-    let index = app.search_results.selected_display_card_index.unwrap_or(0);
+    let index = app.search_results.selected_display_card_index.unwrap_or(0)
+        + app.start_card_list_index as usize;
+
     match app.active_block {
         ActiveBlock::DisplayBlock => {
             match app.active_display_block {

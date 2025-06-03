@@ -4,7 +4,7 @@ mod top_three;
 pub mod util;
 use crate::app::*;
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Flex, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Margin, Rect},
     style::Style,
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, Paragraph},
@@ -24,7 +24,7 @@ pub fn draw_main_layout(f: &mut Frame, app: &mut App) {
     // Search Input and help
     draw_input_and_help_box(f, app, parent_layout[0]);
 
-    // Draw dashboard
+    // draw side and dipsplay sections
     let chunk = side_menu::draw_routes(f, app, parent_layout[1]);
     display_block::draw_display_layout(f, app, chunk);
 }
@@ -32,14 +32,10 @@ pub fn draw_main_layout(f: &mut Frame, app: &mut App) {
 pub fn draw_input_and_help_box(f: &mut Frame, app: &App, layout_chunk: Rect) {
     let [search_chunk, title_chunk] = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(17), Constraint::Percentage(82)])
-        .flex(Flex::SpaceBetween)
+        .constraints([Constraint::Percentage(18), Constraint::Percentage(82)])
         .areas(layout_chunk);
     // removing the little gap
-    let [_, search_chunk] = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Length(1), Constraint::Fill(1)])
-        .areas(search_chunk);
+    let search_chunk = search_chunk.inner(Margin::new(1, 0));
     let current_block = app.active_block;
 
     let highlight_state = current_block == ActiveBlock::Input;
