@@ -71,7 +71,9 @@ pub fn handler(key: Key, app: &mut App) {
                         .unwrap()
                         .num_chapters
                         .unwrap_or(10000); //? is this the right move ? , we should inspect this later.
-                    if app.temp_popup_num as u64 != total_ch {
+                    if total_ch == 0 {
+                        app.temp_popup_num += 1;
+                    } else if app.temp_popup_num as u64 != total_ch {
                         app.temp_popup_num += 1;
                     }
                 }
@@ -102,7 +104,9 @@ pub fn handler(key: Key, app: &mut App) {
                         .unwrap()
                         .num_volumes
                         .unwrap_or(10000);
-                    if app.temp_popup_num as u64 != total_volumes {
+                    if total_volumes == 0 {
+                        app.temp_popup_num += 1;
+                    } else if app.temp_popup_num as u64 != total_volumes {
                         app.temp_popup_num += 1;
                     }
                 }

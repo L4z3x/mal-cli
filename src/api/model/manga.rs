@@ -171,18 +171,34 @@ impl Manga {
     }
     pub fn get_num(&self, app_config: &AppConfig) -> String {
         match app_config.manga_display_type {
-            MangaDisplayType::Vol => self
-                .num_volumes
-                .map_or("N/A vol".to_string(), |n| format!("{} vol", n.to_string())),
-            MangaDisplayType::Ch => self
-                .num_chapters
-                .map_or("N/A ch".to_string(), |n| format!("{} ch", n.to_string())),
+            MangaDisplayType::Vol => self.num_volumes.map_or("N/A vol".to_string(), |n| {
+                if n == 0 {
+                    "N/A".to_string()
+                } else {
+                    format!("{} vol", n.to_string())
+                }
+            }),
+            MangaDisplayType::Ch => self.num_chapters.map_or("N/A ch".to_string(), |n| {
+                if n == 0 {
+                    "N/A".to_string()
+                } else {
+                    format!("{} ch", n.to_string())
+                }
+            }),
             MangaDisplayType::Both => format!(
                 "{}, {}",
                 self.num_volumes
-                    .map_or("N/A vol".to_string(), |n| format!("{} vol", n.to_string())),
+                    .map_or("N/A vol".to_string(), |n| if n == 0 {
+                        "N/A".to_string()
+                    } else {
+                        format!("{} vol", n.to_string())
+                    }),
                 self.num_chapters
-                    .map_or("N/A ch".to_string(), |n| format!("{} ch", n.to_string()))
+                    .map_or("N/A ch".to_string(), |n| if n == 0 {
+                        "N/A".to_string()
+                    } else {
+                        format!("{} ch", n.to_string())
+                    })
             ),
         }
     }

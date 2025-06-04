@@ -19,7 +19,7 @@ pub use input::handler as input_handler;
 pub fn handle_app(key: Key, app: &mut App) {
     // First handle any global event and then move to block event
     if app.exit_confirmation_popup {
-        if key == Key::Esc || get_lowercase_key(key) == Key::Char('n') {
+        if key == Key::Esc || key == Key::Char('n') {
             app.exit_confirmation_popup = false;
             return;
         } else if key == Key::Enter || get_lowercase_key(key) == Key::Char('y') {

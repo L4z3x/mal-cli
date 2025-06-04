@@ -94,9 +94,13 @@ pub fn draw_anime_search_results(f: &mut Frame, app: &App, chunk: Rect) {
                 }),
         );
 
-        let ep_num: String = component
-            .num_episodes
-            .map_or("N/A".to_string(), |ep| ep.to_string());
+        let ep_num: String = component.num_episodes.map_or("N/A".to_string(), |ep| {
+            if ep != 0 {
+                ep.to_string()
+            } else {
+                "N/A".to_string()
+            }
+        });
 
         let start_date: String = component
             .start_date
@@ -223,7 +227,6 @@ pub fn draw_manga_search_results(f: &mut Frame, app: &App, chunk: Rect) {
             .num_list_users
             .map_or("N/A".to_string(), |n| format_number_with_commas(n));
 
-        //todo: add vols and ch based on app_config
         let type_num_vol = Line::from(Span::styled(
             format!("{} ({})", media_type, vol_num),
             app.app_config.theme.text,
