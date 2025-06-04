@@ -24,10 +24,8 @@ pub fn handler(key: Key, app: &mut App) {
                 app.manga_details_synopsys_scroll_view_state.scroll_down()
             }
             ActiveMangaDetailBlock::Chapters => {
-                if app.popup {
-                    if app.temp_popup_num != 0 {
-                        app.temp_popup_num -= 1;
-                    }
+                if app.popup && app.temp_popup_num != 0 {
+                    app.temp_popup_num -= 1;
                 }
             }
             ActiveMangaDetailBlock::AddToList => {
@@ -49,10 +47,8 @@ pub fn handler(key: Key, app: &mut App) {
                 }
             }
             ActiveMangaDetailBlock::Volumes => {
-                if app.popup {
-                    if app.temp_popup_num != 0 {
-                        app.temp_popup_num -= 1;
-                    }
+                if app.popup && app.temp_popup_num != 0 {
+                    app.temp_popup_num -= 1;
                 }
             }
         },
@@ -97,18 +93,8 @@ pub fn handler(key: Key, app: &mut App) {
                 }
             }
             ActiveMangaDetailBlock::Volumes => {
-                if app.popup {
-                    let total_volumes = app
-                        .manga_details
-                        .as_ref()
-                        .unwrap()
-                        .num_volumes
-                        .unwrap_or(10000);
-                    if total_volumes == 0 {
-                        app.temp_popup_num += 1;
-                    } else if app.temp_popup_num as u64 != total_volumes {
-                        app.temp_popup_num += 1;
-                    }
+                if app.popup && app.temp_popup_num != 0 {
+                    app.temp_popup_num -= 1;
                 }
             }
         },

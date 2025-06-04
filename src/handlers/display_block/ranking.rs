@@ -43,12 +43,10 @@ fn handle_popup(key: Key, app: &mut App) {
                 } else {
                     app.anime_ranking_type_index = 8; // max index
                 }
+            } else if app.manga_ranking_type_index > 0 {
+                app.manga_ranking_type_index -= 1;
             } else {
-                if app.manga_ranking_type_index > 0 {
-                    app.manga_ranking_type_index -= 1;
-                } else {
-                    app.manga_ranking_type_index = 8; // max index
-                }
+                app.manga_ranking_type_index = 8; // max index
             }
         }
 

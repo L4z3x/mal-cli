@@ -87,7 +87,7 @@ pub mod tests {
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
         };
         let manga_list = get_manga_list(&manga_query, &auth).await.unwrap();
-        let manga = manga_list.data.get(0).unwrap().node.clone();
+        let manga = manga_list.data.first().unwrap().node.clone();
         Ok(manga)
     }
 

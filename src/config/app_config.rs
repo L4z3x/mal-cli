@@ -117,7 +117,7 @@ impl AppConfig {
                 // seek_milliseconds: 1000,
                 tick_rate_milliseconds: 250,
                 // show_loading_indicator: true,
-                show_logger: true, // todo: change to false
+                show_logger: false, // todo: change to false
             },
             nsfw: true,
             title_language: TitleLanguage::English,

@@ -91,11 +91,7 @@ impl OAuth {
     ) -> Self {
         OAuth {
             client_id: client_id.to_string(),
-            client_secret: if let Some(cs) = client_secret {
-                Some(cs.to_string())
-            } else {
-                None
-            },
+            client_secret: client_secret.map(|cs| cs.to_string()),
             redirect_url: redirect_url.to_string(),
             user_agent: user_agent.to_string(),
             challenge: Self::new_challenge(CODE_CHALLENGE_LENGTH),
@@ -357,7 +353,7 @@ impl OAuth {
             );
 
             let url = auth.get_auth_url();
-            open(url).unwrap();
+            open(&url).unwrap();
 
             let mut auth = redirect::Server::new(config.get_user_agent(), auth)
                 .go()
@@ -383,7 +379,7 @@ impl OAuth {
             );
 
             let url = auth.get_auth_url();
-            open(url).unwrap();
+            open(&url).unwrap();
 
             let mut auth = redirect::Server::new(config.get_user_agent(), auth)
                 .go()
@@ -399,8 +395,8 @@ impl OAuth {
 }
 
 /// use webbrowser crate to open url in browser
-pub fn open(url: Url) -> Result<(), Error> {
-    webbrowser::open(&url.to_string())
+pub fn open(url: &Url) -> Result<(), Error> {
+    webbrowser::open(url.as_ref())
 }
 
 #[cfg(test)]
@@ -435,7 +431,7 @@ pub mod tests {
 
         // create and open url
         let url = auth.get_auth_url();
-        open(url).unwrap();
+        open(&url).unwrap();
 
         // wait for redirect
         let mut auth = redirect::Server::new(config.get_user_agent(), auth)

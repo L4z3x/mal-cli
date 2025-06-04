@@ -56,10 +56,7 @@ impl TokenWrapper {
     }
     /// Get the time that the token will expire (None if already expired)
     pub fn expire_time(&self) -> Option<time::SystemTime> {
-        if let Some(secs) = self.expires_in_secs() {
-            Some(time::SystemTime::now() + time::Duration::from_secs(secs))
-        } else {
-            None
-        }
+        self.expires_in_secs()
+            .map(|secs| time::SystemTime::now() + time::Duration::from_secs(secs))
     }
 }

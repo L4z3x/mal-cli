@@ -673,14 +673,12 @@ pub fn draw_user_status_popup(f: &mut Frame, app: &App, chunk: Rect) {
     if app.result_popup {
         let message_line = if app.popup_is_loading {
             "Loading..."
+        } else if app.popup_post_req_success {
+            &app.popup_post_req_success_message.as_ref().unwrap()
         } else {
-            if app.popup_post_req_success {
-                &app.popup_post_req_success_message.as_ref().unwrap()
-            } else {
-                &app.api_error
-            }
+            &app.api_error
         };
-        loading::draw_centered_line(f, app, chunk, &message_line);
+        loading::draw_centered_line(f, app, chunk, message_line);
         return;
     }
 
@@ -734,14 +732,12 @@ pub fn draw_rate_popup(f: &mut Frame, app: &App, chunk: Rect) {
     if app.result_popup {
         let message_line = if app.popup_is_loading {
             "Loading..."
+        } else if app.popup_post_req_success {
+            &app.popup_post_req_success_message.as_ref().unwrap()
         } else {
-            if app.popup_post_req_success {
-                &app.popup_post_req_success_message.as_ref().unwrap()
-            } else {
-                &app.api_error
-            }
+            &app.api_error
         };
-        loading::draw_centered_line(f, app, chunk, &message_line);
+        loading::draw_centered_line(f, app, chunk, message_line);
         return;
     }
 
@@ -784,14 +780,12 @@ pub fn draw_count_popup(f: &mut Frame, app: &App, chunk: Rect) {
     if app.result_popup {
         let message_line = if app.popup_is_loading {
             "Loading..."
+        } else if app.popup_post_req_success {
+            &app.popup_post_req_success_message.as_ref().unwrap()
         } else {
-            if app.popup_post_req_success {
-                &app.popup_post_req_success_message.as_ref().unwrap()
-            } else {
-                &app.api_error
-            }
+            &app.api_error
         };
-        loading::draw_centered_line(f, app, chunk, &message_line);
+        loading::draw_centered_line(f, app, chunk, message_line);
         return;
     }
 

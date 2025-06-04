@@ -481,7 +481,7 @@ pub fn user_list_to_anime_query(
         num_times_rewatched: my_list.num_times_rewatched,
         priority: my_list.priority,
         rewatch_value: my_list.rewatch_value,
-        tags: my_list.tags.clone().map_or(None, |v| Some(v.join(","))),
+        tags: my_list.tags.clone().map(|v| v.join(",")),
     }
 }
 
@@ -519,7 +519,7 @@ pub fn user_list_to_manga_query(
         num_volumes_read,
         priority: my_list.priority,
         reread_value: my_list.reread_value,
-        tags: my_list.tags.clone().map_or(None, |v| Some(v.join(","))),
+        tags: my_list.tags.clone().map(|v| v.join(",")),
         comments: my_list.comments.clone(),
         is_rereading: Some(my_list.is_rereading),
         num_times_reread: my_list.num_times_reread,

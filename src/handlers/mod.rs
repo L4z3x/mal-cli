@@ -145,12 +145,12 @@ pub fn is_data_available(
     block: ActiveDisplayBlock,
 ) -> (bool, Option<usize>) {
     for (i, route) in app.navigator.data.iter().enumerate() {
-        if route.1.block == block && route.1.data.is_some() {
-            if std::mem::discriminant(data)
+        if route.1.block == block
+            && route.1.data.is_some()
+            && std::mem::discriminant(data)
                 == std::mem::discriminant(route.1.data.as_ref().unwrap())
-            {
-                return (true, Some(i));
-            }
+        {
+            return (true, Some(i));
         }
     }
     return (false, None);

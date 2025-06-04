@@ -128,7 +128,7 @@ pub(crate) fn handle_response<'a, D: Deserialize<'a>>(res: &'a ApiResponse) -> A
         return Err(Error::HttpError(res.status));
     }
     if let Some(body) = &res.body {
-        Ok(serde_json::from_str::<D>(&body)?)
+        Ok(serde_json::from_str::<D>(body)?)
     } else {
         Err(Error::NoBody)
     }

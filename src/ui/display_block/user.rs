@@ -250,10 +250,8 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) -> Rect {
         list.push(("Birthday: ".to_string(), birthday));
     }
 
-    if !is_supperter.is_some() {
-        if is_supperter.unwrap() {
-            list.push(("Supporter: ".to_string(), "Yes".to_string()));
-        }
+    if !is_supperter.is_some() && is_supperter.unwrap() {
+        list.push(("Supporter: ".to_string(), "Yes".to_string()));
     }
     let chunks = Layout::default()
         .direction(Direction::Vertical)
