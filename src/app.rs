@@ -3,14 +3,20 @@ use crate::config::app_config::AppConfig;
 use crate::network::IoEvent;
 use chrono::Datelike;
 use image::{DynamicImage, ImageError};
+use log::LevelFilter;
 use ratatui::layout::Rect;
+use ratatui::style::{Color, Style};
+use ratatui::widgets::{Block, Borders};
+use ratatui::Frame;
 use ratatui_image::picker::Picker;
 use ratatui_image::protocol::StatefulProtocol;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::sync::mpsc::Sender;
+use tui_logger::{TuiLoggerWidget, TuiWidgetState};
+
 use strum_macros::IntoStaticStr;
-use tracing::debug;
+use tracing::warn;
 use tui_scrollview::ScrollViewState;
 const DEFAULT_ROUTE: Route = Route {
     data: None,
@@ -273,10 +279,11 @@ pub struct App {
     pub help_menu_page: u32,
     pub help_menu_max_lines: u32,
     pub help_docs_size: u32,
+    // logger:
+    pub logger_state: TuiWidgetState,
     // exit:
     pub exit_flag: bool,
     pub exit_confirmation_popup: bool,
-
     // image:
     pub picker: Option<Picker>,
     pub media_image: Option<(String, u32, u32)>,
@@ -573,7 +580,17 @@ impl App {
             // exit:
             exit_flag: false,
             exit_confirmation_popup: false,
+            // logger:
+            logger_state: TuiWidgetState::default().set_default_display_level(LevelFilter::Debug), // todo: change to env var
         }
+    }
+
+    pub fn render_logs(&mut self, f: &mut Frame, area: ratatui::layout::Rect) {
+        let logs = TuiLoggerWidget::default()
+            .block(Block::default().title("Logs").borders(Borders::ALL))
+            .style(Style::default().fg(Color::White))
+            .state(&mut self.logger_state);
+        f.render_widget(logs, area);
     }
 
     pub fn write_error(&mut self, e: api::Error) {
@@ -631,8 +648,7 @@ impl App {
     fn push_existing_route(&mut self, id: u16) {
         //
         if !self.navigator.data.contains_key(&id) {
-            debug!("Route ID {} does not exist in data map, cannot push", id);
-            println!("Route ID {} does not exist in data map, cannot push", id);
+            warn!("Route ID {} does not exist in data map, cannot push", id);
             self.navigator.index = 0; // reset index to home
             return;
         }
@@ -725,7 +741,7 @@ impl App {
         }
         if self.navigator.index >= self.navigator.history.len() {
             // if we exceeded the history length, we reset the index to the last route
-            debug!("Navigator index exceeded history length, resetting to last route");
+            warn!("Navigator index exceeded history length, resetting to last route");
             self.navigator.index = self.navigator.history.len().saturating_sub(2);
         }
 
@@ -743,9 +759,9 @@ impl App {
     }
 
     fn load_state_data(&mut self, i: usize) {
-        debug!("{}", &self.navigator.history[0]);
+        warn!("{:?}", &self.navigator.history);
         if !self.navigator.validate_state() {
-            println!("Invalid navigation state");
+            warn!("Invalid navigation state");
             self.navigator.index = 0; // reset index to home
             return;
         }
@@ -754,10 +770,12 @@ impl App {
         }
         let route_id = self.navigator.history[i];
         if !self.navigator.data.contains_key(&route_id) {
-            println!(
+            warn!(
                 "Error: Route ID {} not found in data map when loading state",
                 route_id
             );
+            self.navigator.index = 0; // reset index to home
+            self.navigator.history.remove(i);
             return;
         }
         self.navigator.index = i;

@@ -15,11 +15,25 @@ mod display_block;
 
 pub fn draw_main_layout(f: &mut Frame, app: &mut App) {
     let margin = util::get_main_layout_margin(app);
+    let app_area;
+    if app.app_config.behavior.show_logger {
+        let logger_area;
+        [app_area, logger_area] = Layout::default()
+            .direction(ratatui::layout::Direction::Horizontal)
+            .constraints([Constraint::Percentage(60), Constraint::Percentage(40)])
+            .areas(f.area());
+        app.render_logs(f, logger_area);
+    } else {
+        app_area = f.area();
+    }
+
+    // draw the logger area
+
     let parent_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(3), Constraint::Min(1)].as_ref())
         .margin(margin)
-        .split(f.area());
+        .split(app_area);
 
     // Search Input and help
     draw_input_and_help_box(f, app, parent_layout[0]);

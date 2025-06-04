@@ -85,9 +85,10 @@ pub struct KeyBindings {
 
 #[derive(Clone)]
 pub struct BehaviorConfig {
-    pub seek_milliseconds: u32,
+    // pub show_loading_indicator: bool,
+    // pub seek_milliseconds: u64,
     pub tick_rate_milliseconds: u64,
-    pub show_loading_indicator: bool,
+    pub show_logger: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -113,9 +114,10 @@ impl AppConfig {
                 next_state: Key::Ctrl('p'),
             },
             behavior: BehaviorConfig {
-                seek_milliseconds: 1000,
+                // seek_milliseconds: 1000,
                 tick_rate_milliseconds: 250,
-                show_loading_indicator: true,
+                // show_loading_indicator: true,
+                show_logger: true, // todo: change to false
             },
             nsfw: true,
             title_language: TitleLanguage::English,

@@ -8,7 +8,6 @@ use mal::handlers::common;
 use mal::logging::initialize_logging;
 use ratatui::prelude::CrosstermBackend;
 use ratatui::Terminal;
-use tracing::debug;
 
 use std::sync::Arc;
 use std::{
@@ -70,10 +69,7 @@ async fn main() -> Result<()> {
     setup_panic_hook();
 
     // initialize logging
-    initialize_logging()?;
-
-    debug!("==> Starting MAL Client");
-
+    initialize_logging();
     // Get config
     println!("==> Loading Configiration");
     let app_config = AppConfig::load()?;
@@ -120,7 +116,6 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
         app.active_top_three_anime = Some(app_config.top_three_anime_types[0].clone());
 
         app.active_top_three_manga = Some(app_config.top_three_manga_types[0].clone());
-        // todo: load top three from cache
         app.dispatch(IoEvent::GetTopThree(TopThreeBlock::Anime(
             app_config.top_three_anime_types[0].clone(),
         )));
@@ -129,6 +124,10 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
 
     loop {
         let mut app = app.lock().await;
+        if app.exit_flag {
+            // if exit_flag is set, we exit the app
+            break;
+        }
 
         let current_block = app.active_block;
         terminal.draw(|mut f| ui::draw_main_layout(&mut f, &mut app))?;
@@ -178,10 +177,6 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
         match events.next()? {
             event::Event::Input(key) => {
                 let key = common::get_lowercase_key(key);
-                if app.exit_flag {
-                    // if exit_flag is set, we exit the app
-                    break;
-                }
 
                 let active_block = app.active_block;
                 // change the default of menu selecting to None when leaving the block
