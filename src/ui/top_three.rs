@@ -5,6 +5,7 @@ use ratatui::{
     widgets::{Block, BorderType, Borders, Paragraph, Wrap},
     Frame,
 };
+use tracing::warn;
 
 use crate::{
     api::model::{
@@ -72,7 +73,7 @@ fn draw_anime_top_three(
         AnimeRankingType::ByPopularity => &app.top_three_anime.popular,
         AnimeRankingType::Favorite => &app.top_three_anime.favourite,
         AnimeRankingType::Other(_) => {
-            eprintln!("no anime ranking type specifyed ui/top_three.rs:59");
+            warn!("no anime ranking type specifyed ");
             &app.top_three_anime.airing
         }
     };
@@ -207,7 +208,7 @@ fn draw_manga_top_three(
         MangaRankingType::ByPopularity => &app.top_three_manga.popular,
         MangaRankingType::Favorite => &app.top_three_manga.favourite,
         MangaRankingType::Other(_) => {
-            eprintln!("No manga ranking type specified in ui/top_three.rs");
+            warn!("No manga ranking type specified in ui/top_three.rs");
             &app.top_three_manga.manga
         }
     };

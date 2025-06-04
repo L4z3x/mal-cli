@@ -92,6 +92,7 @@ pub fn handler(key: Key, app: &mut App) {
             }
             app.active_display_block = ActiveDisplayBlock::Loading;
             app.active_block = ActiveBlock::DisplayBlock;
+            app.reset_result_index();
             app.display_block_title = format!("Search Results: {}", input_str).to_string();
 
             app.dispatch(IoEvent::GetSearchResults(input_str.clone()));

@@ -209,7 +209,7 @@ impl Navigator {
     pub fn validate_state(&self) -> bool {
         // Check if index is within bounds
         if self.index >= self.history.len() {
-            println!(
+            warn!(
                 "Navigation state invalid: index {} >= history length {}",
                 self.index,
                 self.history.len()
@@ -228,7 +228,7 @@ impl Navigator {
         // Check if all history route IDs exist in data
         for &route_id in &self.history {
             if !self.data.contains_key(&route_id) {
-                println!(
+                warn!(
                     "Navigation state invalid: history route ID {} not in data map",
                     route_id
                 );
@@ -340,7 +340,6 @@ pub struct App {
     pub manga_list_status: Option<UserReadStatus>,
     // to track pagination (with local data)
     pub start_card_list_index: u16,
-    pub end_card_list_index: u16,
 }
 #[derive(Debug, Clone)]
 pub enum DetailPopup {
@@ -576,7 +575,6 @@ impl App {
             manga_details_info_scroll_view_state: ScrollViewState::default(),
             manga_details_synopsys_scroll_view_state: ScrollViewState::default(),
             start_card_list_index: 0,
-            end_card_list_index: 14,
             // exit:
             exit_flag: false,
             exit_confirmation_popup: false,
@@ -628,7 +626,7 @@ impl App {
         if let Some(io_tx) = &self.io_tx {
             if let Err(e) = io_tx.send(event) {
                 self.is_loading = false;
-                println!("Error from dispatch {}", e);
+                warn!("Error from dispatch {}", e);
             }
         };
     }
@@ -674,7 +672,7 @@ impl App {
 
         // Ensure the index is within bounds
         if index >= self.navigator.history.len() {
-            eprintln!("Error: Navigation index {} is out of bounds", index);
+            warn!("Error: Navigation index {} is out of bounds", index);
             return None;
         }
 
@@ -684,7 +682,7 @@ impl App {
         match self.navigator.data.get(&id) {
             Some(route) => Some(route),
             None => {
-                eprintln!("Error: Route ID {} not found in data map", id);
+                warn!("Error: Route ID {} not found in data map", id);
                 None
             }
         }
@@ -892,6 +890,11 @@ impl App {
         let file_path = self.app_config.paths.picture_cache_dir_path.join(file_name);
         let image = image::ImageReader::open(file_path)?.decode()?;
         Ok(image)
+    }
+    pub fn reset_result_index(&mut self) {
+        // reset the selected index in the search results
+        self.search_results.selected_display_card_index = Some(0);
+        self.start_card_list_index = 0;
     }
 }
 

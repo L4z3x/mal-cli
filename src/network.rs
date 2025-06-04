@@ -866,7 +866,7 @@ async fn get_picture(
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error fetching image: {}", e);
+                        warn!("Error fetching image: {}", e);
                     }
                 }
             }

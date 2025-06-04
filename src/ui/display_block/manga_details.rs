@@ -11,6 +11,7 @@ use ratatui::{
     widgets::{Block, BorderType, Paragraph},
     Frame,
 };
+use tracing::warn;
 use tui_big_text::{BigText, PixelSize};
 use tui_scrollview::{ScrollView, ScrollbarVisibility};
 
@@ -50,7 +51,7 @@ pub fn draw_manga_detail(f: &mut Frame, app: &mut App, chunk: Rect) {
                 details_utils::draw_rate_popup(f, app, chunk);
             }
             _ => {
-                eprintln!("invalid block manga popup")
+                warn!("invalid block manga popup")
             }
         }
     }

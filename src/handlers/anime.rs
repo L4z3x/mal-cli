@@ -53,8 +53,7 @@ fn get_seasonal(app: &mut App) {
     if is_current_route {
         return;
     }
-    app.start_card_list_index = 0;
-    app.search_results.selected_display_card_index = Some(0);
+    app.reset_result_index();
 
     if is_next {
         app.load_next_route();
@@ -94,9 +93,7 @@ pub fn get_anime_ranking(app: &mut App) {
         return;
     }
 
-    app.start_card_list_index = 0;
-    app.search_results.selected_display_card_index = Some(0);
-
+    app.reset_result_index();
     if is_next {
         app.load_next_route();
         return;
@@ -120,9 +117,7 @@ pub fn get_manga_ranking(app: &mut App) {
     if is_current_route {
         return;
     }
-
-    app.start_card_list_index = 0;
-    app.search_results.selected_display_card_index = Some(0);
+    app.reset_result_index();
 
     if is_next {
         app.load_next_route();
@@ -169,6 +164,8 @@ fn is_manga_ranking_data_available(app: &App) -> (bool, bool, Option<u16>) {
 }
 
 fn get_suggestion(app: &mut App) {
+    app.reset_result_index();
+
     let (is_data_available, is_next, index) = is_suggestion_data_available(app);
 
     let is_current_route = app

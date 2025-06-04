@@ -10,7 +10,7 @@ use super::result;
 pub fn handler(key: Key, app: &mut App) {
     match key {
         k if k == app.app_config.keys.toggle => change_tab(app),
-        k if k == app.app_config.keys.open_popup => {}
+        k if k == app.app_config.keys.open_popup => {} // i don't remember what is the popup for
         _ => result::handler(key, app),
     }
 }
@@ -22,7 +22,7 @@ fn change_tab(app: &mut App) {
     app.anime_list_status = next_status.clone();
 
     let (is_data_available, is_next, index) = is_user_anime_list_data_available(app);
-
+    app.reset_result_index();
     if is_next {
         app.load_next_route();
         return;

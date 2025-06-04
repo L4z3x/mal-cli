@@ -6,10 +6,12 @@ pub fn handler(key: Key, app: &mut App) {
     match key {
         k if k == app.app_config.keys.toggle => match app.search_results.selected_tab {
             SelectedSearchTab::Anime => {
+                app.reset_result_index();
                 app.search_results.selected_tab = SelectedSearchTab::Manga;
             }
 
             SelectedSearchTab::Manga => {
+                app.reset_result_index();
                 app.search_results.selected_tab = SelectedSearchTab::Anime;
             }
         },
@@ -88,13 +90,6 @@ fn scroll_results_down(app: &mut App) {
     // Ensure that the end index does not exceed the data length
     // If it does, reset the the index to the start
 
-    // keep the position of the index
-    // println!(
-    //     "s:[{}],e:[{}],d: [{}]",
-    //     app.start_card_list_index,
-    //     get_end_card_index(app),
-    //     data_length
-    // );
     if get_end_card_index(app) + DISPLAY_COLUMN_NUMBER > data_length - 1 {
         app.start_card_list_index =
             (data_length - DISPLAY_COLUMN_NUMBER * DISPLAY_RAWS_NUMBER) as u16;

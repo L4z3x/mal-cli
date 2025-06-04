@@ -25,6 +25,7 @@ pub fn handler(key: Key, app: &mut App) {
 }
 
 fn reload_seasonal(app: &mut App) {
+    app.reset_result_index();
     app.active_display_block = ActiveDisplayBlock::Loading;
     app.popup = false;
     app.anime_season.anime_season.season = get_season(app);
