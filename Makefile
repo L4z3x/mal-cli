@@ -1,5 +1,4 @@
-@echo "  test                    - Run tests"
-	@echo "  test-nocapture          - Run tests with output visible".PHONY: build build-release build-linux-musl-debug build-linux-musl-release clippy fmt audit clean check install help
+.PHONY: build build-release build-linux-musl-debug build-linux-musl-release clippy fmt audit clean check install help
 
 # Default target
 all: build
@@ -19,8 +18,6 @@ build-linux-musl-debug:
 # Build Release with MUSL
 build-linux-musl-release:
 	cargo build --release --target x86_64-unknown-linux-musl
-
-
 
 # Run Clippy with all targets/features, fail on warnings
 clippy:
@@ -61,8 +58,6 @@ help:
 	@echo "  build-release           - Build release version"
 	@echo "  build-linux-musl-debug  - Build debug static binary (Linux MUSL)"
 	@echo "  build-linux-musl-release- Build release static binary (Linux MUSL)"
-	@echo "  test                    - Run tests"
-	@echo "  test-nocapture          - Run tests with output visible"
 	@echo "  clippy                  - Run clippy linter"
 	@echo "  fmt                     - Format code"
 	@echo "  fmt-check               - Check code formatting"
