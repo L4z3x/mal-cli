@@ -62,5 +62,5 @@ pub fn draw_nav_bar(f: &mut Frame, app: &App, chunk: Rect) -> Rect {
     // .block(block);
 
     f.render_widget(manga_tab_block, manga_tab);
-    return splitted_layout[1];
+    splitted_layout[1]
 }

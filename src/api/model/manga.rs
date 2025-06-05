@@ -175,14 +175,14 @@ impl Manga {
                 if n == 0 {
                     "N/A".to_string()
                 } else {
-                    format!("{} vol", n.to_string())
+                    format!("{} vol", n)
                 }
             }),
             MangaDisplayType::Ch => self.num_chapters.map_or("N/A ch".to_string(), |n| {
                 if n == 0 {
                     "N/A".to_string()
                 } else {
-                    format!("{} ch", n.to_string())
+                    format!("{} ch", n)
                 }
             }),
             MangaDisplayType::Both => format!(
@@ -191,13 +191,13 @@ impl Manga {
                     .map_or("N/A vol".to_string(), |n| if n == 0 {
                         "N/A".to_string()
                     } else {
-                        format!("{} vol", n.to_string())
+                        format!("{} vol", n)
                     }),
                 self.num_chapters
                     .map_or("N/A ch".to_string(), |n| if n == 0 {
                         "N/A".to_string()
                     } else {
-                        format!("{} ch", n.to_string())
+                        format!("{} ch", n)
                     })
             ),
         }

@@ -109,7 +109,7 @@ pub fn draw_anime_search_results(f: &mut Frame, app: &App, chunk: Rect) {
 
         let num_user_list: String = component
             .num_list_users
-            .map_or("N/A".to_string(), |s| format_number_with_commas(s));
+            .map_or("N/A".to_string(), format_number_with_commas);
 
         let score = Line::from(Span::styled(
             format!(
@@ -225,7 +225,7 @@ pub fn draw_manga_search_results(f: &mut Frame, app: &App, chunk: Rect) {
 
         let num_user_list: String = component
             .num_list_users
-            .map_or("N/A".to_string(), |n| format_number_with_commas(n));
+            .map_or("N/A".to_string(), format_number_with_commas);
 
         let type_num_vol = Line::from(Span::styled(
             format!("{} ({})", media_type, vol_num),
@@ -261,7 +261,7 @@ pub fn construct_cards_with_data<T: Clone + Debug>(
     let raw_layout = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
-        .constraints(vec![Constraint::Percentage(20); DISPLAY_RAWS_NUMBER.into()])
+        .constraints(vec![Constraint::Percentage(20); DISPLAY_RAWS_NUMBER])
         .split(chunk);
 
     let components: Vec<&T> = current_page.iter().map(|node| &node.node).collect();
@@ -274,11 +274,11 @@ pub fn construct_cards_with_data<T: Clone + Debug>(
                     .direction(Direction::Horizontal)
                     .constraints(vec![
                         Constraint::Ratio(1, DISPLAY_COLUMN_NUMBER as u32);
-                        DISPLAY_COLUMN_NUMBER.into()
+                        DISPLAY_COLUMN_NUMBER
                     ])
                     .split(*raw)
-                    .into_iter()
-                    .map(|rect| rect.clone())
+                    .iter()
+                    .copied()
                     .collect::<Vec<Rect>>()
             })
             .collect(),

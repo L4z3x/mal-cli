@@ -136,6 +136,6 @@ mod test {
 
         print!("{:#?}", result);
 
-        assert!(result.data.len() > 0);
+        assert!(!result.data.is_empty());
     }
 }

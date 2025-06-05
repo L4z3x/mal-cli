@@ -101,7 +101,7 @@ impl Server {
 
         // return a minimal http response to the browser
         let r = format!("HTTP/1.1 200 OK\r\n\r\n<html><head><title>{} Authorized</title></head><body>{} Authorized</body></html>", self.app_name, self.app_name);
-        socket_stream.write(r.as_bytes())?;
+        socket_stream.write_all(r.as_bytes())?;
         socket_stream.flush()?;
 
         Ok(ret_auth)

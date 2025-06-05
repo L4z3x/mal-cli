@@ -48,7 +48,7 @@ fn get_seasonal(app: &mut App) {
     let (is_data_availabe, is_next, index) = is_seasonal_data_available(app);
     let is_current_route = app
         .get_current_route()
-        .map_or(false, |r| r.block == ActiveDisplayBlock::Seasonal);
+        .is_some_and(|r| r.block == ActiveDisplayBlock::Seasonal);
 
     if is_current_route {
         return;
@@ -79,7 +79,7 @@ fn is_seasonal_data_available(app: &mut App) -> (bool, bool, Option<u16>) {
             return (true, is_next, Some(id));
         }
     }
-    return (false, false, None);
+    (false, false, None)
 }
 
 pub fn get_anime_ranking(app: &mut App) {
@@ -87,7 +87,7 @@ pub fn get_anime_ranking(app: &mut App) {
 
     let is_current_route = app
         .get_current_route()
-        .map_or(false, |r| r.block == ActiveDisplayBlock::AnimeRanking);
+        .is_some_and(|r| r.block == ActiveDisplayBlock::AnimeRanking);
 
     if is_current_route {
         return;
@@ -113,7 +113,7 @@ pub fn get_manga_ranking(app: &mut App) {
 
     let is_current_route = app
         .get_current_route()
-        .map_or(false, |r| r.block == ActiveDisplayBlock::MangaRanking);
+        .is_some_and(|r| r.block == ActiveDisplayBlock::MangaRanking);
     if is_current_route {
         return;
     }
@@ -145,7 +145,7 @@ fn is_anime_ranking_data_available(app: &App) -> (bool, bool, Option<u16>) {
             }
         }
     }
-    return (false, false, None);
+    (false, false, None)
 }
 
 fn is_manga_ranking_data_available(app: &App) -> (bool, bool, Option<u16>) {
@@ -160,7 +160,7 @@ fn is_manga_ranking_data_available(app: &App) -> (bool, bool, Option<u16>) {
             }
         }
     }
-    return (false, false, None);
+    (false, false, None)
 }
 
 fn get_suggestion(app: &mut App) {
@@ -170,7 +170,7 @@ fn get_suggestion(app: &mut App) {
 
     let is_current_route = app
         .get_current_route()
-        .map_or(false, |r| r.block == ActiveDisplayBlock::Suggestions);
+        .is_some_and(|r| r.block == ActiveDisplayBlock::Suggestions);
 
     if is_current_route {
         return;
@@ -203,5 +203,5 @@ fn is_suggestion_data_available(app: &App) -> (bool, bool, Option<u16>) {
             return (true, is_next, Some(id));
         }
     }
-    return (false, false, None);
+    (false, false, None)
 }

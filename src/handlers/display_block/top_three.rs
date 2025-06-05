@@ -11,7 +11,7 @@ pub fn handler(key: Key, app: &mut App) {
     match key {
         k if common::up_event(k) => {
             if index > 0 {
-                index = index - 1;
+                index -= 1;
             } else {
                 index = 2;
             }
@@ -19,7 +19,7 @@ pub fn handler(key: Key, app: &mut App) {
 
         k if common::down_event(k) => {
             if index < 2 {
-                index = index + 1;
+                index += 1;
             } else {
                 index = 0;
             }
@@ -29,7 +29,7 @@ pub fn handler(key: Key, app: &mut App) {
             TopThreeBlock::Anime(_) => {
                 let data_available = is_manga_data_available(
                     app,
-                    &app.active_top_three_manga
+                    app.active_top_three_manga
                         .as_ref()
                         .unwrap_or(&app.available_manga_ranking_types[0]),
                 );
@@ -263,14 +263,14 @@ fn change_manga_top_three_block(app: &mut App, index: u32) {
 
 fn increment_index(index: &mut u32, max: u32) {
     if *index < max - 1 {
-        *index = *index + 1;
+        *index += 1;
     } else {
         *index = 0;
     }
 }
 fn decrement_index(index: &mut u32, max: u32) {
     if *index > 0 {
-        *index = *index - 1;
+        *index -= 1;
     } else {
         *index = max - 1;
     }

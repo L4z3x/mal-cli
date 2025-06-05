@@ -11,7 +11,7 @@ use crate::{
     auth::OAuth,
 };
 use bytes::Bytes;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::warn;
@@ -208,7 +208,7 @@ impl<'a> Network<'a> {
             nsfw: app.app_config.nsfw,
             offset: 0,
         };
-        let title = format!("Top Anime by {}", ranking_type.to_string());
+        let title = format!("Top Anime by {}", ranking_type);
         match api::get_anime_ranking(&query, &self.oauth).await {
             Ok(result) => {
                 app.anime_ranking_data = Some(result.clone());
@@ -246,7 +246,7 @@ impl<'a> Network<'a> {
         };
         // better title:
         let mut rank = ranking_type.to_string();
-        if rank == "bypopularity".to_string() {
+        if rank == *"bypopularity" {
             rank = "Popular Manga".to_string();
         }
         let title = format!("Top {}", rank);
@@ -560,8 +560,7 @@ impl<'a> Network<'a> {
 
         let title = format!(
             "Seasonal Anime: {} {}",
-            app.anime_season.anime_season.season,
-            app.anime_season.anime_season.year.to_string()
+            app.anime_season.anime_season.season, app.anime_season.anime_season.year,
         );
 
         let route = Route {
@@ -832,42 +831,40 @@ async fn get_picture(
     if let Some(p) = pictures {
         let urls = vec![&p.large, &p.medium];
         // loop all image urls and return the first fetched one
-        for url in urls {
-            if let Some(url) = url {
-                // save the image in the .cache/mal-tui/media-images folder
-                let image = fetch_image(url).await;
-                match image {
-                    Ok(bytes) => {
-                        let file_name = format!("{}.png", id);
-                        let file_path = image_dir_path.join(file_name.clone());
-                        let image = image::load_from_memory(&bytes).ok();
-                        if let Some(image) = image {
-                            image
-                                .save_with_format(&file_path, image::ImageFormat::Png)
-                                .ok();
-                            // after saving the image we need to update the index file
-                            // first push to array then check if it reached the max size if yes then we remove the first element(image then array element)
-                            let res = update_image_cache(
-                                &cache_index_file,
-                                &image_dir_path,
-                                &file_name,
-                                max_limit,
-                            )
-                            .await;
-                            if let Err(e) = res {
-                                warn!("error updating the cache index file: {}", e)
-                            }
-
-                            return Some((
-                                file_path.to_string_lossy().to_string(),
-                                image.width(),
-                                image.height(),
-                            ));
+        for url in urls.into_iter().flatten() {
+            // save the image in the .cache/mal-tui/media-images folder
+            let image = fetch_image(url).await;
+            match image {
+                Ok(bytes) => {
+                    let file_name = format!("{}.png", id);
+                    let file_path = image_dir_path.join(file_name.clone());
+                    let image = image::load_from_memory(&bytes).ok();
+                    if let Some(image) = image {
+                        image
+                            .save_with_format(&file_path, image::ImageFormat::Png)
+                            .ok();
+                        // after saving the image we need to update the index file
+                        // first push to array then check if it reached the max size if yes then we remove the first element(image then array element)
+                        let res = update_image_cache(
+                            &cache_index_file,
+                            &image_dir_path,
+                            &file_name,
+                            max_limit,
+                        )
+                        .await;
+                        if let Err(e) = res {
+                            warn!("error updating the cache index file: {}", e)
                         }
+
+                        return Some((
+                            file_path.to_string_lossy().to_string(),
+                            image.width(),
+                            image.height(),
+                        ));
                     }
-                    Err(e) => {
-                        warn!("Error fetching image: {}", e);
-                    }
+                }
+                Err(e) => {
+                    warn!("Error fetching image: {}", e);
                 }
             }
         }
@@ -877,7 +874,7 @@ async fn get_picture(
 
 async fn update_image_cache(
     cache_index_file: &PathBuf,
-    image_dir_path: &PathBuf,
+    image_dir_path: &Path,
     file_name: &str,
     max_limit: u16,
 ) -> Result<(), Box<dyn std::error::Error>> {

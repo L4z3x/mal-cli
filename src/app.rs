@@ -1,3 +1,5 @@
+#![allow(clippy::new_without_default)]
+#![allow(clippy::large_enum_variant)]
 use crate::api::{self, model::*};
 use crate::config::app_config::AppConfig;
 use crate::network::IoEvent;
@@ -254,13 +256,13 @@ impl Navigator {
     }
 
     pub fn get_current_title(&self) -> &String {
-        let id = self.history[self.index as usize];
+        let id = self.history[self.index];
         &self.data[&id].title
     }
 
-    pub fn get_current_block(&self) -> &ActiveDisplayBlock {
-        let id = self.history[self.index as usize];
-        &self.data[&id].block
+    pub fn get_current_block(&self) -> ActiveDisplayBlock {
+        let id = self.history[self.index];
+        self.data[&id].block
     }
 }
 
@@ -385,7 +387,7 @@ pub enum TopThreeBlock {
     Error(RankingType),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct TopThreeManga {
     pub all: Option<[Manga; 3]>,
     pub manga: Option<[Manga; 3]>,
@@ -398,23 +400,7 @@ pub struct TopThreeManga {
     pub favourite: Option<[Manga; 3]>,
 }
 
-impl TopThreeManga {
-    pub fn default() -> Self {
-        Self {
-            all: None,
-            manga: None,
-            novels: None,
-            oneshots: None,
-            doujin: None,
-            manhwa: None,
-            manhua: None,
-            popular: None,
-            favourite: None,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct TopThreeAnime {
     pub airing: Option<[Anime; 3]>,
     pub upcoming: Option<[Anime; 3]>,
@@ -427,22 +413,7 @@ pub struct TopThreeAnime {
     pub favourite: Option<[Anime; 3]>,
 }
 
-impl TopThreeAnime {
-    pub fn default() -> Self {
-        Self {
-            airing: None,
-            upcoming: None,
-            popular: None,
-            all: None,
-            tv: None,
-            ova: None,
-            movie: None,
-            special: None,
-            favourite: None,
-        }
-    }
-}
-
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone)]
 pub enum Data {
     SearchResult(SearchResult),
@@ -587,7 +558,7 @@ impl App {
         let logs = TuiLoggerWidget::default()
             .block(Block::default().title("Logs").borders(Borders::ALL))
             .style(Style::default().fg(Color::White))
-            .state(&mut self.logger_state);
+            .state(&self.logger_state);
         f.render_widget(logs, area);
     }
 
@@ -668,7 +639,7 @@ impl App {
     }
 
     pub fn get_current_route(&self) -> Option<&Route> {
-        let index = self.navigator.index as usize;
+        let index = self.navigator.index;
 
         // Ensure the index is within bounds
         if index >= self.navigator.history.len() {
@@ -723,7 +694,7 @@ impl App {
         if self.active_display_block == ActiveDisplayBlock::Error
             || self.active_display_block == ActiveDisplayBlock::Help
         {
-            self.active_display_block = self.navigator.get_current_block().clone();
+            self.active_display_block = self.navigator.get_current_block();
             return;
         }
         if self.navigator.index == 0 {
@@ -752,7 +723,7 @@ impl App {
     }
 
     pub fn load_route(&mut self, id: u16) {
-        self.push_existing_route(id as u16);
+        self.push_existing_route(id);
         self.load_state_data(self.navigator.history.len() - 1);
     }
 
@@ -763,7 +734,7 @@ impl App {
             self.navigator.index = 0; // reset index to home
             return;
         }
-        if i as usize >= self.navigator.history.len() {
+        if i >= self.navigator.history.len() {
             return;
         }
         let route_id = self.navigator.history[i];
@@ -844,7 +815,7 @@ impl App {
                     }
                 }
 
-                self.active_display_block = self.navigator.get_current_block().clone();
+                self.active_display_block = self.navigator.get_current_block();
                 self.display_block_title = self.navigator.get_current_title().clone();
                 self.active_block = ActiveBlock::DisplayBlock;
             }
@@ -909,12 +880,12 @@ fn get_season() -> Season {
 }
 
 fn get_selected_season(season: &Season) -> u8 {
-    match season {
-        &Season::Winter => 0,
-        &Season::Spring => 1,
-        &Season::Summer => 2,
-        &Season::Fall => 3,
-        &Season::Other(_) => panic!("no season selected"),
+    match *season {
+        Season::Winter => 0,
+        Season::Spring => 1,
+        Season::Summer => 2,
+        Season::Fall => 3,
+        Season::Other(_) => panic!("no season selected"),
     }
 }
 

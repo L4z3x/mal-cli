@@ -155,8 +155,8 @@ pub fn draw_selectable_list(
     selected_index: Option<usize>,
 ) {
     let mut state = ListState::default();
-    if selected_index.is_some() {
-        state.select(Some(selected_index.unwrap() % items.len()));
+    if let Some(index) = selected_index {
+        state.select(Some(index % items.len()));
     }
 
     // choose color based on hover state

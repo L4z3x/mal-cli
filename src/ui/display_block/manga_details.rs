@@ -239,7 +239,7 @@ fn draw_side_info(f: &mut Frame, app: &App, chunk: Rect) {
     scrol_view.render_widget(alter_titles_title, alternative_titles_title_chunk);
     scrol_view.render_widget(alter_titles, alternative_title_chunk);
     scrol_view.render_widget(key_values_info, key_val_chunk);
-    let mut scroll_state = app.manga_details_info_scroll_view_state.clone();
+    let mut scroll_state = app.manga_details_info_scroll_view_state;
 
     f.render_stateful_widget(scrol_view, chunk, &mut scroll_state);
 }
@@ -326,7 +326,7 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
         .as_ref()
         .unwrap()
         .num_list_users
-        .map_or("N/A".to_string(), |s| format_number_with_commas(s));
+        .map_or("N/A".to_string(), format_number_with_commas);
 
     let num_user_line =
         Line::from(format!("{} {}", num_user, "users")).alignment(Alignment::Center);
@@ -337,7 +337,7 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
         .as_ref()
         .unwrap()
         .rank
-        .map_or("N/A".to_string(), |n| format_number_with_commas(n));
+        .map_or("N/A".to_string(), format_number_with_commas);
     let rank = Span::styled(
         format!("#{}", ranked),
         Style::default().add_modifier(Modifier::BOLD),
@@ -350,7 +350,7 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
         .as_ref()
         .unwrap()
         .popularity
-        .map_or("N/A".to_string(), |n| format_number_with_commas(n));
+        .map_or("N/A".to_string(), format_number_with_commas);
     let popularity = Span::styled(
         format!("#{}", popularity),
         Style::default().add_modifier(Modifier::BOLD),
@@ -362,7 +362,7 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
         .as_ref()
         .unwrap()
         .num_list_users
-        .map_or("N/A".to_string(), |n| format_number_with_commas(n));
+        .map_or("N/A".to_string(), format_number_with_commas);
 
     let members = Span::styled(members, Style::default().add_modifier(Modifier::BOLD));
 

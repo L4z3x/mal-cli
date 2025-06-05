@@ -144,7 +144,7 @@ where
 {
     struct StringOrIntVisitor;
 
-    impl<'de> Visitor<'de> for StringOrIntVisitor {
+    impl Visitor<'_> for StringOrIntVisitor {
         type Value = String;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -365,13 +365,10 @@ impl<'de> Deserialize<'de> for TimeWrapper {
         use serde::de::Error;
         let s = String::deserialize(deserializer)?;
         let format = format_description::parse("[hour]:[minute]:[second]").unwrap();
-        match Time::parse(&s, &format) {
-            Ok(time) => {
-                place.time = time;
-                return Ok(());
-            }
-            Err(_) => (),
-        };
+        if let Ok(time) = Time::parse(&s, &format) {
+            place.time = time;
+            return Ok(());
+        }
         let re = regex::Regex::new(r"([0-9]+):([0-9]+)").unwrap();
         if let Some(caps) = re.captures(&s) {
             let hour = caps.get(1).unwrap();
@@ -414,10 +411,9 @@ impl<'de> Deserialize<'de> for DateWrapper {
         use serde::de::Error;
         let s = String::deserialize(deserializer)?;
         let format = format_description::parse("[year]-[month]-[day]").unwrap();
-        match Date::parse(&s, &format) {
-            Ok(date) => return Ok(DateWrapper { date }),
-            Err(_) => (),
-        };
+        if let Ok(date) = Date::parse(&s, &format) {
+            return Ok(DateWrapper { date });
+        }
         let re = regex::Regex::new(r"([0-9]+)-?([0-9]+)?").unwrap();
         if let Some(caps) = re.captures(&s) {
             let year = caps.get(1).unwrap();
@@ -455,12 +451,9 @@ impl<'de> Deserialize<'de> for DateWrapper {
         use serde::de::Error;
         let s = String::deserialize(deserializer)?;
         let format = format_description::parse("[year]-[month]-[day]").unwrap();
-        match Date::parse(&s, &format) {
-            Ok(date) => {
-                place.date = date;
-                return Ok(());
-            }
-            Err(_) => (),
+        if let Ok(date) = Date::parse(&s, &format) {
+            place.date = date;
+            return Ok(());
         };
         let re = regex::Regex::new(r"([0-9]+)-?([0-9]+)?").unwrap();
         if let Some(caps) = re.captures(&s) {

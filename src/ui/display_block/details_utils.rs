@@ -43,7 +43,7 @@ pub fn draw_picture(f: &mut Frame, app: &mut App, chunk: Rect) {
     //     .constraints([Constraint::Length(1), Constraint::Fill(1)])
     //     .split(chunk)[1];
 
-    if let Some(_) = app.media_image {
+    if app.media_image.is_some() {
         if let (Some(_), Some(_)) = (&app.picker, &app.image_state) {
             let image = StatefulImage::default();
 
@@ -55,7 +55,7 @@ pub fn draw_picture(f: &mut Frame, app: &mut App, chunk: Rect) {
             f.render_stateful_widget(
                 image,
                 center_area(chunk, 100 - perc_x, 100 - perc_y),
-                &mut app.image_state.as_mut().unwrap(),
+                app.image_state.as_mut().unwrap(),
             );
         }
     } else {
@@ -96,7 +96,7 @@ pub fn get_text_prop(
     let mut text_lines_ui = Vec::new();
 
     for line in text_lines {
-        let (height, line) = construct_paragraph_lines(&line, 80, 1, 1);
+        let (height, line) = construct_paragraph_lines(line, 80, 1, 1);
         line.iter().for_each(|l| text_lines_ui.push(l.clone()));
         text_height += height;
     }
@@ -153,9 +153,9 @@ pub fn draw_synopsis_items(
         scroll_view.render_widget(text.clone(), text_chunk);
     }
     let mut state = match app.active_display_block {
-        ActiveDisplayBlock::AnimeDetails => app.anime_details_synopsys_scroll_view_state.clone(),
-        ActiveDisplayBlock::MangaDetails => app.manga_details_synopsys_scroll_view_state.clone(),
-        _ => app.anime_details_synopsys_scroll_view_state.clone(),
+        ActiveDisplayBlock::AnimeDetails => app.anime_details_synopsys_scroll_view_state,
+        ActiveDisplayBlock::MangaDetails => app.manga_details_synopsys_scroll_view_state,
+        _ => app.anime_details_synopsys_scroll_view_state,
     };
     f.render_stateful_widget(scroll_view, chunk, &mut state);
 }
@@ -674,7 +674,7 @@ pub fn draw_user_status_popup(f: &mut Frame, app: &App, chunk: Rect) {
         let message_line = if app.popup_is_loading {
             "Loading..."
         } else if app.popup_post_req_success {
-            &app.popup_post_req_success_message.as_ref().unwrap()
+            app.popup_post_req_success_message.as_ref().unwrap()
         } else {
             &app.api_error
         };
@@ -686,7 +686,7 @@ pub fn draw_user_status_popup(f: &mut Frame, app: &App, chunk: Rect) {
         ActiveDisplayBlock::MangaDetails => USER_READ_STATUS
             .iter()
             .map(|status| {
-                Line::from(Span::raw(format!("{}", status)))
+                Line::from(Span::raw(status.to_string()))
                     .style(Style::default().fg(app.app_config.theme.text))
                     .alignment(Alignment::Center)
             })
@@ -694,7 +694,7 @@ pub fn draw_user_status_popup(f: &mut Frame, app: &App, chunk: Rect) {
         _ => USER_WATCH_STATUS
             .iter()
             .map(|status| {
-                Line::from(Span::raw(format!("{}", status)))
+                Line::from(Span::raw(status.to_string()))
                     .style(Style::default().fg(app.app_config.theme.text))
                     .alignment(Alignment::Center)
             })
@@ -733,7 +733,7 @@ pub fn draw_rate_popup(f: &mut Frame, app: &App, chunk: Rect) {
         let message_line = if app.popup_is_loading {
             "Loading..."
         } else if app.popup_post_req_success {
-            &app.popup_post_req_success_message.as_ref().unwrap()
+            app.popup_post_req_success_message.as_ref().unwrap()
         } else {
             &app.api_error
         };
@@ -744,7 +744,7 @@ pub fn draw_rate_popup(f: &mut Frame, app: &App, chunk: Rect) {
     let rate_list = RATING_OPTIONS
         .iter()
         .map(|rate| {
-            Line::from(Span::raw(format!("{}", rate)))
+            Line::from(Span::raw(rate.to_string()))
                 .style(Style::default().fg(app.app_config.theme.text))
                 .alignment(Alignment::Center)
         })
@@ -781,7 +781,7 @@ pub fn draw_count_popup(f: &mut Frame, app: &App, chunk: Rect) {
         let message_line = if app.popup_is_loading {
             "Loading..."
         } else if app.popup_post_req_success {
-            &app.popup_post_req_success_message.as_ref().unwrap()
+            app.popup_post_req_success_message.as_ref().unwrap()
         } else {
             &app.api_error
         };

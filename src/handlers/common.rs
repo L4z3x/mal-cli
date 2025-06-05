@@ -2,31 +2,19 @@
 use crate::event::Key;
 
 pub fn down_event(key: Key) -> bool {
-    match key {
-        Key::Down | Key::Char('j') | Key::Ctrl('n') => true,
-        _ => false,
-    }
+    matches!(key, Key::Down | Key::Char('j') | Key::Ctrl('n'))
 }
 
 pub fn up_event(key: Key) -> bool {
-    match key {
-        Key::Up | Key::Char('k') | Key::Ctrl('p') => true,
-        _ => false,
-    }
+    matches!(key, Key::Up | Key::Char('k') | Key::Ctrl('p'))
 }
 
 pub fn left_event(key: Key) -> bool {
-    match key {
-        Key::Left | Key::Char('h') | Key::Ctrl('b') => true,
-        _ => false,
-    }
+    matches!(key, Key::Left | Key::Char('h') | Key::Ctrl('b'))
 }
 
 pub fn right_event(key: Key) -> bool {
-    match key {
-        Key::Right | Key::Char('l') | Key::Ctrl('f') => true,
-        _ => false,
-    }
+    matches!(key, Key::Right | Key::Char('l') | Key::Ctrl('f'))
 }
 
 pub fn on_down_press<T>(selection_data: &[T], selection_index: Option<usize>) -> usize {
@@ -63,10 +51,7 @@ pub fn on_up_press<T>(selection_data: &[T], selection_index: Option<usize>) -> u
 }
 
 pub fn quit_event(key: Key) -> bool {
-    match key {
-        Key::Char('q') | Key::Ctrl('C') | Key::Ctrl('c') => true,
-        _ => false,
-    }
+    matches!(key, Key::Char('q') | Key::Ctrl('C') | Key::Ctrl('c'))
 }
 
 pub fn get_lowercase_key(key: Key) -> Key {

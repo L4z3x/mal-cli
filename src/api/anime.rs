@@ -143,7 +143,7 @@ pub mod tests {
             nsfw: false,
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
         };
-        let anime_list = get_anime_list(&anime_query, &auth).await.unwrap();
+        let anime_list = get_anime_list(&anime_query, auth).await.unwrap();
         let anime = anime_list.data.first().unwrap().node.clone();
         Ok(anime)
     }
@@ -162,7 +162,7 @@ pub mod tests {
         };
         let result = get_anime_list(&query, &auth).await.unwrap();
         println!("{:#?}", result);
-        assert!(result.data.len() > 0);
+        assert!(!result.data.is_empty());
     }
 
     #[tokio::test]
@@ -191,7 +191,7 @@ pub mod tests {
         };
         let result = get_anime_ranking(&query, &auth).await.unwrap();
         println!("{:#?}", result);
-        assert!(result.data.len() > 0);
+        assert!(!result.data.is_empty());
     }
     #[tokio::test]
     async fn test_get_seasonal_anime() {
@@ -209,7 +209,7 @@ pub mod tests {
         };
         let result = get_seasonal_anime(&season, &query, &auth).await.unwrap();
         println!("{:#?}", result);
-        assert!(result.data.len() > 0);
+        assert!(!result.data.is_empty());
     }
     #[tokio::test]
     async fn test_get_suggested_anime() {
@@ -222,6 +222,6 @@ pub mod tests {
         };
         let result = get_suggested_anime(&query, &auth).await.unwrap();
         println!("{:#?}", result);
-        assert!(result.data.len() > 0);
+        assert!(!result.data.is_empty());
     }
 }

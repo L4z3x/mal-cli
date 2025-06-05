@@ -1,3 +1,4 @@
+#![allow(ambiguous_glob_reexports)]
 /// Anime API endpoints
 pub mod anime;
 pub use anime::*;

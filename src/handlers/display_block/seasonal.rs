@@ -43,13 +43,11 @@ fn handle_popup(key: Key, app: &mut App) {
         k if common::down_event(k) => {
             if is_season_selected {
                 app.anime_season.selected_season = (app.anime_season.selected_season + 1) % 4;
+            } else if app.anime_season.selected_year > 1917 {
+                // Ensure the selected year does not go below 1917, which is the last year available
+                app.anime_season.selected_year -= 1;
             } else {
-                if app.anime_season.selected_year > 1917 {
-                    // Ensure the selected year does not go below 1917, which is the last year available
-                    app.anime_season.selected_year -= 1;
-                } else {
-                    app.anime_season.selected_year = 1917;
-                }
+                app.anime_season.selected_year = 1917;
             }
         }
 
@@ -60,12 +58,10 @@ fn handle_popup(key: Key, app: &mut App) {
                 } else {
                     app.anime_season.selected_season = (app.anime_season.selected_season - 1) % 4;
                 }
+            } else if app.anime_season.selected_year < chrono::Utc::now().year_ce().1 as u16 {
+                app.anime_season.selected_year += 1;
             } else {
-                if app.anime_season.selected_year < chrono::Utc::now().year_ce().1 as u16 {
-                    app.anime_season.selected_year += 1;
-                } else {
-                    app.anime_season.selected_year = chrono::Utc::now().year_ce().1 as u16;
-                }
+                app.anime_season.selected_year = chrono::Utc::now().year_ce().1 as u16;
             }
         }
 

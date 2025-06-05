@@ -96,7 +96,7 @@ pub fn is_user_anime_list_data_available(app: &App) -> (bool, bool, Option<u16>)
             }
         }
     }
-    return (false, false, None);
+    (false, false, None)
 }
 
 pub fn is_user_manga_list_data_available(app: &App) -> (bool, bool, Option<u16>) {
@@ -113,7 +113,7 @@ pub fn is_user_manga_list_data_available(app: &App) -> (bool, bool, Option<u16>)
             }
         }
     }
-    return (false, false, None);
+    (false, false, None)
 }
 
 fn is_user_profile_data_available(app: &App) -> (bool, bool, Option<u16>) {
@@ -126,5 +126,5 @@ fn is_user_profile_data_available(app: &App) -> (bool, bool, Option<u16>) {
             return (true, is_next, Some(id));
         }
     }
-    return (false, false, None);
+    (false, false, None)
 }

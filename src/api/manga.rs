@@ -86,7 +86,7 @@ pub mod tests {
             nsfw: false,
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
         };
-        let manga_list = get_manga_list(&manga_query, &auth).await.unwrap();
+        let manga_list = get_manga_list(&manga_query, auth).await.unwrap();
         let manga = manga_list.data.first().unwrap().node.clone();
         Ok(manga)
     }
@@ -103,7 +103,7 @@ pub mod tests {
         };
         let result = get_manga_list(&query, &auth).await.unwrap();
         println!("{:#?}", result);
-        assert!(result.data.len() > 0);
+        assert!(!result.data.is_empty());
     }
 
     #[tokio::test]
@@ -134,6 +134,6 @@ pub mod tests {
         };
         let result = get_manga_ranking(&query, &auth).await.unwrap();
         println!("{:#?}", result);
-        assert!(result.data.len() > 0);
+        assert!(!result.data.is_empty());
     }
 }

@@ -35,20 +35,12 @@ pub fn handler(key: Key, app: &mut App) {
             }
             ActiveAnimeDetailBlock::AddToList => {
                 if app.popup {
-                    app.selected_popup_status = if app.selected_popup_status == 4 {
-                        0
-                    } else {
-                        app.selected_popup_status + 1
-                    }
+                    app.selected_popup_status = (app.selected_popup_status + 1) % 5;
                 }
             }
             ActiveAnimeDetailBlock::Rate => {
                 if app.popup {
-                    app.selected_popup_rate = if app.selected_popup_rate == 10 {
-                        0
-                    } else {
-                        app.selected_popup_rate + 1
-                    }
+                    app.selected_popup_rate = (app.selected_popup_rate + 1) % 11;
                 }
             }
         },
@@ -66,79 +58,39 @@ pub fn handler(key: Key, app: &mut App) {
                         .as_ref()
                         .unwrap()
                         .num_episodes
-                        .unwrap_or(10000); //? is this the right move ? , we should inspect this later.
-                    if total_ep == 0 {
-                        app.temp_popup_num += 1;
-                    } else if app.temp_popup_num as u64 != total_ep {
+                        .unwrap_or(10000);
+                    if total_ep == 0 || app.temp_popup_num as u64 != total_ep {
                         app.temp_popup_num += 1;
                     }
                 }
             }
             ActiveAnimeDetailBlock::AddToList => {
                 if app.popup {
-                    app.selected_popup_status = if app.selected_popup_status == 0 {
-                        4
-                    } else {
-                        app.selected_popup_status - 1
-                    }
+                    app.selected_popup_status = (app.selected_popup_status + 4) % 5;
                 }
             }
             ActiveAnimeDetailBlock::Rate => {
                 if app.popup {
-                    app.selected_popup_rate = if app.selected_popup_rate == 0 {
-                        10
-                    } else {
-                        app.selected_popup_rate - 1
-                    }
+                    app.selected_popup_rate = (app.selected_popup_rate + 9) % 11;
                 }
             }
         },
-        k if common::right_event(k) => {
-            if app.popup {
-                return;
-            }
-            match app.active_anime_detail_block {
-                ActiveAnimeDetailBlock::AddToList => {
-                    app.active_anime_detail_block = ActiveAnimeDetailBlock::Rate;
-                }
-                ActiveAnimeDetailBlock::Rate => {
-                    app.active_anime_detail_block = ActiveAnimeDetailBlock::Episodes;
-                }
-                ActiveAnimeDetailBlock::Episodes => {
-                    app.active_anime_detail_block = ActiveAnimeDetailBlock::AddToList;
-                }
-                ActiveAnimeDetailBlock::SideInfo => {
-                    app.active_anime_detail_block = ActiveAnimeDetailBlock::Episodes;
-                }
-
-                ActiveAnimeDetailBlock::Synopsis => {
-                    app.active_anime_detail_block = ActiveAnimeDetailBlock::SideInfo
-                }
+        k if common::right_event(k) && !app.popup => {
+            app.active_anime_detail_block = match app.active_anime_detail_block {
+                ActiveAnimeDetailBlock::AddToList => ActiveAnimeDetailBlock::Rate,
+                ActiveAnimeDetailBlock::Rate => ActiveAnimeDetailBlock::Episodes,
+                ActiveAnimeDetailBlock::Episodes => ActiveAnimeDetailBlock::AddToList,
+                ActiveAnimeDetailBlock::SideInfo => ActiveAnimeDetailBlock::Episodes,
+                ActiveAnimeDetailBlock::Synopsis => ActiveAnimeDetailBlock::SideInfo,
             }
         }
-
-        k if common::left_event(k) => {
-            if app.popup {
-                return;
-            }
-
-            match app.active_anime_detail_block {
-                ActiveAnimeDetailBlock::AddToList => {
-                    app.active_anime_detail_block = ActiveAnimeDetailBlock::Episodes;
-                }
-                ActiveAnimeDetailBlock::Rate => {
-                    app.active_anime_detail_block = ActiveAnimeDetailBlock::AddToList;
-                }
-                ActiveAnimeDetailBlock::Episodes => {
-                    app.active_anime_detail_block = ActiveAnimeDetailBlock::Rate;
-                }
-                ActiveAnimeDetailBlock::SideInfo => {
-                    app.active_anime_detail_block = ActiveAnimeDetailBlock::Synopsis;
-                }
-
-                ActiveAnimeDetailBlock::Synopsis => {
-                    app.active_anime_detail_block = ActiveAnimeDetailBlock::AddToList;
-                }
+        k if common::left_event(k) && !app.popup => {
+            app.active_anime_detail_block = match app.active_anime_detail_block {
+                ActiveAnimeDetailBlock::AddToList => ActiveAnimeDetailBlock::Episodes,
+                ActiveAnimeDetailBlock::Rate => ActiveAnimeDetailBlock::AddToList,
+                ActiveAnimeDetailBlock::Episodes => ActiveAnimeDetailBlock::Rate,
+                ActiveAnimeDetailBlock::SideInfo => ActiveAnimeDetailBlock::Synopsis,
+                ActiveAnimeDetailBlock::Synopsis => ActiveAnimeDetailBlock::AddToList,
             }
         }
         _ => {}
@@ -149,22 +101,12 @@ fn change_tab(app: &mut App) {
     if app.popup {
         return;
     }
-    match app.active_anime_detail_block {
-        ActiveAnimeDetailBlock::AddToList => {
-            app.active_anime_detail_block = ActiveAnimeDetailBlock::Rate;
-        }
-        ActiveAnimeDetailBlock::Rate => {
-            app.active_anime_detail_block = ActiveAnimeDetailBlock::Episodes;
-        }
-        ActiveAnimeDetailBlock::Episodes => {
-            app.active_anime_detail_block = ActiveAnimeDetailBlock::SideInfo;
-        }
-        ActiveAnimeDetailBlock::SideInfo => {
-            app.active_anime_detail_block = ActiveAnimeDetailBlock::Synopsis;
-        }
-        ActiveAnimeDetailBlock::Synopsis => {
-            app.active_anime_detail_block = ActiveAnimeDetailBlock::AddToList;
-        }
+    app.active_anime_detail_block = match app.active_anime_detail_block {
+        ActiveAnimeDetailBlock::AddToList => ActiveAnimeDetailBlock::Rate,
+        ActiveAnimeDetailBlock::Rate => ActiveAnimeDetailBlock::Episodes,
+        ActiveAnimeDetailBlock::Episodes => ActiveAnimeDetailBlock::SideInfo,
+        ActiveAnimeDetailBlock::SideInfo => ActiveAnimeDetailBlock::Synopsis,
+        ActiveAnimeDetailBlock::Synopsis => ActiveAnimeDetailBlock::AddToList,
     }
 }
 
@@ -456,26 +398,10 @@ pub fn user_list_to_anime_query(
     score: Option<u8>,
     ep: Option<u64>,
 ) -> UpdateUserAnimeListStatusQuery {
-    let status = if status.is_some() {
-        status
-    } else {
-        Some(my_list.status.clone())
-    };
-    let score = if score.is_some() {
-        score
-    } else {
-        Some(my_list.score)
-    };
-    let num_watched_episodes = if ep.is_some() {
-        ep
-    } else {
-        Some(my_list.num_episodes_watched)
-    };
-
     UpdateUserAnimeListStatusQuery {
-        status,
-        num_watched_episodes,
-        score,
+        status: status.or_else(|| Some(my_list.status.clone())),
+        score: score.or(Some(my_list.score)),
+        num_watched_episodes: ep.or(Some(my_list.num_episodes_watched)),
         comments: my_list.comments.clone(),
         is_rewatching: Some(my_list.is_rewatching),
         num_times_rewatched: my_list.num_times_rewatched,
@@ -492,31 +418,11 @@ pub fn user_list_to_manga_query(
     ch_num: Option<u64>,
     vol_num: Option<u64>,
 ) -> UpdateUserMangaStatus {
-    let status = if status.is_some() {
-        status
-    } else {
-        Some(my_list.status.clone())
-    };
-    let score = if score.is_some() {
-        score
-    } else {
-        Some(my_list.score)
-    };
-    let num_chapters_read = if ch_num.is_some() {
-        ch_num
-    } else {
-        Some(my_list.num_chapters_read)
-    };
-    let num_volumes_read = if vol_num.is_some() {
-        vol_num
-    } else {
-        Some(my_list.num_volumes_read)
-    };
     UpdateUserMangaStatus {
-        score,
-        status,
-        num_chapters_read,
-        num_volumes_read,
+        status: status.or_else(|| Some(my_list.status.clone())),
+        score: score.or(Some(my_list.score)),
+        num_chapters_read: ch_num.or(Some(my_list.num_chapters_read)),
+        num_volumes_read: vol_num.or(Some(my_list.num_volumes_read)),
         priority: my_list.priority,
         reread_value: my_list.reread_value,
         tags: my_list.tags.clone().map(|v| v.join(",")),

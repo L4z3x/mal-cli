@@ -115,7 +115,7 @@ fn draw_anime_top_three(
 
             let number_users = data
                 .num_list_users
-                .map_or("?".to_string(), |n| format_number_with_commas(n));
+                .map_or("?".to_string(), format_number_with_commas);
 
             // let anime_status: &str = data
             //     .status
@@ -241,7 +241,7 @@ fn draw_manga_top_three(
             let chapter_num = data.num_chapters.map_or("?".to_string(), |n| n.to_string());
             let number_users = data
                 .num_list_users
-                .map_or("?".to_string(), |n| format_number_with_commas(n));
+                .map_or("?".to_string(), format_number_with_commas);
             let user_manga_status = data
                 .my_list_status
                 .as_ref()

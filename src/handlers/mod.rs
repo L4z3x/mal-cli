@@ -15,6 +15,7 @@ use crate::network::IoEvent;
 
 use common::get_lowercase_key;
 pub use input::handler as input_handler;
+use log::warn;
 
 pub fn handle_app(key: Key, app: &mut App) {
     // First handle any global event and then move to block event
@@ -153,7 +154,7 @@ pub fn is_data_available(
             return (true, Some(i));
         }
     }
-    return (false, None);
+    (false, None)
 }
 
 pub fn get_media_detail_page(app: &mut App) {
@@ -332,63 +333,56 @@ pub fn get_media_detail_page(app: &mut App) {
                 let index = app.selected_top_three as usize;
                 let mut anime = None;
                 match anime_ranking_type {
-                    AnimeRankingType::Airing => match &app.top_three_anime.airing {
-                        Some(data) => {
+                    AnimeRankingType::Airing => {
+                        if let Some(data) = &app.top_three_anime.airing {
                             anime = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    AnimeRankingType::All => match &app.top_three_anime.all {
-                        Some(data) => {
+                    }
+                    AnimeRankingType::All => {
+                        if let Some(data) = &app.top_three_anime.all {
                             anime = Some(&data[index]);
                         }
-                        None => {}
-                    },
+                    }
 
-                    AnimeRankingType::Upcoming => match &app.top_three_anime.upcoming {
-                        Some(data) => {
+                    AnimeRankingType::Upcoming => {
+                        if let Some(data) = &app.top_three_anime.upcoming {
                             anime = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    AnimeRankingType::Favorite => match &app.top_three_anime.favourite {
-                        Some(data) => {
+                    }
+                    AnimeRankingType::Favorite => {
+                        if let Some(data) = &app.top_three_anime.favourite {
                             anime = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    AnimeRankingType::Movie => match &app.top_three_anime.movie {
-                        Some(data) => {
+                    }
+                    AnimeRankingType::Movie => {
+                        if let Some(data) = &app.top_three_anime.movie {
                             anime = Some(&data[index]);
                         }
-                        None => {}
-                    },
+                    }
 
-                    AnimeRankingType::OVA => match &app.top_three_anime.ova {
-                        Some(data) => {
+                    AnimeRankingType::OVA => {
+                        if let Some(data) = &app.top_three_anime.ova {
                             anime = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    AnimeRankingType::TV => match &app.top_three_anime.tv {
-                        Some(data) => {
+                    }
+                    AnimeRankingType::TV => {
+                        if let Some(data) = &app.top_three_anime.tv {
                             anime = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    AnimeRankingType::ByPopularity => match &app.top_three_anime.popular {
-                        Some(data) => {
+                    }
+                    AnimeRankingType::ByPopularity => {
+                        if let Some(data) = &app.top_three_anime.popular {
                             anime = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    AnimeRankingType::Special => match &app.top_three_anime.special {
-                        Some(data) => {
+                    }
+                    AnimeRankingType::Special => {
+                        if let Some(data) = &app.top_three_anime.special {
                             anime = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    AnimeRankingType::Other(_) => {} // PUSH ERROR
+                    }
+                    AnimeRankingType::Other(_) => {
+                        warn!("other anime ranking type was specified")
+                    }
                 }
                 let anime = match anime {
                     Some(data) => data,
@@ -416,61 +410,54 @@ pub fn get_media_detail_page(app: &mut App) {
                 let index = app.selected_top_three as usize;
                 let mut manga = None;
                 match manga_ranking_type {
-                    MangaRankingType::All => match &app.top_three_manga.all {
-                        Some(data) => {
+                    MangaRankingType::All => {
+                        if let Some(data) = &app.top_three_manga.all {
                             manga = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    MangaRankingType::Manga => match &app.top_three_manga.manga {
-                        Some(data) => {
+                    }
+                    MangaRankingType::Manga => {
+                        if let Some(data) = &app.top_three_manga.manga {
                             manga = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    MangaRankingType::OneShots => match &app.top_three_manga.oneshots {
-                        Some(data) => {
+                    }
+                    MangaRankingType::OneShots => {
+                        if let Some(data) = &app.top_three_manga.oneshots {
                             manga = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    MangaRankingType::ByPopularity => match &app.top_three_manga.popular {
-                        Some(data) => {
+                    }
+                    MangaRankingType::ByPopularity => {
+                        if let Some(data) = &app.top_three_manga.popular {
                             manga = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    MangaRankingType::Favorite => match &app.top_three_manga.favourite {
-                        Some(data) => {
+                    }
+                    MangaRankingType::Favorite => {
+                        if let Some(data) = &app.top_three_manga.favourite {
                             manga = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    MangaRankingType::Manhua => match &app.top_three_manga.manhua {
-                        Some(data) => {
+                    }
+                    MangaRankingType::Manhua => {
+                        if let Some(data) = &app.top_three_manga.manhua {
                             manga = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    MangaRankingType::Manhwa => match &app.top_three_manga.manhwa {
-                        Some(data) => {
+                    }
+                    MangaRankingType::Manhwa => {
+                        if let Some(data) = &app.top_three_manga.manhwa {
                             manga = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    MangaRankingType::Novels => match &app.top_three_manga.novels {
-                        Some(data) => {
+                    }
+                    MangaRankingType::Novels => {
+                        if let Some(data) = &app.top_three_manga.novels {
                             manga = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    MangaRankingType::Doujinshi => match &app.top_three_manga.doujin {
-                        Some(data) => {
+                    }
+                    MangaRankingType::Doujinshi => {
+                        if let Some(data) = &app.top_three_manga.doujin {
                             manga = Some(&data[index]);
                         }
-                        None => {}
-                    },
-                    MangaRankingType::Other(_) => {} // PUSH ERROR
+                    }
+                    MangaRankingType::Other(_) => {
+                        warn!("other manga ranking type was specified")
+                    } // PUSH ERROR
                 }
 
                 let manga = match manga {
@@ -535,5 +522,5 @@ fn is_media_data_available(app: &App, data: &Media) -> (bool, bool, Option<u16>)
             }
         }
     }
-    return (false, false, None);
+    (false, false, None)
 }

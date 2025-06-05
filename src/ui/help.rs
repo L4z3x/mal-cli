@@ -50,7 +50,7 @@ pub fn draw_help_menu(f: &mut Frame, app: &App) {
                 .border_style(gray),
         )
         .style(Style::default().fg(app.app_config.theme.text))
-        .widths(&[
+        .widths([
             Constraint::Length(50),
             Constraint::Length(40),
             Constraint::Length(20),

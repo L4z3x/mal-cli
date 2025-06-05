@@ -95,7 +95,7 @@ async fn main() -> Result<()> {
 }
 
 #[tokio::main]
-async fn start_network<'a>(io_rx: std::sync::mpsc::Receiver<IoEvent>, network: &mut Network) {
+async fn start_network(io_rx: std::sync::mpsc::Receiver<IoEvent>, network: &mut Network) {
     while let Ok(io_event) = io_rx.recv() {
         network.handle_network_event(io_event).await;
     }
@@ -130,7 +130,7 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
         }
 
         let current_block = app.active_block;
-        terminal.draw(|mut f| ui::draw_main_layout(&mut f, &mut app))?;
+        terminal.draw(|f| ui::draw_main_layout(f, &mut app))?;
 
         if current_block == ActiveBlock::Input {
             terminal.show_cursor()?;
@@ -174,32 +174,29 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
         we switch between blocks by pressing Tab and between display by input and navigation
         we will implement a stack for display block to allow going back and forth
                 */
-        match events.next()? {
-            event::Event::Input(key) => {
-                let key = common::get_lowercase_key(key);
+        if let event::Event::Input(key) = events.next()? {
+            let key = common::get_lowercase_key(key);
 
-                let active_block = app.active_block;
-                // change the default of menu selecting to None when leaving the block
-                if key == Key::Tab {
-                    // handle navigation between block
-                    handlers::handle_tab(&mut app);
-                } else if key == Key::BackTab {
-                    // handle navigation between block
-                    handlers::handle_back_tab(&mut app);
-                } else if active_block == ActiveBlock::Input {
-                    handlers::input_handler(key, &mut app);
-                } else if common::quit_event(key) {
-                    app.exit_confirmation_popup = true;
-                } else if key == app.app_config.keys.back {
-                    if app.active_block != ActiveBlock::Input {
-                        app.load_previous_route();
-                        break;
-                    }
-                } else {
-                    handlers::handle_app(key, &mut app);
+            let active_block = app.active_block;
+            // change the default of menu selecting to None when leaving the block
+            if key == Key::Tab {
+                // handle navigation between block
+                handlers::handle_tab(&mut app);
+            } else if key == Key::BackTab {
+                // handle navigation between block
+                handlers::handle_back_tab(&mut app);
+            } else if active_block == ActiveBlock::Input {
+                handlers::input_handler(key, &mut app);
+            } else if common::quit_event(key) {
+                app.exit_confirmation_popup = true;
+            } else if key == app.app_config.keys.back {
+                if app.active_block != ActiveBlock::Input {
+                    app.load_previous_route();
+                    break;
                 }
+            } else {
+                handlers::handle_app(key, &mut app);
             }
-            _ => {}
         }
     }
 

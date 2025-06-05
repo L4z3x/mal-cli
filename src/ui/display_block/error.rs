@@ -38,7 +38,7 @@ pub fn draw_error(f: &mut Frame, app: &App, chunk: Rect) {
         ))
         .title_alignment(Alignment::Center);
 
-    f.render_widget(error_block.clone(), error_box.clone());
+    f.render_widget(error_block.clone(), error_box);
 
     let error_text = Line::from(app.api_error.clone())
         .centered()

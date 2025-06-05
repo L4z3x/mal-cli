@@ -53,7 +53,7 @@ pub fn handle_result_block(key: Key, app: &mut App) {
             if (0..3).contains(&index) {
                 scroll_results_up(app);
             } else if !(0..3).contains(&index) {
-                index = index - DISPLAY_COLUMN_NUMBER;
+                index -= DISPLAY_COLUMN_NUMBER;
                 app.search_results.selected_display_card_index = Some(index);
             }
         }
@@ -66,7 +66,7 @@ pub fn handle_result_block(key: Key, app: &mut App) {
             {
                 scroll_results_down(app);
             } else {
-                index = index + DISPLAY_COLUMN_NUMBER;
+                index += DISPLAY_COLUMN_NUMBER;
                 if index > max {
                     index = max; // Ensure we don't go out of bounds
                 }
@@ -99,13 +99,13 @@ fn scroll_results_down(app: &mut App) {
             .selected_display_card_index
             .as_ref()
             .unwrap()
-            % DISPLAY_COLUMN_NUMBER as usize;
+            % DISPLAY_COLUMN_NUMBER;
         app.search_results.selected_display_card_index = Some(index_positoin);
 
         app.start_card_list_index = 0;
     } else {
         // If the end index is within bounds, increment the indixes
-        app.start_card_list_index = app.start_card_list_index + DISPLAY_COLUMN_NUMBER as u16
+        app.start_card_list_index += DISPLAY_COLUMN_NUMBER as u16
     }
 }
 

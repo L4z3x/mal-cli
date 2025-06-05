@@ -107,7 +107,7 @@ impl OAuth {
     fn new_challenge(len: usize) -> String {
         // Check whether the len in in between the valid length for a
         // PKCE code (43 chars - 128 chars)
-        if len < 48 || len > 128 {
+        if !(48..=128).contains(&len) {
             panic!("len is not in between 48 and 128");
         }
         let mut rng = rng();
@@ -404,8 +404,7 @@ pub mod tests {
     use super::*;
     pub fn get_auth() -> OAuth {
         let config = AuthConfig::load().unwrap();
-        let auth = OAuth::get_auth(config).unwrap();
-        auth
+        OAuth::get_auth(config).unwrap()
     }
 
     #[test]

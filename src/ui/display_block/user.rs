@@ -209,10 +209,7 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) -> Rect {
         list.push(("Mean Score: ".to_string(), mean_score));
     }
     if total_eps != 0 {
-        list.push((
-            "Total Episodes: ".to_string(),
-            format!("{} Eps", total_eps.to_string()),
-        ));
+        list.push(("Total Episodes: ".to_string(), format!("{} Eps", total_eps)));
     }
     if total_days != 0.0 {
         let total_days = {
@@ -250,7 +247,7 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) -> Rect {
         list.push(("Birthday: ".to_string(), birthday));
     }
 
-    if !is_supperter.is_some() && is_supperter.unwrap() {
+    if is_supperter.is_none() && is_supperter.unwrap() {
         list.push(("Supporter: ".to_string(), "Yes".to_string()));
     }
     let chunks = Layout::default()
@@ -277,5 +274,5 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) -> Rect {
         f.render_widget(paragraph, chunks[i]);
     }
 
-    return layout[0];
+    layout[0]
 }

@@ -11,6 +11,7 @@ pub fn cache_auth(auth: &OAuth) {
     let mut auth_file = OpenOptions::new()
         .write(true)
         .create(true)
+        .truncate(true)
         .open(auth_path)
         .unwrap();
 
@@ -26,6 +27,7 @@ pub fn load_cached_auth() -> Option<OAuth> {
         .read(true)
         .write(true)
         .create(true)
+        .truncate(true)
         .open(auth_path)
         .unwrap();
 
