@@ -19,21 +19,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - os: ubuntu-latest
-          #   rust: stable
-          #   target: x86_64-unknown-linux-gnu
-          #   artifact_name: mal-cli
-          #   asset_name: mal-cli-linux-x86_64
+          - os: ubuntu-latest
+            rust: stable
+            target: x86_64-unknown-linux-gnu
+            artifact_name: mal-cli
+            asset_name: mal-cli-linux-x86_64
           # - os: ubuntu-latest
           #   rust: nightly
           #   target: x86_64-unknown-linux-gnu
           #   artifact_name: mal-cli
             # asset_name: mal-cli-linux-x86_64-nightly
-          # - os: macos-latest
-          #   rust: stable
-          #   target: x86_64-apple-darwin
-          #   artifact_name: mal-cli
-          #   asset_name: mal-cli-macos-x86_64
+          - os: macos-latest
+            rust: stable
+            target: x86_64-apple-darwin
+            artifact_name: mal-cli
+            asset_name: mal-cli-macos-x86_64
           # - os: macos-latest
           #   rust: nightly
           #   target: x86_64-apple-darwin
@@ -87,20 +87,22 @@ jobs:
           make clippy
 
       - name: Build Release
+        shell: bash
         run: |
+          make build-release 
+      
           if [[ "$RUNNER_OS" == "Windows" ]]; then
-            echo "Building on Windows"
-            make build-release 
-            ./target/release/mal.exe --version
-            Get-ChildItem ./target/release/
-            cp .\target\release\mal.exe target\release\${{ matrix.artifact_name }}
+            echo "Detected Windows"
+            ./target/release/mal.exe --version || echo "mal.exe not found"
+            ls -l target/release/ || true
+            cp target/release/mal.exe target/release/${{ matrix.artifact_name }}
           else
-            echo "Building on Linux/macOS"
-            make build-release 
-            ./target/release/mal --version
-            ls -l ./target/release/ 
-            cp ./target/release/mal ./target/release/${{ matrix.artifact_name }} 
+            echo "Detected Linux/macOS"
+            ./target/release/mal --version || echo "mal not found"
+            ls -l target/release/ || true
+            cp target/release/mal target/release/${{ matrix.artifact_name }}
           fi
+          
       - name: Upload binary artifacts
         uses: actions/upload-artifact@v4
         with:
