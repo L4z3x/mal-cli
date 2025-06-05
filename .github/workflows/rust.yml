@@ -2,7 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [ '*' ]
+    branches: [ master ]  # Only run on master pushes
+    tags: [ 'v*' ]  # Trigger on version tags
   pull_request:
     branches: [ master ]
 
@@ -11,24 +12,58 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
+  
+  # Build jobs (only run on tags for releases)
   build:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        rust: [stable, nightly]
+        include:
+          - os: ubuntu-latest
+            rust: stable
+            target: x86_64-unknown-linux-gnu
+            artifact_name: mal-cli
+            asset_name: mal-cli-linux-x86_64
+          - os: ubuntu-latest
+            rust: nightly
+            target: x86_64-unknown-linux-gnu
+            artifact_name: mal-cli
+            asset_name: mal-cli-linux-x86_64-nightly
+          - os: macos-latest
+            rust: stable
+            target: x86_64-apple-darwin
+            artifact_name: mal-cli
+            asset_name: mal-cli-macos-x86_64
+          - os: macos-latest
+            rust: nightly
+            target: x86_64-apple-darwin
+            artifact_name: mal-cli
+            asset_name: mal-cli-macos-x86_64-nightly
+          - os: windows-latest
+            rust: stable
+            target: x86_64-pc-windows-msvc
+            artifact_name: mal-cli.exe
+            asset_name: mal-cli-windows-x86_64.exe
+          - os: windows-latest
+            rust: nightly
+            target: x86_64-pc-windows-msvc
+            artifact_name: mal-cli.exe
+            asset_name: mal-cli-windows-x86_64.exe-nightly
+
     runs-on: ${{ matrix.os }}
+    if: startsWith(github.ref, 'refs/tags/v')  # Only run on tag pushes
     continue-on-error: ${{ matrix.rust == 'nightly' }}
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.rust }}
           components: clippy
-      
+          targets: ${{ matrix.target }}
+
       - name: Cache cargo registry
         uses: actions/cache@v3
         with:
@@ -40,45 +75,38 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-${{ matrix.rust }}-
             ${{ runner.os }}-cargo-
-      
+
       - name: Build Debug
         run: |
           rustc --version
           make build
-      
+
       - name: Run clippy
         run: |
           cargo clean
           make clippy
-      
+
       - name: Build Release
         run: make build-release
-      
-      - name: Upload binary artifacts (Linux/macOS)
-        if: matrix.rust == 'stable' && matrix.os != 'windows-latest'
+
+      - name: Upload binary artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: mal-${{ matrix.os }}
-          path: target/release/mal
-      
-      - name: Upload binary artifacts (Windows)
-        if: matrix.rust == 'stable' && matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: mal-${{ matrix.os }}
-          path: target/release/mal.exe
+          name: ${{ matrix.asset_name }}
+          path: target/release/${{ matrix.artifact_name }}
 
   build-linux-musl:
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')  # Only run on tag pushes
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           targets: x86_64-unknown-linux-musl
-      
+
       - name: Cache cargo registry
         uses: actions/cache@v3
         with:
@@ -89,51 +117,53 @@ jobs:
           key: ${{ runner.os }}-musl-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-musl-cargo-
-      
+
       - name: Setup MUSL
         run: |
           sudo apt-get update -qq
           sudo apt-get install -qq musl-tools
-      
+
       - name: Build Debug
         run: |
           make build-linux-musl-debug
-          ./target/x86_64-unknown-linux-musl/debug/mal --version
-      
+          ./target/x86_64-unknown-linux-musl/debug/mal-cli --version
+
       - name: Build Release
         run: |
           make build-linux-musl-release
-          ./target/x86_64-unknown-linux-musl/release/mal --version
-      
+          ./target/x86_64-unknown-linux-musl/release/mal-cli --version
+
       - name: Upload MUSL binary artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: mal-linux-musl-static
-          path: target/x86_64-unknown-linux-musl/release/mal
+          name: mal-cli-linux-musl-static
+          path: target/x86_64-unknown-linux-musl/release/mal-cli
 
   rustfmt:
     name: Rustfmt
     runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.ref, 'refs/tags/v') }}   # Skip on tag pushes, handled in test job
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
-      
+
       - name: Check formatting
         run: cargo fmt -- --check
 
   security-audit:
     name: Security audit
     runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.ref, 'refs/tags/v') }}  # Skip on tag pushes, handled in test job
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      
+
       - name: Cache cargo registry
         uses: actions/cache@v3
         with:
@@ -141,6 +171,185 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
           key: ${{ runner.os }}-audit-cargo-${{ hashFiles('**/Cargo.lock') }}
-      
+
       - name: Run security audit
         run: make audit
+
+  # GitHub Release Job
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, build-linux-musl]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          
+          # Copy and rename artifacts for release with version
+          cp artifacts/mal-cli-linux-x86_64/mal-cli release-assets/mal-cli-v${VERSION}-linux-x86_64
+          cp artifacts/mal-cli-linux-musl-static/mal-cli release-assets/mal-cli-v${VERSION}-linux-musl-x86_64
+          cp artifacts/mal-cli-macos-x86_64/mal-cli release-assets/mal-cli-v${VERSION}-macos-x86_64
+          cp artifacts/mal-cli-windows-x86_64.exe/mal-cli.exe release-assets/mal-cli-v${VERSION}-windows-x86_64.exe
+          
+          # Make binaries executable
+          chmod +x release-assets/mal-cli-v${VERSION}-*
+          
+          # Create checksums
+          cd release-assets
+          sha256sum * > checksums.txt
+          cd ..
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release-assets/*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # AUR Package Release
+  aur-release:
+    name: Release to AUR
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [release]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Generate PKGBUILD
+        run: |
+          # Download source tarball to calculate sha256
+          curl -L -o source.tar.gz "https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${GITHUB_REF#refs/tags/}.tar.gz"
+          SHA256=$(sha256sum source.tar.gz | cut -d' ' -f1)
+          
+          cat > PKGBUILD << EOF
+          # Maintainer: L4z3x <moussaousselmal1970@gmail.com>
+          pkgname=mal-cli
+          pkgver=${{ steps.version.outputs.VERSION }}
+          pkgrel=1
+          pkgdesc="A powerful CLI tool for MyAnimeList"
+          arch=('x86_64')
+          url="https://github.com/${GITHUB_REPOSITORY}"
+          license=('MIT')
+          depends=('gcc-libs')
+          makedepends=('rust' 'cargo')
+          source=("https://github.com/${GITHUB_REPOSITORY}/releases/download/v\${pkgver}/mal-cli-linux-x86_64")
+          sha256sums=('SKIP')  # You'll need to update this with actual checksum
+          
+          package() {
+              install -Dm755 "\${srcdir}/mal-cli-linux-x86_64" "\${pkgdir}/usr/bin/mal-cli"
+          }
+          EOF
+      - name: Publish to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v2.7.0
+        with:
+          pkgname: mal-cli-bin  # Binary package name
+          pkgbuild: ./PKGBUILD
+          commit_username: ${{ secrets.AUR_USERNAME }}
+          commit_email: ${{ secrets.AUR_EMAIL }}
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "Update to version ${{ steps.version.outputs.VERSION }}"
+
+  # Debian Package Release
+  debian-release:
+    name: Release to APT Repository
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [release]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Install packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y devscripts build-essential lintian
+
+      - name: Download Linux binary
+        uses: actions/download-artifact@v4
+        with:
+          name: mal-cli-linux-x86_64
+          path: .
+
+      - name: Create Debian package structure
+        run: |
+          mkdir -p mal-cli-${{ steps.version.outputs.VERSION }}/debian
+          mkdir -p mal-cli-${{ steps.version.outputs.VERSION }}/usr/bin
+          
+          # Copy binary
+          cp mal-cli mal-cli-${{ steps.version.outputs.VERSION }}/usr/bin/
+          chmod +x mal-cli-${{ steps.version.outputs.VERSION }}/usr/bin/mal-cli
+          
+          # Copy control file from repo
+          cp debian/control mal-cli-${{ steps.version.outputs.VERSION }}/debian/control
+          
+          # Create debian/changelog
+          cat > mal-cli-${{ steps.version.outputs.VERSION }}/debian/changelog << EOF
+          mal-cli (${{ steps.version.outputs.VERSION }}-1) unstable; urgency=medium
+          
+            * New upstream release
+          
+           -- L4z3x <moussaousselmal1970@gmail.com>  $(date -R)
+          EOF
+          
+          # Copy other debian files if they exist
+          if [ -f debian/rules ]; then
+            cp debian/rules mal-cli-${{ steps.version.outputs.VERSION }}/debian/rules
+            chmod +x mal-cli-${{ steps.version.outputs.VERSION }}/debian/rules
+          else
+            # Create default rules if not exists
+            cat > mal-cli-${{ steps.version.outputs.VERSION }}/debian/rules << EOF
+          #!/usr/bin/make -f
+          %:
+          	dh \$@
+          
+          override_dh_auto_build:
+          	# Nothing to build, we have precompiled binary
+          
+          override_dh_auto_install:
+          	install -Dm755 usr/bin/mal-cli \$(CURDIR)/debian/mal-cli/usr/bin/mal-cli
+          EOF
+            chmod +x mal-cli-${{ steps.version.outputs.VERSION }}/debian/rules
+          fi
+          
+          # Copy or create compat
+          if [ -f debian/compat ]; then
+            cp debian/compat mal-cli-${{ steps.version.outputs.VERSION }}/debian/compat
+          else
+            echo "10" > mal-cli-${{ steps.version.outputs.VERSION }}/debian/compat
+          fi
+
+      - name: Build Debian package
+        run: |
+          cd mal-cli-${{ steps.version.outputs.VERSION }}
+          debuild -us -uc -b
+
+      - name: Upload Debian package to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: mal-cli_${{ steps.version.outputs.VERSION }}-1_amd64.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
