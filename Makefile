@@ -54,7 +54,7 @@ install-release:
 # Show help
 help:
 	@echo "Available targets:"
-	@echo "  build                    - Build debug version"
+	@echo "  build                   - Build debug version"
 	@echo "  build-release           - Build release version"
 	@echo "  build-linux-musl-debug  - Build debug static binary (Linux MUSL)"
 	@echo "  build-linux-musl-release- Build release static binary (Linux MUSL)"
