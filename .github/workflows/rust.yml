@@ -90,6 +90,7 @@ jobs:
         run: |
           make build-release 
           ./target/release/mal --version
+          ls -l target/release/ || Get-ChildItem target/release/
           cp target/release/mal target/release/${{ matrix.artifact_name }}
       - name: Upload binary artifacts
         uses: actions/upload-artifact@v4

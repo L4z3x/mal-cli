@@ -1,21 +1,11 @@
 => result:
     - click p for next page pagination (feature) 
 
-    => keys bar:
+=> keys bar:
     - keys bar for each display_block
 
 => general:
-    - add make file
-    - image cache clearing (LAST USED) ( WITH A JSON FILE ig)
-    - make 'q' return the user to the home screen and close the popup if there is one 
-    - cleaning the codebase
     - change demo video to a gif
-    - add shift+Tab to go backwards in the navigation (Mandatory)
-    - add logging to the app (info, error, debug) (feature)
+
 => detail page:
     - add a key for deleting the list of the anime (delete endpoint) (feature)
-    - update ep number of unknown ep animes like 'One Piece' (bug)
-=> bug:
-    - on ranking page col 1 row 2 , handlers/mod.rs 174
-    - stuck on loading, there is something ambigious that keeps the network thread busy, we neeed to figure out what it is.
-    - check all todo notes
