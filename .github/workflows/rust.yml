@@ -102,7 +102,7 @@ jobs:
             ls -l target/release/ || true
             cp target/release/mal target/release/${{ matrix.artifact_name }}
           fi
-          
+
       - name: Upload binary artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -151,7 +151,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mal-cli-linux-musl-static
-          path: target/x86_64-unknown-linux-musl/release/mal-cli
+          path: target/x86_64-unknown-linux-musl/release/mal
 
   rustfmt:
     name: Rustfmt
@@ -211,12 +211,16 @@ jobs:
         run: |
           mkdir -p release-assets
           VERSION="${{ steps.version.outputs.VERSION }}"
-          
+
+          ls ./artifacts/
           # Copy and rename artifacts for release with version
-          cp artifacts/mal-cli-linux-x86_64/mal-cli release-assets/mal-cli-v${VERSION}-linux-x86_64
-          cp artifacts/mal-cli-linux-musl-static/mal-cli release-assets/mal-cli-v${VERSION}-linux-musl-x86_64
-          cp artifacts/mal-cli-macos-x86_64/mal-cli release-assets/mal-cli-v${VERSION}-macos-x86_64
-          cp artifacts/mal-cli-windows-x86_64.exe/mal-cli.exe release-assets/mal-cli-v${VERSION}-windows-x86_64.exe
+          cp artifacts/mal-cli/mal-cli-linux-x86_64 release-assets/mal-cli-v${VERSION}-linux-x86_64
+
+          cp artifacts/mal-cli-linux-musl-static/mal  release-assets/mal-cli-v${VERSION}-linux-musl-x86_64
+          
+          cp artifacts/mal-cli/mal-cli release-assets/mal-cli-v${VERSION}-macos-x86_64
+          
+          cp artifacts/mal-cli-windows-x86_64.exe/ release-assets/mal-cli-v${VERSION}-windows-x86_64.exe
           
           # Make binaries executable
           chmod +x release-assets/mal-cli-v${VERSION}-*
