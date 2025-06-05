@@ -19,21 +19,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            rust: stable
-            target: x86_64-unknown-linux-gnu
-            artifact_name: mal-cli
-            asset_name: mal-cli-linux-x86_64
+          # - os: ubuntu-latest
+          #   rust: stable
+          #   target: x86_64-unknown-linux-gnu
+          #   artifact_name: mal-cli
+          #   asset_name: mal-cli-linux-x86_64
           # - os: ubuntu-latest
           #   rust: nightly
           #   target: x86_64-unknown-linux-gnu
           #   artifact_name: mal-cli
             # asset_name: mal-cli-linux-x86_64-nightly
-          - os: macos-latest
-            rust: stable
-            target: x86_64-apple-darwin
-            artifact_name: mal-cli
-            asset_name: mal-cli-macos-x86_64
+          # - os: macos-latest
+          #   rust: stable
+          #   target: x86_64-apple-darwin
+          #   artifact_name: mal-cli
+          #   asset_name: mal-cli-macos-x86_64
           # - os: macos-latest
           #   rust: nightly
           #   target: x86_64-apple-darwin
@@ -88,10 +88,19 @@ jobs:
 
       - name: Build Release
         run: |
-          make build-release 
-          ./target/release/mal --version
-          ls -l target/release/ || Get-ChildItem target/release/
-          cp target/release/mal target/release/${{ matrix.artifact_name }} || cp target\release\mal.exe target\release\${{ matrix.artifact_name }}
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            echo "Building on Windows"
+            make build-release 
+            ./target/release/mal.exe --version
+            Get-ChildItem ./target/release/
+            cp .\target\release\mal.exe target\release\${{ matrix.artifact_name }}
+          else
+            echo "Building on Linux/macOS"
+            make build-release 
+            ./target/release/mal --version
+            ls -l ./target/release/ 
+            cp ./target/release/mal ./target/release/${{ matrix.artifact_name }} 
+          fi
       - name: Upload binary artifacts
         uses: actions/upload-artifact@v4
         with:
