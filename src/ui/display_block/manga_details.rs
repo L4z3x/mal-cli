@@ -443,7 +443,11 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
         .unwrap()
         .num_chapters
         .map_or("?".to_string(), |n| {
-            (n > 0).then(|| n.to_string()).unwrap_or("?".to_string())
+            if n > 0 {
+                n.to_string()
+            } else {
+                "?".to_string()
+            }
         });
     let user_chapter_progress = format!("Chapters: {}/{}", read_ch, total_ch);
     let mut user_chapter_progress_paragraph = Paragraph::new(user_chapter_progress)
@@ -457,7 +461,11 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
         .unwrap()
         .num_volumes
         .map_or("?".to_string(), |n| {
-            (n > 0).then(|| n.to_string()).unwrap_or("?".to_string())
+            if n > 0 {
+                n.to_string()
+            } else {
+                "?".to_string()
+            }
         });
     let user_volume_progress = format!("Volumes: {} / {}", read_vol, total_vol);
 

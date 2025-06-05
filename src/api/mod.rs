@@ -87,11 +87,7 @@ pub(crate) async fn send(request: RequestBuilder, auth: &OAuth) -> ApiResult<Api
     let status = response.status();
     Ok(ApiResponse {
         status,
-        body: if let Ok(body) = response.text().await {
-            Some(body)
-        } else {
-            None
-        },
+        body: (response.text().await).ok(),
     })
 }
 

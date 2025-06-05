@@ -433,7 +433,11 @@ fn draw_info(f: &mut Frame, app: &App, chunk: Rect) {
         .unwrap()
         .num_episodes
         .map_or("?".to_string(), |n| {
-            (n > 0).then(|| n.to_string()).unwrap_or("?".to_string())
+            if n > 0 {
+                n.to_string()
+            } else {
+                "?".to_string()
+            }
         });
 
     let user_progress = format!("Episodes: {}/{}", watched_ep, total_ep);
