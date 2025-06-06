@@ -470,8 +470,7 @@ impl App {
                 selected_year: year as u16,
             },
             // logger:
-            logger_state: TuiWidgetState::default()
-                .set_default_display_level(app_config.log_level.clone()),
+            logger_state: TuiWidgetState::default().set_default_display_level(app_config.log_level),
 
             available_anime_ranking_types: app_config.top_three_anime_types.clone(),
             active_top_three: TopThreeBlock::Anime(app_config.top_three_anime_types[0].clone()),

@@ -104,7 +104,7 @@ pub enum MangaDisplayType {
 }
 
 impl AppConfig {
-    pub fn default() -> Result<Self, ConfigError> {
+    pub fn new() -> Result<Self, ConfigError> {
         let paths = get_cache_dir()?;
 
         Ok(Self {
@@ -165,10 +165,10 @@ impl AppConfig {
         if !config_file.exists() {
             // if config file doesn't exist, create default config
             fs::create_dir_all(config_file.parent().unwrap())?;
-            let default_config = Self::default()?;
+            let default_config = Self::new()?;
 
             fs::write(&config_file, serde_yaml::to_string(&default_config)?)?;
-            return Ok(default_config);
+            Ok(default_config)
         } else {
             // if config file exists, read it
             let content = fs::read_to_string(&config_file).map_err(|_| ConfigError::ReadError)?;
