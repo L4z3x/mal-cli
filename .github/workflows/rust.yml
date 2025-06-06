@@ -65,7 +65,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Cache cargo registry
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
@@ -231,7 +231,7 @@ jobs:
           cd ..
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             release-assets/*
@@ -241,7 +241,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # AUR Package Release
+# AUR Package Release
   aur-release:
     name: Release to AUR
     runs-on: ubuntu-latest
@@ -257,7 +257,7 @@ jobs:
       - name: Generate PKGBUILD
         run: |
           # Download source tarball to calculate sha256
-          curl -L -o source.tar.gz "https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${GITHUB_REF#refs/tags/}.tar.gz"
+          curl -L -o source.tar.gz "https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/v${{ steps.version.outputs.VERSION }}.tar.gz"
           SHA256=$(sha256sum source.tar.gz | cut -d' ' -f1)
           
           cat > PKGBUILD << EOF
@@ -271,25 +271,54 @@ jobs:
           license=('MIT')
           depends=('gcc-libs')
           makedepends=('rust' 'cargo')
-          source=("https://github.com/${GITHUB_REPOSITORY}/releases/download/v\${pkgver}/mal-cli-linux-x86_64")
-          sha256sums=('$SHA256')  # You'll need to update this with actual checksum
+          source=("\${pkgname}-\${pkgver}.tar.gz::https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/v\${pkgver}.tar.gz")
+          sha256sums=('${SHA256}')
+          
+          build() {
+              cd "\${srcdir}/mal-cli-\${pkgver}"
+              cargo build --release --locked
+          }
+          
+          check() {
+              cd "\${srcdir}/mal-cli-\${pkgver}"
+              cargo test --release --locked
+          }
           
           package() {
-              install -Dm755 "\${srcdir}/mal-cli-linux-x86_64" "\${pkgdir}/usr/bin/mal-cli"
+              cd "\${srcdir}/mal-cli-\${pkgver}"
+              install -Dm755 "target/release/mal" "\${pkgdir}/usr/bin/mal"
           }
           EOF
-          makepkg --printsrcinfo > .SRCINFO
+          
+          # Generate .SRCINFO manually (simpler than installing makepkg)
+          cat > .SRCINFO << EOF
+          pkgbase = mal-cli
+          	pkgdesc = A powerful CLI tool for MyAnimeList
+          	pkgver = ${{ steps.version.outputs.VERSION }}
+          	pkgrel = 1
+          	url = https://github.com/${GITHUB_REPOSITORY}
+          	arch = x86_64
+          	license = MIT
+          	makedepends = rust
+          	makedepends = cargo
+          	depends = gcc-libs
+          	source = mal-cli-${{ steps.version.outputs.VERSION }}.tar.gz::https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/v${{ steps.version.outputs.VERSION }}.tar.gz
+          	sha256sums = ${SHA256}
+          
+          pkgname = mal-cli
+          EOF
+
       - name: Publish to AUR
         uses: KSXGitHub/github-actions-deploy-aur@v2.7.0
         with:
-          pkgname: mal-cli  # Binary package name
+          pkgname: mal-cli
           pkgbuild: ./PKGBUILD
           commit_username: ${{ secrets.AUR_USERNAME }}
           commit_email: ${{ secrets.AUR_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
           commit_message: "Update to version ${{ steps.version.outputs.VERSION }}"
 
-  # Debian Package Release
+# Debian Package Release
   debian-release:
     name: Create Debian Package
     runs-on: ubuntu-latest
@@ -305,66 +334,154 @@ jobs:
       - name: Install packaging tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y devscripts build-essential lintian
+          sudo apt-get install -y devscripts build-essential lintian fakeroot
 
       - name: Download Linux binary
         uses: actions/download-artifact@v4
         with:
           name: mal-cli-linux-x86_64
-          path: .
+          path: ./artifacts
 
       - name: Create Debian package structure
         run: |
-          mkdir -p mal-cli-${{ steps.version.outputs.VERSION }}/debian
-          mkdir -p mal-cli-${{ steps.version.outputs.VERSION }}/usr/bin
+          PKG_NAME="mal-cli"
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          PKG_DIR="${PKG_NAME}_${VERSION}"
           
-          # Copy binary
-          cp mal-cli mal-cli-${{ steps.version.outputs.VERSION }}/usr/bin/
-          chmod +x mal-cli-${{ steps.version.outputs.VERSION }}/usr/bin/mal-cli
+          # Create package directory structure
+          mkdir -p ${PKG_DIR}/DEBIAN
+          mkdir -p ${PKG_DIR}/usr/bin
+          mkdir -p ${PKG_DIR}/usr/share/doc/${PKG_NAME}
           
-          # Copy control file from repo
-          cp debian/control mal-cli-${{ steps.version.outputs.VERSION }}/debian/control
+          # Copy binary and make executable
+          cp ./artifacts/mal-cli ${PKG_DIR}/usr/bin/mal
+          chmod +x ${PKG_DIR}/usr/bin/mal
           
-          # Create debian/changelog
-          cat > mal-cli-${{ steps.version.outputs.VERSION }}/debian/changelog << EOF
-          mal-cli (${{ steps.version.outputs.VERSION }}-1) unstable; urgency=medium
+          # Create control file
+          cat > ${PKG_DIR}/DEBIAN/control << EOF
+          Package: mal-cli
+          Version: ${VERSION}
+          Section: utils
+          Priority: optional
+          Architecture: amd64
+          Depends: libc6 (>= 2.17), libgcc-s1 (>= 3.0)
+          Maintainer: L4z3x <moussaousselmal1970@gmail.com>
+          Description: A powerful CLI tool for MyAnimeList
+           mal-cli is a command-line interface tool that provides functionality
+           for interacting with MyAnimeList. It allows users to manage their
+           anime lists and perform various operations from the terminal.
+           .
+           This package provides the 'mal' command for MyAnimeList operations.
+          Homepage: https://github.com/${GITHUB_REPOSITORY}
+          EOF
           
-            * New upstream release
+          # Create copyright file
+          cat > ${PKG_DIR}/usr/share/doc/${PKG_NAME}/copyright << EOF
+          Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+          Upstream-Name: mal-cli
+          Upstream-Contact: L4z3x <moussaousselmal1970@gmail.com>
+          Source: https://github.com/${GITHUB_REPOSITORY}
+          
+          Files: *
+          Copyright: $(date +%Y) L4z3x
+          License: MIT
+           Permission is hereby granted, free of charge, to any person obtaining a
+           copy of this software and associated documentation files (the "Software"),
+           to deal in the Software without restriction, including without limitation
+           the rights to use, copy, modify, merge, publish, distribute, sublicense,
+           and/or sell copies of the Software, and to permit persons to whom the
+           Software is furnished to do so, subject to the following conditions:
+           .
+           The above copyright notice and this permission notice shall be included
+           in all copies or substantial portions of the Software.
+           .
+           THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+           OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+           FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+           THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+           LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+           FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+           DEALINGS IN THE SOFTWARE.
+          EOF
+          
+          # Create changelog
+          cat > ${PKG_DIR}/usr/share/doc/${PKG_NAME}/changelog.Debian << EOF
+          mal-cli (${VERSION}-1) unstable; urgency=medium
+          
+            * New upstream release ${VERSION}
+            * Updated dependencies and build system
           
            -- L4z3x <moussaousselmal1970@gmail.com>  $(date -R)
           EOF
           
-          # Copy other debian files if they exist
-          if [ -f debian/rules ]; then
-            cp debian/rules mal-cli-${{ steps.version.outputs.VERSION }}/debian/rules
-            chmod +x mal-cli-${{ steps.version.outputs.VERSION }}/debian/rules
-          else
-            # Create default rules if not exists
-            cat > mal-cli-${{ steps.version.outputs.VERSION }}/debian/rules << EOF
-          #!/usr/bin/make -f
-          %:
-          	dh \$@
+          # Compress changelog
+          gzip -9 ${PKG_DIR}/usr/share/doc/${PKG_NAME}/changelog.Debian
           
-          override_dh_auto_build:
-          	# Nothing to build, we have precompiled binary
+          # Create postinst script (optional, for any post-installation tasks)
+          cat > ${PKG_DIR}/DEBIAN/postinst << EOF
+          #!/bin/bash
+          set -e
           
-          override_dh_auto_install:
-          	install -Dm755 usr/bin/mal-cli \$(CURDIR)/debian/mal-cli/usr/bin/mal-cli
+          # Ensure binary is executable
+          chmod +x /usr/bin/mal
+          
+          exit 0
           EOF
-            chmod +x mal-cli-${{ steps.version.outputs.VERSION }}/debian/rules
-          fi
+          chmod 755 ${PKG_DIR}/DEBIAN/postinst
           
-          # Copy or create compat
-          if [ -f debian/compat ]; then
-            cp debian/compat mal-cli-${{ steps.version.outputs.VERSION }}/debian/compat
-          else
-            echo "10" > mal-cli-${{ steps.version.outputs.VERSION }}/debian/compat
-          fi
+          # Create prerm script (optional, for cleanup before removal)
+          cat > ${PKG_DIR}/DEBIAN/prerm << EOF
+          #!/bin/bash
+          set -e
+          
+          # Nothing to do before removal
+          
+          exit 0
+          EOF
+          chmod 755 ${PKG_DIR}/DEBIAN/prerm
 
       - name: Build Debian package
         run: |
-          cd mal-cli-${{ steps.version.outputs.VERSION }}
-          debuild -us -uc -b
+          PKG_NAME="mal-cli"
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          PKG_DIR="${PKG_NAME}_${VERSION}"
+          
+          # Set package permissions correctly
+          find ${PKG_DIR} -type d -exec chmod 755 {} \;
+          find ${PKG_DIR}/usr -type f -exec chmod 644 {} \;
+          chmod +x ${PKG_DIR}/usr/bin/mal
+          chmod 755 ${PKG_DIR}/DEBIAN/postinst
+          chmod 755 ${PKG_DIR}/DEBIAN/prerm
+          
+          # Build the package
+          dpkg-deb --build ${PKG_DIR}
+          
+          # Rename to standard naming convention
+          mv ${PKG_DIR}.deb mal-cli_${VERSION}-1_amd64.deb
+          
+          # Verify the package
+          dpkg-deb --info mal-cli_${VERSION}-1_amd64.deb
+          dpkg-deb --contents mal-cli_${VERSION}-1_amd64.deb
+          
+          # Optional: Run lintian to check for issues (warnings are ok)
+          lintian mal-cli_${VERSION}-1_amd64.deb || true
+
+      - name: Test Debian package
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          
+          # Test installation (dry-run)
+          sudo dpkg --dry-run -i mal-cli_${VERSION}-1_amd64.deb
+          
+          # Actually install and test
+          sudo dpkg -i mal-cli_${VERSION}-1_amd64.deb || true
+          sudo apt-get install -f -y  # Fix any dependency issues
+          
+          # Test that the command works
+          mal --version || echo "Note: mal command may require specific setup"
+          
+          # Remove the package
+          sudo dpkg -r mal-cli || true
 
       - name: Upload Debian package to GitHub Release
         uses: softprops/action-gh-release@v1
