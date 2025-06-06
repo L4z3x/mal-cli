@@ -1,7 +1,9 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use serde::{Deserialize, Serialize};
 
 /// Represends a Key Press
-#[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Key {
     Enter,
     Tab,

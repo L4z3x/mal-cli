@@ -1,4 +1,7 @@
-use std::{fs, path::Path};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use super::*;
 use crate::{
@@ -6,9 +9,11 @@ use crate::{
     event::key::Key,
 };
 use ratatui::style::Color;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct AppConfig {
+    #[serde(skip_deserializing, skip_serializing)]
     pub paths: CachePaths,
     pub keys: KeyBindings,
     pub theme: Theme,
@@ -24,13 +29,13 @@ pub struct AppConfig {
     pub max_cached_images: u16,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Deserialize, Serialize, Debug)]
 pub enum TitleLanguage {
     Japanese,
     English,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Deserialize, Serialize, Clone, Debug)]
 pub struct Theme {
     pub mal_color: Color,
     pub active: Color,
@@ -73,7 +78,7 @@ impl Default for Theme {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct KeyBindings {
     pub help: Key,
     pub back: Key,
@@ -83,7 +88,7 @@ pub struct KeyBindings {
     pub open_popup: Key,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct BehaviorConfig {
     // pub show_loading_indicator: bool,
     // pub seek_milliseconds: u64,
@@ -91,17 +96,17 @@ pub struct BehaviorConfig {
     pub show_logger: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum MangaDisplayType {
     Vol,
     Ch,
     Both,
 }
 
-// TODO: get app config from file
 impl AppConfig {
-    pub fn load() -> Result<Self, ConfigError> {
+    pub fn default() -> Result<Self, ConfigError> {
         let paths = get_cache_dir()?;
+
         Ok(Self {
             paths,
             theme: Theme::default(),
@@ -115,11 +120,11 @@ impl AppConfig {
             },
             behavior: BehaviorConfig {
                 // seek_milliseconds: 1000,
-                tick_rate_milliseconds: 250,
+                tick_rate_milliseconds: 500,
                 // show_loading_indicator: true,
                 show_logger: false, // todo: change to false
             },
-            nsfw: true,
+            nsfw: false,
             title_language: TitleLanguage::English,
             manga_display_type: MangaDisplayType::Both,
             // first_top_three_block: TopThreeBlock::Anime(AnimeRankingType::Airing),
@@ -128,12 +133,51 @@ impl AppConfig {
                 AnimeRankingType::All,
                 AnimeRankingType::Upcoming,
                 AnimeRankingType::Movie,
+                AnimeRankingType::Special,
+                AnimeRankingType::OVA,
+                AnimeRankingType::TV,
+                AnimeRankingType::ByPopularity,
+                AnimeRankingType::Favorite,
             ],
-            top_three_manga_types: vec![MangaRankingType::All, MangaRankingType::Manga],
+            top_three_manga_types: vec![
+                MangaRankingType::All,
+                MangaRankingType::Manga,
+                MangaRankingType::Novels,
+                MangaRankingType::OneShots,
+                MangaRankingType::Doujinshi,
+                MangaRankingType::Manhwa,
+                MangaRankingType::Manhua,
+                MangaRankingType::ByPopularity,
+                MangaRankingType::Favorite,
+            ],
             navigation_stack_limit: 15,
             search_limit: 30,
             max_cached_images: 15,
         })
+    }
+
+    pub fn load() -> Result<Self, ConfigError> {
+        // check file exists
+        // do not get paths from config file,always use the default paths
+        let config_file = dirs::home_dir()
+            .ok_or(ConfigError::PathError)?
+            .join(CONFIG_DIR)
+            .join(APP_CONFIG_DIR)
+            .join(_CONFIG_FILE);
+        if !config_file.exists() {
+            // if config file doesn't exist, create default config
+            fs::create_dir_all(config_file.parent().unwrap())?;
+            let default_config = Self::default()?;
+
+            fs::write(&config_file, serde_yaml::to_string(&default_config)?)?;
+            return Ok(default_config);
+        } else {
+            // if config file exists, read it
+            let content = fs::read_to_string(&config_file).map_err(|_| ConfigError::ReadError)?;
+            let config: Self = serde_yaml::from_str(&content).map_err(ConfigError::ParseError)?;
+
+            Ok(config)
+        }
     }
 }
 
@@ -172,8 +216,14 @@ fn get_cache_dir() -> Result<CachePaths, ConfigError> {
         None => Err(ConfigError::PathError),
     }
 }
-#[derive(Clone, Debug)]
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CachePaths {
     pub picture_cache_dir_path: PathBuf,
     pub data_file_path: PathBuf,
+}
+impl Default for CachePaths {
+    fn default() -> Self {
+        get_cache_dir().ok().unwrap()
+    }
 }

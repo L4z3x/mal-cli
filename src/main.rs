@@ -80,10 +80,10 @@ async fn main() -> Result<()> {
     // Get config
     println!("==> Loading Configiration");
     let app_config = AppConfig::load()?;
-    println!("==> Refreshing Token");
+    println!("==> Auth Configuration Loading");
     let auth_config = AuthConfig::load()?;
+    println!("==> Refreshing Token");
     let oauth = OAuth::get_auth_async(auth_config).await?;
-    println!("==> Token Refreshed");
     let (sync_io_tx, sync_io_rx) = std::sync::mpsc::channel::<IoEvent>();
 
     // initialize app state
