@@ -309,7 +309,7 @@ jobs:
           EOF
 
       - name: Publish to AUR
-        uses: KSXGitHub/github-actions-deploy-aur@v2.7.0
+        uses: KSXGitHub/github-actions-deploy-aur@v4.1.1
         with:
           pkgname: mal-cli
           pkgbuild: ./PKGBUILD
@@ -317,7 +317,8 @@ jobs:
           commit_email: ${{ secrets.AUR_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
           commit_message: "Update to version ${{ steps.version.outputs.VERSION }}"
-
+          ssh_keyscan_types: rsa,ecdsa,ed25519
+          allow_empty_commits: false
 # Debian Package Release
   debian-release:
     name: Create Debian Package
