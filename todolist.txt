@@ -9,3 +9,8 @@
 
 => detail page:
     - add a key for deleting the list of the anime (delete endpoint) (feature)
+
+==> args:
+    - add for info (like files path, etc) (feature)
+    - add help for intro and what to do
+    - add args as seperate file (feature)

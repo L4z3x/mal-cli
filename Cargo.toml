@@ -26,7 +26,7 @@ figlet-rs = "0.1.5"
 httparse = "1.10.1"
 image = "0.25.5"
 lazy_static = "1.5.0"
-log = "0.4.27"
+log = { version = "0.4.27", features = ["serde"] }
 rand = "0.9.0"
 ratatui = { version = "0.29.0", features = ["serde"] }
 ratatui-image = "5.0.0"

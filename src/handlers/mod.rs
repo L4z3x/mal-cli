@@ -330,7 +330,7 @@ pub fn get_media_detail_page(app: &mut App) {
         }
         ActiveBlock::TopThree => match &app.active_top_three {
             TopThreeBlock::Anime(anime_ranking_type) => {
-                let index = app.selected_top_three as usize;
+                let index = app.selected_top_three as usize % 3;
                 let mut anime = None;
                 match anime_ranking_type {
                     AnimeRankingType::Airing => {
@@ -407,7 +407,7 @@ pub fn get_media_detail_page(app: &mut App) {
                 }
             }
             TopThreeBlock::Manga(manga_ranking_type) => {
-                let index = app.selected_top_three as usize;
+                let index = app.selected_top_three as usize % 3;
                 let mut manga = None;
                 match manga_ranking_type {
                     MangaRankingType::All => {

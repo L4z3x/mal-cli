@@ -8,8 +8,7 @@ keys:
 theme:
   mal_color: '#2E51A2'
   active: Cyan
-  banner: LightCyan
-  hint: Yellow
+  banner: '#2E51A2'
   hovered: Magenta
   text: White
   selected: LightCyan
@@ -20,7 +19,7 @@ theme:
   status_dropped: Gray
   status_on_hold: Yellow
   status_watching: Blue
-  status_plan_to_watch: Cyan
+  status_plan_to_watch: LightMagenta
   status_other: White
 behavior:
   tick_rate_milliseconds: 500
@@ -29,25 +28,25 @@ nsfw: false
 title_language: English
 manga_display_type: Both
 top_three_anime_types:
-  - airing
-  - all
-  - upcoming
-  - movie
-  - special
-  - ova
-  - tv
-  - popularity
-  - favorite
+- airing
+- all
+- upcoming
+- movie
+- special
+- ova
+- tv
+- popularity
+- favorite
 top_three_manga_types:
-  - all
-  - manga
-  - novels
-  - oneshots
-  - doujinshi
-  - manhwa
-  - manhua
-  - bypopularity
-  - favorite
+- all
+- manga
+- novels
+- oneshots
+- doujinshi
+- manhwa
+- manhua
+- bypopularity
+- favorite
 navigation_stack_limit: 15
 search_limit: 30
 max_cached_images: 15

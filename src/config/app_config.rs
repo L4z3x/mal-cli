@@ -8,6 +8,7 @@ use crate::{
     api::model::{AnimeRankingType, MangaRankingType},
     event::key::Key,
 };
+use log::LevelFilter;
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
 
@@ -26,6 +27,7 @@ pub struct AppConfig {
     pub top_three_manga_types: Vec<MangaRankingType>,
     pub navigation_stack_limit: u32,
     pub search_limit: u64,
+    pub log_level: LevelFilter,
     pub max_cached_images: u16,
 }
 
@@ -40,7 +42,6 @@ pub struct Theme {
     pub mal_color: Color,
     pub active: Color,
     pub banner: Color,
-    pub hint: Color,
     pub hovered: Color,
     pub text: Color,
     pub selected: Color,
@@ -60,11 +61,10 @@ impl Default for Theme {
         Self {
             mal_color: Color::Rgb(46, 81, 162),
             active: Color::Cyan,
-            banner: Color::LightCyan,
-            hint: Color::Yellow,
+            banner: Color::Rgb(46, 81, 162),
             hovered: Color::Magenta,
-            text: Color::White,
             selected: Color::LightCyan,
+            text: Color::White,
             error_border: Color::Red,
             error_text: Color::LightRed,
             inactive: Color::Gray,
@@ -72,8 +72,8 @@ impl Default for Theme {
             status_dropped: Color::Gray,
             status_on_hold: Color::Yellow,
             status_watching: Color::Blue,
-            status_plan_to_watch: Color::Cyan,
-            status_other: Color::White,
+            status_plan_to_watch: Color::LightMagenta,
+            status_other: Color::DarkGray,
         }
     }
 }
@@ -119,15 +119,12 @@ impl AppConfig {
                 next_state: Key::Ctrl('p'),
             },
             behavior: BehaviorConfig {
-                // seek_milliseconds: 1000,
                 tick_rate_milliseconds: 500,
-                // show_loading_indicator: true,
-                show_logger: false, // todo: change to false
+                show_logger: false,
             },
             nsfw: false,
             title_language: TitleLanguage::English,
             manga_display_type: MangaDisplayType::Both,
-            // first_top_three_block: TopThreeBlock::Anime(AnimeRankingType::Airing),
             top_three_anime_types: vec![
                 AnimeRankingType::Airing,
                 AnimeRankingType::All,
@@ -153,6 +150,7 @@ impl AppConfig {
             navigation_stack_limit: 15,
             search_limit: 30,
             max_cached_images: 15,
+            log_level: LevelFilter::Debug,
         })
     }
 

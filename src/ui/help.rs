@@ -1,7 +1,7 @@
 use crate::app::App;
 use ratatui::{
     layout::{Constraint, Direction, Layout},
-    style::{Color, Style},
+    style::Style,
     text::Span,
     widgets::{Block, Borders, Cell, Row, Table},
     Frame,
@@ -15,7 +15,7 @@ pub fn draw_help_menu(f: &mut Frame, app: &App) {
         .split(f.area());
 
     let white = Style::default().fg(app.app_config.theme.text);
-    let gray = Style::default().fg(Color::Gray); //
+    let gray = Style::default().fg(app.app_config.theme.inactive); //
 
     let header = ["Description", "Event", "Context"];
     let help_docs = get_help();

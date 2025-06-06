@@ -117,12 +117,6 @@ fn draw_anime_top_three(
                 .num_list_users
                 .map_or("?".to_string(), format_number_with_commas);
 
-            // let anime_status: &str = data
-            //     .status
-            //     .as_ref()
-            //     .map_or(AnimeStatus::Other("Unknown".to_string()), |s| s.clone())
-            //     .into();
-
             let user_anime_status = data
                 .my_list_status
                 .as_ref()

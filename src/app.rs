@@ -5,9 +5,8 @@ use crate::config::app_config::AppConfig;
 use crate::network::IoEvent;
 use chrono::Datelike;
 use image::{DynamicImage, ImageError};
-use log::LevelFilter;
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Style};
+use ratatui::style::Style;
 use ratatui::widgets::{Block, Borders};
 use ratatui::Frame;
 use ratatui_image::picker::Picker;
@@ -470,6 +469,9 @@ impl App {
                 selected_season,
                 selected_year: year as u16,
             },
+            // logger:
+            logger_state: TuiWidgetState::default()
+                .set_default_display_level(app_config.log_level.clone()),
 
             available_anime_ranking_types: app_config.top_three_anime_types.clone(),
             active_top_three: TopThreeBlock::Anime(app_config.top_three_anime_types[0].clone()),
@@ -504,7 +506,7 @@ impl App {
             // top three
             top_three_anime: TopThreeAnime::default(),
             top_three_manga: TopThreeManga::default(),
-            selected_top_three: 3, // out of index to select nothing
+            selected_top_three: 0, // out of index to select nothing
             active_top_three_anime: None,
             active_top_three_manga: None,
             active_anime_rank_index: 0,
@@ -549,15 +551,13 @@ impl App {
             // exit:
             exit_flag: false,
             exit_confirmation_popup: false,
-            // logger:
-            logger_state: TuiWidgetState::default().set_default_display_level(LevelFilter::Debug), // todo: change to env var
         }
     }
 
     pub fn render_logs(&mut self, f: &mut Frame, area: ratatui::layout::Rect) {
         let logs = TuiLoggerWidget::default()
             .block(Block::default().title("Logs").borders(Borders::ALL))
-            .style(Style::default().fg(Color::White))
+            .style(Style::default().fg(self.app_config.theme.text))
             .state(&self.logger_state);
         f.render_widget(logs, area);
     }

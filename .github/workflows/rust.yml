@@ -272,16 +272,17 @@ jobs:
           depends=('gcc-libs')
           makedepends=('rust' 'cargo')
           source=("https://github.com/${GITHUB_REPOSITORY}/releases/download/v\${pkgver}/mal-cli-linux-x86_64")
-          sha256sums=('SKIP')  # You'll need to update this with actual checksum
+          sha256sums=('$SHA256')  # You'll need to update this with actual checksum
           
           package() {
               install -Dm755 "\${srcdir}/mal-cli-linux-x86_64" "\${pkgdir}/usr/bin/mal-cli"
           }
           EOF
+          makepkg --printsrcinfo > .SRCINFO
       - name: Publish to AUR
         uses: KSXGitHub/github-actions-deploy-aur@v2.7.0
         with:
-          pkgname: mal-cli-bin  # Binary package name
+          pkgname: mal-cli  # Binary package name
           pkgbuild: ./PKGBUILD
           commit_username: ${{ secrets.AUR_USERNAME }}
           commit_email: ${{ secrets.AUR_EMAIL }}
