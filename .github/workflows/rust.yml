@@ -275,17 +275,12 @@ jobs:
           sha256sums=('${SHA256}')
           
           build() {
-              cd "\${srcdir}/mal-cli-\${pkgver}"
+              cd "\${srcdir}/mal-tui-\${pkgver}"
               cargo build --release --locked
           }
           
-          check() {
-              cd "\${srcdir}/mal-cli-\${pkgver}"
-              cargo test --release --locked
-          }
-          
           package() {
-              cd "\${srcdir}/mal-cli-\${pkgver}"
+              cd "\${srcdir}/mal-tui-\${pkgver}"
               install -Dm755 "target/release/mal" "\${pkgdir}/usr/bin/mal"
           }
           EOF
@@ -485,7 +480,7 @@ jobs:
           sudo dpkg -r mal-cli || true
 
       - name: Upload Debian package to GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: mal-cli_${{ steps.version.outputs.VERSION }}-1_amd64.deb
         env:
