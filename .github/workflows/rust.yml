@@ -275,12 +275,12 @@ jobs:
           sha256sums=('${SHA256}')
           
           build() {
-              cd "\${srcdir}/mal-tui-\${pkgver}"
+              cd "\${srcdir}/mal-cli-\${pkgver}"
               cargo build --release --locked
           }
           
           package() {
-              cd "\${srcdir}/mal-tui-\${pkgver}"
+              cd "\${srcdir}/mal-cli-\${pkgver}"
               install -Dm755 "target/release/mal" "\${pkgdir}/usr/bin/mal"
           }
           EOF
