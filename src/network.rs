@@ -128,15 +128,15 @@ impl<'a> Network<'a> {
                 app.app_config.max_cached_images,
             )
             .await;
+            app.media_image = image.clone();
+            app.image_state = Some(
+                app.picker
+                    .as_ref()
+                    .unwrap()
+                    .new_resize_protocol(app.get_picture_from_cache().unwrap()),
+            );
         }
 
-        app.media_image = image.clone();
-        app.image_state = Some(
-            app.picker
-                .as_ref()
-                .unwrap()
-                .new_resize_protocol(app.get_picture_from_cache().unwrap()),
-        );
         let route = Route {
             data: Some(Data::Anime(app.anime_details.as_ref().unwrap().clone())),
             block: ActiveDisplayBlock::AnimeDetails,
@@ -178,14 +178,14 @@ impl<'a> Network<'a> {
                 app.app_config.max_cached_images,
             )
             .await;
+            app.media_image = image.clone();
+            app.image_state = Some(
+                app.picker
+                    .as_ref()
+                    .unwrap()
+                    .new_resize_protocol(app.get_picture_from_cache().unwrap()),
+            );
         }
-        app.media_image = image.clone();
-        app.image_state = Some(
-            app.picker
-                .as_ref()
-                .unwrap()
-                .new_resize_protocol(app.get_picture_from_cache().unwrap()),
-        );
         let route = Route {
             data: Some(Data::Manga(app.manga_details.as_ref().unwrap().clone())),
             block: ActiveDisplayBlock::MangaDetails,
