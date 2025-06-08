@@ -1445,8 +1445,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "mal-tui"
-version = "0.1.1"
+name = "mal-cli"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "better-panic",

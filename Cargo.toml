@@ -1,7 +1,7 @@
 [package]
-name = "mal-tui"
+name = "mal-cli"
 authors = ["L4z3x <moussaousselmal1970@gmail.com>","Anas Saeed <saeedanas396@gmail.com>"] 
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "CLI tool for  myanimelist"
 repository = "https://github.com/L4z3x/mal-cli"
