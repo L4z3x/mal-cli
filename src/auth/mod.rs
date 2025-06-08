@@ -17,7 +17,7 @@ use std::{io::Error, iter, str::FromStr}; // process::Output
 use token::{Token, TokenWrapper};
 use url::Url;
 
-const USER_AGENT: &str = "mal-tui";
+const USER_AGENT: &str = "mal-cli";
 const AUTHORIZE_URL: &str = "https://myanimelist.net/v1/oauth2/authorize";
 const TOKEN_URL: &str = "https://myanimelist.net/v1/oauth2/token";
 

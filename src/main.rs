@@ -67,14 +67,11 @@ fn setup_panic_hook() {
 async fn main() -> Result<()> {
     better_panic::install();
     setup_panic_hook();
-    let args: Vec<String> = std::env::args().collect();
-    if args.contains(&"--version".to_string())
-        || args.contains(&"-V".to_string())
-        || args.contains(&"-v".to_string())
-    {
-        println!("mal version {}", env!("CARGO_PKG_VERSION"));
+    let exit = mal::cli::handle_args();
+    if exit {
         return Ok(());
     }
+
     // initialize logging
     initialize_logging();
     // Get config
