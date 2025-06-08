@@ -19,6 +19,12 @@ forked from [SaeedAnas/mal-cli](https://github.com/SaeedAnas/mal-cli)
   ```
   yay -S mal-cli
   ```
+
+## using cargo:
+  ```
+  cargo install mal-cli-rs
+  ```
+
 ## Debian-based:
   download the package from last release and run:
   ```
