@@ -1,17 +1,23 @@
 [package]
 name = "mal-tui"
-authors = ["Anas Saeed <saeedanas396@gmail.com>"] 
-version = "0.1.0"
-description = "Terminal User Interface for myanimelist.net"
+authors = ["L4z3x <moussaousselmal1970@gmail.com>","Anas Saeed <saeedanas396@gmail.com>"] 
+version = "0.1.1"
 edition = "2021"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[lib]
-name = "mal"
-path = "src/lib.rs"
+description = "CLI tool for  myanimelist"
+repository = "https://github.com/L4z3x/mal-cli"
+license = "MIT"
+keywords = ["myanimelist", "cli", "anime","tui","terminal"]
+categories = ["command-line-utilities","api-bindings","command-line-interface"]
 
 [[bin]]
 name = "mal"
 path = "src/main.rs"
+test = false
+bench = false
+
+[lib]
+name = "mal"
+path = "src/lib.rs"
 
 [dependencies]
 anyhow = "1.0.97"
