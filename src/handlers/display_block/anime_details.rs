@@ -58,7 +58,7 @@ pub fn handler(key: Key, app: &mut App) {
                         .as_ref()
                         .unwrap()
                         .num_episodes
-                        .unwrap_or(10000);
+                        .unwrap_or(10000); // just to let the user update the number even if the total is unkonw just like in mal.
                     if total_ep == 0 || app.temp_popup_num as u64 != total_ep {
                         app.temp_popup_num += 1;
                     }

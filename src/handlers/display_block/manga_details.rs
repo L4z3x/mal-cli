@@ -66,7 +66,7 @@ pub fn handler(key: Key, app: &mut App) {
                         .as_ref()
                         .unwrap()
                         .num_chapters
-                        .unwrap_or(10000); //? is this the right move ? , we should inspect this later.
+                        .unwrap_or(10000); // just to let the user update the number even if the total is unkonw just like in mal.
                     if total_ch == 0 || app.temp_popup_num as u64 != total_ch {
                         app.temp_popup_num += 1;
                     }
@@ -91,8 +91,16 @@ pub fn handler(key: Key, app: &mut App) {
                 }
             }
             ActiveMangaDetailBlock::Volumes => {
-                if app.popup && app.temp_popup_num != 0 {
-                    app.temp_popup_num -= 1;
+                if app.popup {
+                    let total_vol = app
+                        .manga_details
+                        .as_ref()
+                        .unwrap()
+                        .num_volumes
+                        .unwrap_or(10000); // just to let the user update the number even if the total is unkonw just like in mal.
+                    if total_vol == 0 || app.temp_popup_num as u64 != total_vol {
+                        app.temp_popup_num += 1;
+                    }
                 }
             }
         },
