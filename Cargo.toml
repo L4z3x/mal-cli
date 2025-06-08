@@ -1,5 +1,5 @@
 [package]
-name = "mal-cli"
+name = "mal-cli-rs"
 authors = ["L4z3x <moussaousselmal1970@gmail.com>","Anas Saeed <saeedanas396@gmail.com>"] 
 version = "0.2.0"
 edition = "2021"
