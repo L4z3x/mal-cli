@@ -25,5 +25,12 @@ forked from [SaeedAnas/mal-cli](https://github.com/SaeedAnas/mal-cli)
   sudo dpkg -i <installed-packege>
   ```
   release section can be found here ![here](https://github.com/L4z3x/mal-cli/releases/)
+
+# HOW TO GET CLIENT ID:
+  visit ![mal](https://myanimelist.net/apiconfig/create)
+  and if you get an error, go to your profile -> profile settings -> api -> create
+  ![image](./assets/mal-client-id-page.png)
+  
+
 # TODO:
 - [ ] add help section
