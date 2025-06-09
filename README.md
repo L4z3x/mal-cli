@@ -41,5 +41,10 @@ forked from [SaeedAnas/mal-cli](https://github.com/SaeedAnas/mal-cli)
   ![image](./assets/mal-client-id-page.png)
   
 
+# Debug:
+in $HOME/.config/mal-tui/config.yml file:
+   set show_logger to true
+   set log_level to INFO
+
 # TODO:
 - [ ] add help section
