@@ -2,7 +2,7 @@
 
 A terminal interface for the official [myanimelist](https://myanimelist.net/) api written in rust.
 
-forked from [SaeedAnas/mal-cli](https://github.com/SaeedAnas/mal-cli)
+forked from [SaeedAnas/mal-cli](https://github.com/SaeedAnas/mal-cli) (last commit 5 years ago)
 
 # HOW IT LOOKS
 ## Detail page
@@ -32,7 +32,7 @@ forked from [SaeedAnas/mal-cli](https://github.com/SaeedAnas/mal-cli)
   ```
   release section can be found here ![here](https://github.com/L4z3x/mal-cli/releases/)
 
-## windows/ macos:
+## windows/ macos / musl:
   download binaries from release section and run directly otherwise use cargo
 
 # HOW TO GET CLIENT ID:
