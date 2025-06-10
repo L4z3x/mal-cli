@@ -4,7 +4,7 @@ A terminal interface for the official [myanimelist](https://myanimelist.net/) ap
 
 forked from [SaeedAnas/mal-cli](https://github.com/SaeedAnas/mal-cli) (last commit 5 years ago)
 ## Note:
-for rendering images use a gpu-enhanced terminal like kitty, and for windows use windows terminal >1.22
+for rendering images use a gpu-enhanced terminal like kitty, and for windows use windows terminal >1.22 
 # HOW IT LOOKS
 ## Detail page
 ![detail](./assets/mal-tui-manga-details-page.png)
