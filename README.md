@@ -3,7 +3,7 @@
 A terminal interface for the official [myanimelist](https://myanimelist.net/) api written in rust.
 
 forked from [SaeedAnas/mal-cli](https://github.com/SaeedAnas/mal-cli) (last commit 5 years ago)
-
+## Note: for rendering images use a gpu-enhanced terminal like kitty, and for windows use windows terminal >1.22
 # HOW IT LOOKS
 ## Detail page
 ![detail](./assets/mal-tui-manga-details-page.png)
@@ -34,7 +34,7 @@ forked from [SaeedAnas/mal-cli](https://github.com/SaeedAnas/mal-cli) (last comm
 
 ## windows/ macos / musl:
   download binaries from release section and run directly otherwise use cargo
-
+##
 # HOW TO GET CLIENT ID:
   visit ![mal](https://myanimelist.net/apiconfig/create)
   and if you get an error, go to your profile -> profile settings -> api -> create
