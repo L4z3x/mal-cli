@@ -1488,7 +1488,6 @@ dependencies = [
 name = "mal-cli-rs"
 version = "0.2.0"
 dependencies = [
- "anyhow",
  "better-panic",
  "bytes",
  "chrono",
@@ -1499,7 +1498,6 @@ dependencies = [
  "figlet-rs",
  "httparse",
  "image",
- "lazy_static",
  "log",
  "rand 0.9.0",
  "ratatui",

@@ -113,6 +113,7 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
 
     let events = event::Events::new(app_config.behavior.tick_rate_milliseconds);
     {
+        // initialize top three block
         let mut app = app.lock().await;
         app.active_top_three = TopThreeBlock::Loading(RankingType::AnimeRankingType(
             app_config.top_three_anime_types[0].clone(),
@@ -124,7 +125,6 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
             app_config.top_three_anime_types[0].clone(),
         )));
     }
-    // let mut is_first_render = true;
 
     loop {
         let mut app = app.lock().await;
