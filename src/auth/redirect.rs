@@ -43,7 +43,7 @@ impl Server {
     }
 
     /// Run the server.
-    /// Blocks until it recieves exactly one request.
+    /// Blocks until it recieves exactly one response.
     pub fn go(self) -> Result<super::OAuth, ServerError> {
         use std::io::prelude::*;
         use std::net::TcpListener;
@@ -67,7 +67,7 @@ impl Server {
                         break;
                     }
                 }
-                Err(e) => panic!("{}", e),
+                Err(e) => return Err(ServerError::IOError(e)),
             };
         }
 

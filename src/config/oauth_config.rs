@@ -25,7 +25,7 @@ impl AuthConfig {
             Ok(config_yml)
         } else {
             let standard_font = FIGfont::standard().unwrap();
-            let figlet = standard_font.convert("MAL-TUI");
+            let figlet = standard_font.convert("MAL-CLI");
             let banner = figlet.unwrap().to_string();
             println!("{}", banner);
             println!(
@@ -52,16 +52,27 @@ impl AuthConfig {
             }
 
             let mut client_id = String::new();
-            println!("\nEnter your client ID: ");
-            stdin().read_line(&mut client_id)?;
-            let client_id = client_id.trim().to_string();
-
+            loop {
+                println!("\nEnter your client ID: ");
+                stdin().read_line(&mut client_id)?;
+                let trimmed_client_id = client_id.trim().to_string();
+                if trimmed_client_id.len() == 32
+                    && trimmed_client_id.chars().all(|c| c.is_ascii_hexdigit())
+                {
+                    client_id = trimmed_client_id;
+                    break;
+                } else {
+                    println!("Invalid client ID format. try again");
+                    client_id.clear();
+                }
+            }
             let mut user_agent = String::new();
             println!("\nEnter User Agent (default {}): ", DEFAULT_USER_AGENT);
             stdin().read_line(&mut user_agent)?;
+
             let user_agent = match user_agent.trim().len() {
                 0 => DEFAULT_USER_AGENT.to_string(),
-                _ => user_agent,
+                _ => user_agent.trim().to_string(),
             };
 
             let mut port = String::new();

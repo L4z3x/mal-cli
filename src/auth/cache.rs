@@ -41,3 +41,8 @@ pub fn load_cached_auth() -> Option<OAuth> {
 
     Some(cached_auth)
 }
+
+pub fn delete_cached_auth() {
+    let auth_path = AuthConfig::get_paths().unwrap().config_file_path;
+    let _ = std::fs::remove_file(auth_path);
+}

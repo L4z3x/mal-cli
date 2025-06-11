@@ -10,14 +10,14 @@ pub use oauth_config::AuthConfig;
 use std::path::PathBuf;
 
 const CONFIG_DIR: &str = ".config";
-const APP_CONFIG_DIR: &str = "mal-tui";
+const APP_CONFIG_DIR: &str = "mal-cli";
 const CACHE_DIR: &str = ".cache";
-const APP_CACHE_DIR: &str = "mal-tui";
+const APP_CACHE_DIR: &str = "mal-cli";
 const PICTURE_CACHE_DIR: &str = "images";
 const DATA_FILE: &str = "mal_data.json";
 
 const DEFAULT_PORT: u16 = 2006;
-const DEFAULT_USER_AGENT: &str = "mal-tui";
+const DEFAULT_USER_AGENT: &str = "mal-cli";
 const OAUTH_FILE: &str = "oauth2.yml";
 const TOKEN_CACHE_FILE: &str = ".mal_token_cache.json";
 
@@ -35,6 +35,8 @@ pub enum ConfigError {
     ParseError(serde_yaml::Error),
     /// Represents all other failures
     IOError(std::io::Error),
+
+    InvalidClientIdError,
 }
 
 impl std::error::Error for ConfigError {
@@ -45,6 +47,7 @@ impl std::error::Error for ConfigError {
             ConfigError::PathError => None,
             ConfigError::ParseError(_) => None,
             ConfigError::IOError(_) => None,
+            ConfigError::InvalidClientIdError => None,
         }
     }
 }
@@ -57,6 +60,7 @@ impl std::fmt::Display for ConfigError {
             ConfigError::PathError => write!(f, "Path not found"),
             ConfigError::ParseError(ref err) => err.fmt(f),
             ConfigError::IOError(ref err) => err.fmt(f),
+            ConfigError::InvalidClientIdError => write!(f, "Invalid client ID provided"),
         }
     }
 }

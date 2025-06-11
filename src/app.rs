@@ -855,7 +855,7 @@ impl App {
     }
 
     pub fn get_picture_from_cache(&self) -> Result<DynamicImage, ImageError> {
-        // all images are stored in $HOME?/.cache/mal-tui/images/
+        // all images are stored in $HOME?/.cache/mal-cli/images/
         let file_name = self.media_image.as_ref().unwrap().0.clone();
         let file_path = self.app_config.paths.picture_cache_dir_path.join(file_name);
         let image = image::ImageReader::open(file_path)?.decode()?;

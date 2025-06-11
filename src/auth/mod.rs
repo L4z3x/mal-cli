@@ -353,8 +353,17 @@ impl OAuth {
             );
 
             let url = auth.get_auth_url();
-            open(&url).unwrap();
 
+            if test_oauth_url(&url).await {
+                open(&url).unwrap();
+            } else {
+                println!("==> Please verify your creds and retry.");
+                println!("==> Note: cached auth file will be deleted.");
+                // delete oauth cache file
+                cache::delete_cached_auth();
+                // If the URL cannot be opened, return an error
+                return Err(AuthError::InvalidResponse("Failed to open URL".to_string()));
+            }
             let mut auth = redirect::Server::new(config.get_user_agent(), auth)
                 .go()
                 .unwrap();
@@ -366,6 +375,8 @@ impl OAuth {
             Ok(auth)
         }
     }
+
+    // for tests
     pub fn get_auth(config: AuthConfig) -> Result<OAuth, AuthError> {
         if let Some(mut auth) = cache::load_cached_auth() {
             auth.refresh()?;
@@ -394,6 +405,20 @@ impl OAuth {
     }
 }
 
+pub async fn test_oauth_url(url: &Url) -> bool {
+    let res = reqwest::ClientBuilder::new()
+        .user_agent(USER_AGENT)
+        .build()
+        .unwrap()
+        .get(url.as_ref())
+        .send()
+        .await;
+
+    match res {
+        Ok(response) => response.status().is_success(),
+        Err(_) => false,
+    }
+}
 /// use webbrowser crate to open url in browser
 pub fn open(url: &Url) -> Result<(), Error> {
     webbrowser::open(url.as_ref())

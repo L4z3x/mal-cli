@@ -16,7 +16,7 @@ pub fn draw_empty(f: &mut Frame, app: &App, chunk: Rect) {
         .constraints([Constraint::Length(6)])
         .flex(Flex::Center)
         .areas(chunk);
-    draw_figlet(f, "MAL-TUI".to_string(), banner_layout, app);
+    draw_figlet(f, "MAL-CLI".to_string(), banner_layout, app);
 }
 
 pub fn draw_figlet(f: &mut Frame, string: String, chunk: Rect, app: &App) {
