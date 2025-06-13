@@ -1,6 +1,11 @@
-# MAL-Cli
+![Build](https://img.shields.io/github/actions/workflow/status/L4z3x/mal-tui/rust.yml)
+![Crates.io](https://img.shields.io/crates/v/mal-cli-rs)
+![License](https://img.shields.io/github/license/L4z3x/mal-tui)
+![Stars](https://img.shields.io/github/stars/L4z3x/mal-tui?style=social)
 
-A terminal interface for the official [myanimelist](https://myanimelist.net/) api written in rust.
+# MAL-Cli
+🎌 A fast, keyboard-driven terminal client for  [MyAnimeList](https://myanimelist.net/)  – built with Rust and Ratatui.
+
 
 forked from [SaeedAnas/mal-cli](https://github.com/SaeedAnas/mal-cli) (last commit 5 years ago)
 ## Note:
