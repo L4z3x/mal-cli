@@ -54,6 +54,14 @@
   ![image](./assets/mal-client-id-page.png)
   
 
+## Main keys:
+  - [s]: switching/opening popups
+  - [r]: opening popups (when s does the switching)
+  - [Ctrl+p]: forward navigation
+  - [Esc]: backward navigation
+  
+
+
 # Debug:
 in $HOME/.config/mal-tui/config.yml file:
    set show_logger to true
