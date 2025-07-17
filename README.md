@@ -10,7 +10,7 @@
 
 ## Note:
   - for rendering images use a gpu-enhanced terminal like kitty, and for windows use windows terminal >1.22 
-  - forked from [SaeedAnas/mal-cli](https://github.com/SaeedAnas/mal-cli) (last commit 5 years ago)
+  
 
 # Demo:
 <div align="center">
@@ -66,6 +66,9 @@
 in $HOME/.config/mal-tui/config.yml file:
    set show_logger to true
    set log_level to INFO
+
+# Aknowledgement:
+- this repo was forked from [SaeedAnas/mal-cli](https://github.com/SaeedAnas/mal-cli) (last commit 5 years ago)
 
 # TODO:
 - [ ] add help section
